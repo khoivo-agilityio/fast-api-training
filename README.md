@@ -1,93 +1,185 @@
-# python-training
+# Python Training Plan
 
+**_Dec 17, 2025_**
 
+## **OVERVIEW**
 
-## Getting started
+This training plan focuses on building core Python programming skills, emphasizing problem-solving, coding best practices, and foundational concepts. Ensuring a well-rounded learning experience through practical exercises, coding tasks, and unit testing.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## **PREREQUISITES**
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### **General**
 
-## Add your files
+- Understanding basic programming concepts like loops, variables, and conditionals is helpful.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- Basic knowledge of web development.
 
-```
-cd existing_repo
-git remote add origin https://gitlab.asoft-python.com/khoi.vo/python-training.git
-git branch -M main
-git push -uf origin main
-```
+- **Important**: Please walk through the [ACCELERATE LEARNING WITH AI ASSISTANCE](https://docs.google.com/document/d/1vrHTP0oUX39HoLSHbA-oU69TQCLTRWNbFTbcgRNKIh4/edit?usp=sharing) section to get a quick overview of how to use AI to learn more efficiently and effectively.
 
-## Integrate with your tools
+### **Environment**
 
-- [ ] [Set up project integrations](https://gitlab.asoft-python.com/khoi.vo/python-training/-/settings/integrations)
+- [Python 3.13](https://www.python.org/)
 
-## Collaborate with your team
+- [Package manager: uv](https://docs.astral.sh/uv/)
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+- [Linter and formatted: Ruff](https://docs.astral.sh/ruff/)
 
-## Test and Deploy
+- [Pre-commit](https://pre-commit.com/) hook: [Ruff](https://github.com/astral-sh/ruff-pre-commit)
 
-Use the built-in continuous integration in GitLab.
+### **Extension suggestions**
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 
-***
+- [Python Debugger](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy)
 
-# Editing this README
+- [Python Docstring Generator](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 
-## Suggestions for a good README
+## **TIMELINE**
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### **Total: 20 days**
 
-## Name
-Choose a self-explaining name for your project.
+- Python Fundamentals: **10 days**
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+- Deep Dive into Python: **10 days**
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## **OBJECTIVES**
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **Core Syntax & Concepts:** Learn Python's basic data types, control structures, functions, and error handling.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+- **Problem Solving**: Develop algorithms, debug code, and optimize for efficiency.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+- **Data Structures & File Handling**: Understand lists, dictionaries, tuples, and file operations.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+- **Typing**: Understand and apply Python's typing system \- support for type hints.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- **Unit Testing**: Learn writing tests, and focus on Test-Driven Development (TDD).
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+- AI assistance: Leverage AI tools for enhanced learning and development; automate the generation of unit tests, improving code coverage and testing efficiency.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## **PYTHON FUNDAMENTALS**
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+**Objective**: Focus on core concepts like data types, functions, and loops, progressing to advanced topics such as recursion and object-oriented programming. It emphasizes hands-on learning with exercises, promoting problem-solving and Pythonic coding practices.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## **Timeline: 10 days**
 
-## License
-For open source projects, say how it is licensed.
+## **Official document:** [Think Python](https://allendowney.github.io/ThinkPython/index.html)
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## **Part 1: Core Concepts**
+
+- [Chapter 1:](https://allendowney.github.io/ThinkPython/chap01.html) The Way of the Program \- Introduction to programming principles and Python setup.
+
+- [Chapter 2](https://allendowney.github.io/ThinkPython/chap02.html): Variables and Statements \- Learn about data types, variables, and simple expressions.
+
+- [Chapter 3](https://allendowney.github.io/ThinkPython/chap03.html): Functions \- Define and use functions.
+
+- [Chapter 5](https://allendowney.github.io/ThinkPython/chap05.html): Conditionals and Recursion \- Apply conditionals and understand recursion.
+
+- [Chapter 6](https://allendowney.github.io/ThinkPython/chap06.html): Return values
+
+- [Chapter 7](https://allendowney.github.io/ThinkPython/chap07.html): Iteration and Search \- Use loops for repetitive tasks.
+
+## **Part 2: Data Structures & Files**
+
+- [Chapter 8](https://allendowney.github.io/ThinkPython/chap08.html): Strings and Regular Expressions \- Work with strings, methods, slicing, and Regular Expressions.
+
+- [Chapter 9](https://allendowney.github.io/ThinkPython/chap09.html): Lists \- Use lists for managing data collections.
+
+- [Chapter 10](https://allendowney.github.io/ThinkPython/chap10.html): Dictionaries \- Store and retrieve key-value pairs using dictionaries.
+
+- [Chapter 11](https://allendowney.github.io/ThinkPython/chap11.html): Tuples \- Explore tuples for immutable data storage and unpacking techniques.
+
+- [Chapter 12](https://allendowney.github.io/ThinkPython/chap12.html): Text Analysis and Generation
+
+- [Chapter 13](https://allendowney.github.io/ThinkPython/chap13.html): Files and Databases
+
+## **Part 3: Object-Oriented Programming (OOP) & Extras**
+
+- [Chapter 14](https://allendowney.github.io/ThinkPython/chap14.html): Classes and Functions \- Learn how functions interact with classes, including method definitions.
+
+- [Chapter 15](https://allendowney.github.io/ThinkPython/chap15.html): Classes and Methods \- Define and use class methods, instance methods, and object behaviors.
+
+- [Chapter 16](https://allendowney.github.io/ThinkPython/chap16.html): Classes and Objects \- Get introduced to object-oriented programming by defining custom classes.
+
+- [Chapter 17](https://allendowney.github.io/ThinkPython/chap17.html): Inheritance \- Explore how to extend classes using inheritance for code reuse.
+
+- [Chapter 18](https://allendowney.github.io/ThinkPython/chap18.html). Python Extras \- Learn more about Sets, helpful built-in methods, and debugging skills.
+
+## **DEEP DIVE INTO PYTHON**
+
+**Objective**: Focus on mastering idiomatic Python code, along with important practices like type annotations and unit testing.
+
+**Timeline**: 10 days
+
+## **Writing Idiomatic Python 3 (3 days)**
+
+**Objective**: Learn to write clean, efficient, and Pythonic code by following best practices in control structures, data handling, and code organization, improving readability and maintainability.
+
+**Ebook**: [Writing Idiomatic Python 3](https://drive.google.com/file/d/1qSTs6k7KsciEn2rwvTV16TYFkk2hM4hO/view?usp=sharing).
+
+- **Chapter 1: Control Structures and Functions** \- This chapter focuses on improving Python code readability and efficiency by utilizing Pythonic approaches. Topics include If statements, for loops, and functions.
+
+- **Chapter 2: Working with Data** \- This chapter covers best practices for manipulating data types such as lists, dictionaries, strings, and sets. Key points include Lists, dictionaries, strings, classes, and generators.
+
+- **Chapter 3: Organizing Your Code** \- Focuses on code organization and modularity, encouraging simplicity and clarity. Topics include Modules, formatting, executable scripts, and imports.
+
+- **Chapter 4: General Advice** \- Provides general Python programming advice for maintaining efficient, readable, and robust code: Avoid Reinventing the Wheel and Learn Key Modules.
+
+## **Typing (1 day)**
+
+**Objective**: Learn to use type hints to improve code clarity, readability, and maintainability, ensuring better static type checking and function annotations in Python.
+
+**Official document**: [Typing](https://docs.python.org/3/library/typing.html).
+
+- **Basic Types**: Understand the usage of fundamental types like int, str, and None for basic function annotations.
+
+- **Collections**: Learn how to annotate collections such as List, Dict, and Set for more complex data types.
+
+- **Generics**: Work with TypeVar and Generic to create flexible and reusable functions or classes.
+
+- **Callables**: Use Callable to define the types of functions that take specific argument types and return a value.
+
+- **Union & Optional**: Annotate variables that can have multiple types using Union or indicate optional values with Optional.
+
+- **Type Aliases**: Define custom names for types with TypeAlias for clarity and reuse in the code.
+
+- **Literal Types**: Restrict the values a variable can take using Literal for specific, predefined values.
+
+- **Typed Dict**: Use TypedDict to specify dictionaries with fixed keys and their associated types.
+
+## **Unit testing in Python (4 days)**
+
+**Objective**: Learn how to use Python’s unittest framework to write and manage tests. Focus on key concepts like creating test cases, making assertions, and organizing tests. Improve code reliability with tools like mocking, test discovery, and skipping tests for more effective debugging and software maintenance.
+
+**Introduction**: [Introduction to Test-Driven Development (TDD)](https://agiledata.org/essays/tdd.html).
+
+**Official document**: [unitest \- Unit testing framework](https://docs.python.org/3/library/unittest.html).
+
+- **Introduction**: Learn the basics of **unittest** framework, including test cases, suites, and runners.
+
+- **Writing Tests**: Write test methods with assertions and use setUp/tearDown for preparation.
+
+- **Running Tests**: Automate test execution with discovery and command-line/IDE runners.
+
+- **Organizing Tests**: Group tests into suites for better organization.
+
+- **Advanced Features**: Use mocking and skipping tests to handle complex scenarios.
+
+**Reference**: [Writing Unit Tests for Your Code](https://realpython.com/python-unittest/).
+
+## **Exercise (2 days)**
+
+Refactor previous sample and exercise code by applying best practices, adding type hints, and writing unit tests to ensure code reliability and clarity.
+
+## **ADDITIONAL TOOLS AND TOPICS**
+
+- [What’s New In Python 3.11](https://docs.python.org/3/whatsnew/3.11.html)
+
+- [What’s New In Python 3.12](https://docs.python.org/3/whatsnew/3.12.html)
+
+- [What’s New In Python 3.13](https://docs.python.org/3/whatsnew/3.13.html)
+
+- [Real Python Tutorials](https://realpython.com/)
+
+- [Python Debugging](https://code.visualstudio.com/docs/python/debugging)
