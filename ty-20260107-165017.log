@@ -1,0 +1,237 @@
+error[unresolved-import]: Module `jupyturtle` has no member `forward`
+ --> think_python/chapter_04.ipynb:cell 1:1:37
+  |
+1 | from jupyturtle import make_turtle, forward, left
+  |                                     ^^^^^^^
+2 |
+3 | make_turtle()
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `left`
+ --> think_python/chapter_04.ipynb:cell 1:1:46
+  |
+1 | from jupyturtle import make_turtle, forward, left
+  |                                              ^^^^
+2 |
+3 | make_turtle()
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `penup`
+ --> think_python/chapter_04.ipynb:cell 6:1:24
+  |
+1 | from jupyturtle import penup, pendown
+  |                        ^^^^^
+2 |
+3 | make_turtle()
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `pendown`
+ --> think_python/chapter_04.ipynb:cell 6:1:31
+  |
+1 | from jupyturtle import penup, pendown
+  |                               ^^^^^^^
+2 |
+3 | make_turtle()
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `right`
+ --> think_python/chapter_04.ipynb:cell 10:1:24
+  |
+1 | from jupyturtle import right
+  |                        ^^^^^
+2 |
+3 | def triangle(length,angle):
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `forward`
+ --> think_python/chapter_05.ipynb:cell 5:1:24
+  |
+1 | from jupyturtle import forward, left, right, back, make_turtle
+  |                        ^^^^^^^
+2 |
+3 | def draw(length):
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `left`
+ --> think_python/chapter_05.ipynb:cell 5:1:33
+  |
+1 | from jupyturtle import forward, left, right, back, make_turtle
+  |                                 ^^^^
+2 |
+3 | def draw(length):
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `right`
+ --> think_python/chapter_05.ipynb:cell 5:1:39
+  |
+1 | from jupyturtle import forward, left, right, back, make_turtle
+  |                                       ^^^^^
+2 |
+3 | def draw(length):
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `back`
+ --> think_python/chapter_05.ipynb:cell 5:1:46
+  |
+1 | from jupyturtle import forward, left, right, back, make_turtle
+  |                                              ^^^^
+2 |
+3 | def draw(length):
+  |
+info: rule `unresolved-import` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `string` may be missing on object of type `Match[str] | None`
+ --> think_python/chapter_08.ipynb:cell 3:7:7
+  |
+5 | result = re.search(pattern, text)
+6 |
+7 | print(result.string)
+  |       ^^^^^^^^^^^^^
+8 | print(result.group())
+9 | print(result.span())
+  |
+info: rule `possibly-missing-attribute` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `group` may be missing on object of type `Match[str] | None`
+  --> think_python/chapter_08.ipynb:cell 3:8:7
+   |
+ 7 | print(result.string)
+ 8 | print(result.group())
+   |       ^^^^^^^^^^^^
+ 9 | print(result.span())
+10 | print(re.search(pattern, text))
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `span` may be missing on object of type `Match[str] | None`
+  --> think_python/chapter_08.ipynb:cell 3:9:7
+   |
+ 7 | print(result.string)
+ 8 | print(result.group())
+ 9 | print(result.span())
+   |       ^^^^^^^^^^^
+10 | print(re.search(pattern, text))
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+error[invalid-argument-type]: Argument to function `makedirs` is incorrect
+ --> think_python/chapter_13.ipynb:cell 4:1:13
+  |
+1 | os.makedirs(config['data_dir'], exist_ok=True)
+  |             ^^^^^^^^^^^^^^^^^^ Expected `str | bytes | PathLike[str] | PathLike[bytes]`, found `Unknown | str | list[Unknown | str]`
+2 |
+3 | db_file = os.path.join(config['data_dir'], 'captions')
+  |
+info: Element `list[Unknown | str]` of this union is not assignable to `str | bytes | PathLike[str] | PathLike[bytes]`
+info: Function defined here
+    --> stdlib/os/__init__.pyi:1906:5
+     |
+1904 |         """
+1905 |
+1906 | def makedirs(name: StrOrBytesPath, mode: int = 0o777, exist_ok: bool = False) -> None:
+     |     ^^^^^^^^ -------------------- Parameter declared here
+1907 |     """makedirs(name [, mode=0o777][, exist_ok=False])
+     |
+info: rule `invalid-argument-type` was selected in the configuration file
+
+error[no-matching-overload]: No overload of function `join` matches arguments
+ --> think_python/chapter_13.ipynb:cell 4:3:11
+  |
+1 | os.makedirs(config['data_dir'], exist_ok=True)
+2 |
+3 | db_file = os.path.join(config['data_dir'], 'captions')
+  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4 | db_file
+  |
+info: First overload defined here
+   --> stdlib/posixpath.pyi:155:5
+    |
+153 | # as the parameter name is different in ntpath.join()
+154 | @overload
+155 | def join(a: LiteralString, /, *paths: LiteralString) -> LiteralString:
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |     """Join two or more pathname components, inserting '/' as needed.
+157 |     If any component is an absolute path, all previous path components
+    |
+info: Possible overloads for function `join`:
+info:   (a: LiteralString, /, *paths: LiteralString) -> LiteralString
+info:   (a: str | PathLike[str], /, *paths: str | PathLike[str]) -> str
+info:   (a: bytes | PathLike[bytes], /, *paths: bytes | PathLike[bytes]) -> bytes
+info: rule `no-matching-overload` is enabled by default
+
+error[no-matching-overload]: No overload of function `join` matches arguments
+  --> think_python/chapter_13.ipynb:cell 6:12:13
+   |
+10 | path = os.getcwd()
+11 |
+12 | photo_dir = os.path.join(path, config['photo_dir'])
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 | os.makedirs(photo_dir, exist_ok=True)
+   |
+info: First overload defined here
+   --> stdlib/posixpath.pyi:155:5
+    |
+153 | # as the parameter name is different in ntpath.join()
+154 | @overload
+155 | def join(a: LiteralString, /, *paths: LiteralString) -> LiteralString:
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |     """Join two or more pathname components, inserting '/' as needed.
+157 |     If any component is an absolute path, all previous path components
+    |
+info: Possible overloads for function `join`:
+info:   (a: LiteralString, /, *paths: LiteralString) -> LiteralString
+info:   (a: str | PathLike[str], /, *paths: str | PathLike[str]) -> str
+info:   (a: bytes | PathLike[bytes], /, *paths: bytes | PathLike[bytes]) -> bytes
+info: rule `no-matching-overload` is enabled by default
+
+error[no-matching-overload]: No overload of function `join` matches arguments
+  --> think_python/chapter_13.ipynb:cell 9:37:18
+   |
+36 | # Ensure shelve is used correctly
+37 | db = shelve.open(os.path.join(config['photo_dir'], 'digests'), 'n')
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 | walk_images(config['photo_dir'], config['extensions'], db)
+   |
+info: First overload defined here
+   --> stdlib/posixpath.pyi:155:5
+    |
+153 | # as the parameter name is different in ntpath.join()
+154 | @overload
+155 | def join(a: LiteralString, /, *paths: LiteralString) -> LiteralString:
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+156 |     """Join two or more pathname components, inserting '/' as needed.
+157 |     If any component is an absolute path, all previous path components
+    |
+info: Possible overloads for function `join`:
+info:   (a: LiteralString, /, *paths: LiteralString) -> LiteralString
+info:   (a: str | PathLike[str], /, *paths: str | PathLike[str]) -> str
+info:   (a: bytes | PathLike[bytes], /, *paths: bytes | PathLike[bytes]) -> bytes
+info: rule `no-matching-overload` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `forward`
+ --> think_python/chapter_16_17.ipynb:cell 1:1:37
+  |
+1 | from jupyturtle import make_turtle, forward, left
+  |                                     ^^^^^^^
+2 | import math
+  |
+info: rule `unresolved-import` is enabled by default
+
+error[unresolved-import]: Module `jupyturtle` has no member `left`
+ --> think_python/chapter_16_17.ipynb:cell 1:1:46
+  |
+1 | from jupyturtle import make_turtle, forward, left
+  |                                              ^^^^
+2 | import math
+  |
+info: rule `unresolved-import` is enabled by default
+
+Found 18 diagnostics

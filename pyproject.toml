@@ -1,0 +1,16 @@
+[tool.ty.rules]
+# Core safety
+invalid-assignment = "error"
+invalid-return-type = "error"
+invalid-argument-type = "error"
+too-many-positional-arguments = "error"
+
+# Cleanup & best practices
+invalid-ignore-comment = "warn"
+
+# Optional stylistic/strictness
+call-top-callable = "warn"
+ambiguous-protocol-member = "warn"
+
+# Disabled
+unsupported-bool-conversion = "ignore"
