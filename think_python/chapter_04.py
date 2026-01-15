@@ -1,4 +1,5 @@
 """Chapter 4: Turtle graphics example - drawing a square."""
+
 import turtle
 
 # Create a turtle screen/window
