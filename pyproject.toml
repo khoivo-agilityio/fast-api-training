@@ -1,0 +1,19 @@
+[project]
+name = "task-manager"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "typer",
+  "pydantic",
+]
+
+[project.scripts]
+task = "task_manager.cli.main:app"
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN"]
+ignore = ["ANN101"]
+
+[tool.ruff.format]
+quote-style = "double"
