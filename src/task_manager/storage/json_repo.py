@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from ..models import Task
+from ..models import Task, TaskStatus
 
 
 class JsonTaskRepository:
@@ -37,8 +37,24 @@ class JsonTaskRepository:
                 # Handle empty file or invalid JSON
                 if not isinstance(data, list):
                     return []
-                return [Task(**task_data) for task_data in data]
-        except (json.JSONDecodeError, FileNotFoundError):
+
+                # Parse each task - Pydantic will handle status conversion
+                tasks = []
+                for task_data in data:
+                    # Ensure dates are parsed correctly
+                    if "created_at" in task_data:
+                        task_data["created_at"] = datetime.fromisoformat(
+                            task_data["created_at"]
+                        )
+                    if "updated_at" in task_data:
+                        task_data["updated_at"] = datetime.fromisoformat(
+                            task_data["updated_at"]
+                        )
+
+                    tasks.append(Task(**task_data))
+
+                return tasks
+        except (json.JSONDecodeError, FileNotFoundError, ValueError):
             return []
 
     def _write_tasks(self, tasks: list[Task]) -> None:
@@ -49,14 +65,26 @@ class JsonTaskRepository:
             tasks: List of tasks to write
         """
         with open(self.file_path, "w", encoding="utf-8") as f:
-            # Convert tasks to dictionaries with ISO format dates
+            # Convert tasks to dictionaries
             tasks_data = []
             for task in tasks:
-                task_dict = task.model_dump()
-                # Convert datetime objects to ISO format strings
-                task_dict["created_at"] = task.created_at.isoformat()
-                task_dict["updated_at"] = task.updated_at.isoformat()
+                # Handle both TaskStatus enum and string values
+                status_value = (
+                    task.status.value
+                    if isinstance(task.status, TaskStatus)
+                    else task.status
+                )
+
+                task_dict = {
+                    "id": task.id,
+                    "title": task.title,
+                    "description": task.description,
+                    "status": status_value,  # Always store as string
+                    "created_at": task.created_at.isoformat(),
+                    "updated_at": task.updated_at.isoformat(),
+                }
                 tasks_data.append(task_dict)
+
             json.dump(tasks_data, f, indent=2, ensure_ascii=False)
 
     def _get_next_id(self, tasks: list[Task]) -> int:
@@ -70,7 +98,7 @@ class JsonTaskRepository:
             Next available ID (max ID + 1, or 1 if no tasks exist)
         """
         if not tasks:
-            return 1
+            return 1  # Start from 1, not 0!
         return max(task.id for task in tasks) + 1
 
     def add(self, task: Task) -> Task:
