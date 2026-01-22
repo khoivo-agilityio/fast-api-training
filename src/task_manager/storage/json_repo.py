@@ -34,14 +34,11 @@ class JsonTaskRepository:
         try:
             with open(self.file_path, encoding="utf-8") as f:
                 data = json.load(f)
-                # Handle empty file or invalid JSON
                 if not isinstance(data, list):
                     return []
 
-                # Parse each task - Pydantic will handle status conversion
                 tasks = []
                 for task_data in data:
-                    # Ensure dates are parsed correctly
                     if "created_at" in task_data:
                         task_data["created_at"] = datetime.fromisoformat(
                             task_data["created_at"]
@@ -65,10 +62,8 @@ class JsonTaskRepository:
             tasks: List of tasks to write
         """
         with open(self.file_path, "w", encoding="utf-8") as f:
-            # Convert tasks to dictionaries
             tasks_data = []
             for task in tasks:
-                # Handle both TaskStatus enum and string values
                 status_value = (
                     task.status.value
                     if isinstance(task.status, TaskStatus)
@@ -79,7 +74,7 @@ class JsonTaskRepository:
                     "id": task.id,
                     "title": task.title,
                     "description": task.description,
-                    "status": status_value,  # Always store as string
+                    "status": status_value,
                     "created_at": task.created_at.isoformat(),
                     "updated_at": task.updated_at.isoformat(),
                 }
@@ -98,7 +93,7 @@ class JsonTaskRepository:
             Next available ID (max ID + 1, or 1 if no tasks exist)
         """
         if not tasks:
-            return 1  # Start from 1, not 0!
+            return 1
         return max(task.id for task in tasks) + 1
 
     def add(self, task: Task) -> Task:
@@ -113,10 +108,8 @@ class JsonTaskRepository:
         """
         tasks = self._read_tasks()
 
-        # Auto-generate ID
         new_id = self._get_next_id(tasks)
 
-        # Create new task with generated ID and timestamps
         new_task = Task(
             id=new_id,
             title=task.title,
@@ -170,14 +163,13 @@ class JsonTaskRepository:
 
         for i, existing_task in enumerate(tasks):
             if existing_task.id == task.id:
-                # Update the task with new timestamp
                 updated_task = Task(
                     id=task.id,
                     title=task.title,
                     description=task.description,
                     status=task.status,
-                    created_at=existing_task.created_at,  # Keep original
-                    updated_at=datetime.now(),  # Update timestamp
+                    created_at=existing_task.created_at,
+                    updated_at=datetime.now(),
                 )
                 tasks[i] = updated_task
                 self._write_tasks(tasks)
