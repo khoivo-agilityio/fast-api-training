@@ -1,4 +1,4 @@
-from .base import TaskRepository
-from .json_repo import JsonTaskRepository
+from .base import BaseTaskRepository
+from .task_repo import TaskRepository
 
-__all__ = ["TaskRepository", "JsonTaskRepository"]
+__all__ = ["TaskRepository", "BaseTaskRepository"]

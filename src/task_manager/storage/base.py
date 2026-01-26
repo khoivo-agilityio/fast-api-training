@@ -3,7 +3,7 @@ from typing import Protocol
 from ..models import Task
 
 
-class TaskRepository(Protocol):
+class BaseTaskRepository(Protocol):
     """Repository interface for task storage abstraction"""
 
     def add(self, task: Task) -> Task:

@@ -1,4 +1,23 @@
-from .enums import TaskStatus
-from .task import Task
+"""Task models and schemas"""
 
-__all__ = ["Task", "TaskStatus"]
+from .enums import TaskStatus
+from .task import (
+    Task,
+    TaskBase,
+    TaskCreate,
+    TaskID,
+    TaskInDB,
+    TaskStatusUpdate,
+    TaskUpdate,
+)
+
+__all__ = [
+    "Task",
+    "TaskBase",
+    "TaskCreate",
+    "TaskUpdate",
+    "TaskInDB",
+    "TaskStatusUpdate",
+    "TaskID",
+    "TaskStatus",
+]
