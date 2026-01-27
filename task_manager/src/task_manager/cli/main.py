@@ -48,7 +48,7 @@ def add(
     try:
         service = get_service(data_file)
         desc = description if description else None
-        task = service.add_task(title=title, description=desc)
+        task = service.add(title=title, description=desc)
         print_task_created(task)
 
     except ValueError as e:
@@ -100,7 +100,7 @@ def update(
                 )
 
         # Update the task
-        updated_task = service.update_task(
+        updated_task = service.update(
             task_id=task_id,
             title=title,
             description=description,
@@ -160,7 +160,7 @@ def remove(
         service = get_service(data_file)
 
         # Get task details for confirmation
-        task = service.get_task(task_id)
+        task = service.get(task_id)
 
         # Ask for confirmation unless --force is used
         if not force:
@@ -172,7 +172,7 @@ def remove(
                 raise typer.Abort()
 
         # Delete the task
-        service.delete_task(task_id)
+        service.delete(task_id)
         print_task_deleted(task_id, task.title)
 
     except ValueError as e:
@@ -217,8 +217,10 @@ def list_tasks(
                         f"Valid statuses: {', '.join(valid_statuses)}"
                     )
                 )
-
-        tasks = service.list_tasks(status=status_filter)
+        if status_filter is None:
+            tasks = service.list_all()
+        else:
+            tasks = service.list_by_status(status_filter)
 
         if not tasks:
             print_no_tasks(status_filter)
@@ -245,7 +247,7 @@ def show(
     """
     try:
         service = get_service(data_file)
-        task = service.get_task(task_id)
+        task = service.get(task_id)
         print_task_info(task)
 
     except ValueError as e:

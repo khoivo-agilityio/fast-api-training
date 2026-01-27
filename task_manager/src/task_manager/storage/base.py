@@ -3,7 +3,7 @@ from typing import Protocol
 from ..models import Task
 
 
-class TaskRepository(Protocol):
+class BaseTaskRepository(Protocol):
     """Repository interface for task storage abstraction"""
 
     def add(self, task: Task) -> Task:
@@ -18,7 +18,7 @@ class TaskRepository(Protocol):
         """
         ...
 
-    def list(self) -> list[Task]:
+    def list_all(self) -> list[Task]:
         """
         Retrieve all tasks from the repository.
 
