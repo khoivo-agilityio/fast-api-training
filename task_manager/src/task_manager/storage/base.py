@@ -18,7 +18,7 @@ class BaseTaskRepository(Protocol):
         """
         ...
 
-    def list(self) -> list[Task]:
+    def list_all(self) -> list[Task]:
         """
         Retrieve all tasks from the repository.
 

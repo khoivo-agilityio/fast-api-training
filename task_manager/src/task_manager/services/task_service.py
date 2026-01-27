@@ -37,7 +37,7 @@ class TaskService:
         """
         self.repository = repository
 
-    def add_task(
+    def add(
         self,
         title: str,
         description: str | None = None,
@@ -82,7 +82,7 @@ class TaskService:
         Returns:
             List of all tasks
         """
-        return self.repository.list()
+        return self.repository.list_all()
 
     def list_by_status(self, status: TaskStatus) -> list[Task]:
         """
@@ -94,10 +94,10 @@ class TaskService:
         Returns:
             List of tasks with the specified status
         """
-        tasks = self.repository.list()
+        tasks = self.repository.list_all()
         return [task for task in tasks if task.status == status]
 
-    def get_task(self, task_id: int) -> Task:
+    def get(self, task_id: int) -> Task:
         """
         Get a task by ID.
 
@@ -115,7 +115,7 @@ class TaskService:
             raise ValueError(f"Task with ID {task_id} not found")
         return task
 
-    def update_task(
+    def update(
         self,
         task_id: int,
         title: str | None = None,
@@ -139,7 +139,7 @@ class TaskService:
             ValidationError: If TaskUpdate validation fails
         """
         # Get existing task
-        existing_task = self.get_task(task_id)
+        existing_task = self.get(task_id)
 
         # Use TaskUpdate schema for validation
         task_update = TaskUpdate(title=title, description=description, status=status)
@@ -185,7 +185,7 @@ class TaskService:
         Raises:
             ValueError: If task not found, already done, or invalid transition
         """
-        existing_task = self.get_task(task_id)
+        existing_task = self.get(task_id)
 
         # Check if already done
         if existing_task.status == TaskStatus.DONE:
@@ -201,9 +201,9 @@ class TaskService:
                 f"Valid transitions: {valid_transitions_str}"
             )
 
-        return self.update_task(task_id, status=TaskStatus.DONE)
+        return self.update(task_id, status=TaskStatus.DONE)
 
-    def delete_task(self, task_id: int) -> bool:
+    def delete(self, task_id: int) -> bool:
         """
         Delete a task by ID.
 
@@ -217,7 +217,7 @@ class TaskService:
             ValueError: If task not found
         """
         # Verify task exists
-        self.get_task(task_id)
+        self.get(task_id)
 
         result = self.repository.delete(task_id)
         if not result:
@@ -239,7 +239,7 @@ class TaskService:
             - done: Number of DONE tasks
             - completion_percentage: Percentage of completed tasks
         """
-        tasks = self.repository.list()
+        tasks = self.repository.list_all()
         total = len(tasks)
 
         if total == 0:
