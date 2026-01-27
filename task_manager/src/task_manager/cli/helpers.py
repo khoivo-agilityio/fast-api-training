@@ -4,7 +4,7 @@ import typer
 
 from ..models import Task, TaskStatus
 from ..services import TaskService
-from ..storage.json_repo import JsonTaskRepository
+from ..storage.task_repo import TaskRepository
 
 # Default data file location
 DEFAULT_DATA_FILE = Path.home() / ".task_manager" / "tasks.json"
@@ -26,7 +26,7 @@ def get_service(data_file: Path | None = None) -> TaskService:
         Configured TaskService instance
     """
     file_path = data_file or DEFAULT_DATA_FILE
-    repository = JsonTaskRepository(file_path)
+    repository = TaskRepository(file_path)
     return TaskService(repository)
 
 

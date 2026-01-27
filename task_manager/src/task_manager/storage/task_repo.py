@@ -5,7 +5,7 @@ from pathlib import Path
 from ..models import Task, TaskStatus
 
 
-class JsonTaskRepository:
+class TaskRepository:
     """JSON file-based task repository implementation"""
 
     def __init__(self, file_path: str | Path) -> None:
