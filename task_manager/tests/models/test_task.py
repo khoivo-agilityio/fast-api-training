@@ -1,15 +1,15 @@
 """Unit tests for task model hierarchy"""
 
 import unittest
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import ValidationError
 
+from src.task_manager.enums import TaskStatus
 from src.task_manager.models import (
     Task,
     TaskBase,
     TaskCreate,
-    TaskStatus,
     TaskUpdate,
 )
 
@@ -121,8 +121,8 @@ class TestTask(unittest.TestCase):
             title="Test Task",
             description="Description",
             status=TaskStatus.TODO,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=datetime.now(tz=UTC),
+            updated_at=datetime.now(tz=UTC),
         )
 
         self.assertEqual(task.id, 1)
