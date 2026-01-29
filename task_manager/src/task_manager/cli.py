@@ -3,7 +3,7 @@ from typing import Annotated
 
 import typer
 
-from ..models import TaskStatus
+from .enums import TaskStatus
 from .helpers import (
     get_service,
     handle_error,
@@ -271,7 +271,7 @@ def summary(
     try:
         service = get_service(data_file)
         stats = service.get_summary()
-        print_summary(stats)
+        print_summary(stats.model_dump())
 
     except Exception as e:
         handle_error(e)
