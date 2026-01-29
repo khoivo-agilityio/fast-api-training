@@ -1,13 +1,12 @@
 """Task models and schemas"""
 
-from .enums import TaskStatus
 from .task import (
     Task,
     TaskBase,
     TaskCreate,
     TaskID,
     TaskInDB,
-    TaskStatusUpdate,
+    TaskSummary,
     TaskUpdate,
 )
 
@@ -17,7 +16,6 @@ __all__ = [
     "TaskCreate",
     "TaskUpdate",
     "TaskInDB",
-    "TaskStatusUpdate",
+    "TaskSummary",
     "TaskID",
-    "TaskStatus",
 ]

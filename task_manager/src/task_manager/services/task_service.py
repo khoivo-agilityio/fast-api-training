@@ -2,10 +2,11 @@
 Task service for business logic and workflow management.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
-from ..models import Task, TaskCreate, TaskStatus, TaskUpdate
-from ..storage.base import BaseTaskRepository
+from ..enums import TaskStatus
+from ..models import Task, TaskCreate, TaskSummary, TaskUpdate
+from ..repositories.task_repo import TaskRepository
 
 
 class TaskService:
@@ -19,16 +20,7 @@ class TaskService:
     - Apply business rules
     """
 
-    # Define valid status transitions (workflow states)
-    VALID_TRANSITIONS = {
-        TaskStatus.BACKLOG: [TaskStatus.TODO, TaskStatus.IN_PROGRESS],
-        TaskStatus.TODO: [TaskStatus.BACKLOG, TaskStatus.IN_PROGRESS],
-        TaskStatus.IN_PROGRESS: [TaskStatus.TODO, TaskStatus.TESTING, TaskStatus.DONE],
-        TaskStatus.TESTING: [TaskStatus.IN_PROGRESS, TaskStatus.DONE],
-        TaskStatus.DONE: [],  # Cannot transition from DONE
-    }
-
-    def __init__(self, repository: BaseTaskRepository) -> None:
+    def __init__(self, repository: TaskRepository) -> None:
         """
         Initialize the task service.
 
@@ -36,6 +28,21 @@ class TaskService:
             repository: Task repository implementation
         """
         self.repository = repository
+
+    @staticmethod
+    def _ensure_enum_status(status: TaskStatus | str) -> TaskStatus:
+        """
+        Ensure status is a TaskStatus enum.
+
+        Args:
+            status: Status as enum or string
+
+        Returns:
+            TaskStatus enum
+        """
+        if isinstance(status, TaskStatus):
+            return status
+        return TaskStatus(status)
 
     def add(
         self,
@@ -69,8 +76,8 @@ class TaskService:
             title=task_create.title,
             description=task_create.description,
             status=task_create.status,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=datetime.now(tz=UTC),
+            updated_at=datetime.now(tz=UTC),
         )
 
         return self.repository.add(task)
@@ -95,6 +102,10 @@ class TaskService:
             List of tasks with the specified status
         """
         tasks = self.repository.list_all()
+
+        if status is None:
+            return tasks
+
         return [task for task in tasks if task.status == status]
 
     def get(self, task_id: int) -> Task:
@@ -150,11 +161,17 @@ class TaskService:
         # Validate status transition if status is being updated
         if "status" in update_data:
             new_status = update_data["status"]
-            if not self._is_valid_transition(existing_task.status, new_status):
-                raise ValueError(
-                    f"Invalid status transition from "
-                    f"{existing_task.status.value} to {new_status.value}"
+            # Ensure both statuses are enums for comparison
+            existing_status = self._ensure_enum_status(existing_task.status)
+            new_status_enum = self._ensure_enum_status(new_status)
+
+            # Use enum's transition validation
+            if not existing_status.can_transition_to(new_status_enum):
+                # Use enum's error message generator
+                error_msg = existing_status.get_transition_error_message(
+                    new_status_enum
                 )
+                raise ValueError(error_msg)
 
         # Create updated task with new values merged with existing
         updated_task = Task(
@@ -163,7 +180,7 @@ class TaskService:
             description=update_data.get("description", existing_task.description),
             status=update_data.get("status", existing_task.status),
             created_at=existing_task.created_at,
-            updated_at=datetime.now(),
+            updated_at=datetime.now(tz=UTC),
         )
 
         result = self.repository.update(updated_task)
@@ -187,19 +204,17 @@ class TaskService:
         """
         existing_task = self.get(task_id)
 
-        # Check if already done
-        if existing_task.status == TaskStatus.DONE:
+        # Ensure status is enum
+        status = self._ensure_enum_status(existing_task.status)
+
+        # Check if already done using enum property
+        if status.is_final:
             raise ValueError(f"Task {task_id} is already marked as DONE")
 
-        # Validate transition to DONE
-        if not self._is_valid_transition(existing_task.status, TaskStatus.DONE):
-            valid_transitions_str = ", ".join(
-                s.value for s in self.VALID_TRANSITIONS[existing_task.status]
-            )
-            raise ValueError(
-                f"Cannot mark task as DONE from status {existing_task.status.value}. "
-                f"Valid transitions: {valid_transitions_str}"
-            )
+        # Validate transition to DONE using enum method
+        if not status.can_transition_to(TaskStatus.DONE):
+            error_msg = status.get_transition_error_message(TaskStatus.DONE)
+            raise ValueError(error_msg)
 
         return self.update(task_id, status=TaskStatus.DONE)
 
@@ -225,12 +240,12 @@ class TaskService:
 
         return result
 
-    def get_summary(self) -> dict[str, int | float]:
+    def get_summary(self) -> TaskSummary:
         """
         Get task summary statistics.
 
         Returns:
-            Dictionary containing:
+            TaskSummary model containing:
             - total: Total number of tasks
             - backlog: Number of BACKLOG tasks
             - todo: Number of TODO tasks
@@ -238,55 +253,68 @@ class TaskService:
             - testing: Number of TESTING tasks
             - done: Number of DONE tasks
             - completion_percentage: Percentage of completed tasks
+            - active_tasks: Number of active tasks (TODO, IN_PROGRESS, TESTING)
+            - pending_tasks: Number of pending tasks (BACKLOG, TODO)
         """
         tasks = self.repository.list_all()
         total = len(tasks)
 
         if total == 0:
-            return {
-                "total": 0,
-                "backlog": 0,
-                "todo": 0,
-                "in_progress": 0,
-                "testing": 0,
-                "done": 0,
-                "completion_percentage": 0.0,
-            }
+            return TaskSummary(
+                total=0,
+                backlog=0,
+                todo=0,
+                in_progress=0,
+                testing=0,
+                done=0,
+                active_tasks=0,
+                pending_tasks=0,
+                completion_percentage=0.0,
+            )
 
-        # Count tasks by status
+        # Count tasks by status (ensure enum comparison)
         status_counts = {
-            "backlog": sum(1 for t in tasks if t.status == TaskStatus.BACKLOG),
-            "todo": sum(1 for t in tasks if t.status == TaskStatus.TODO),
-            "in_progress": sum(1 for t in tasks if t.status == TaskStatus.IN_PROGRESS),
-            "testing": sum(1 for t in tasks if t.status == TaskStatus.TESTING),
-            "done": sum(1 for t in tasks if t.status == TaskStatus.DONE),
+            "backlog": sum(
+                1
+                for t in tasks
+                if self._ensure_enum_status(t.status) == TaskStatus.BACKLOG
+            ),
+            "todo": sum(
+                1
+                for t in tasks
+                if self._ensure_enum_status(t.status) == TaskStatus.TODO
+            ),
+            "in_progress": sum(
+                1
+                for t in tasks
+                if self._ensure_enum_status(t.status) == TaskStatus.IN_PROGRESS
+            ),
+            "testing": sum(
+                1
+                for t in tasks
+                if self._ensure_enum_status(t.status) == TaskStatus.TESTING
+            ),
+            "done": sum(
+                1
+                for t in tasks
+                if self._ensure_enum_status(t.status) == TaskStatus.DONE
+            ),
         }
+
+        # Use enum properties for computed counts
+        active_tasks = sum(
+            1 for t in tasks if self._ensure_enum_status(t.status).is_active
+        )
+        pending_tasks = sum(
+            1 for t in tasks if self._ensure_enum_status(t.status).is_pending
+        )
 
         completion_percentage = (status_counts["done"] / total) * 100
 
-        return {
-            "total": total,
+        return TaskSummary(
+            total=total,
             **status_counts,
-            "completion_percentage": round(completion_percentage, 2),
-        }
-
-    def _is_valid_transition(
-        self, current_status: TaskStatus, new_status: TaskStatus
-    ) -> bool:
-        """
-        Check if a status transition is valid.
-
-        Args:
-            current_status: Current task status
-            new_status: Desired new status
-
-        Returns:
-            True if transition is valid, False otherwise
-        """
-        # Same status is always valid (no-op)
-        if current_status == new_status:
-            return True
-
-        # Check if new_status is in the list of valid transitions
-        valid_next_statuses = self.VALID_TRANSITIONS.get(current_status, [])
-        return new_status in valid_next_statuses
+            active_tasks=active_tasks,
+            pending_tasks=pending_tasks,
+            completion_percentage=completion_percentage,
+        )

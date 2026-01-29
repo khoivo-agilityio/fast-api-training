@@ -1,8 +1,9 @@
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
-from ..models import Task, TaskStatus
+from ..enums import TaskStatus
+from ..models import Task
 
 
 class TaskRepository:
@@ -32,7 +33,7 @@ class TaskRepository:
             List of tasks from the file
         """
         try:
-            with open(self.file_path, encoding="utf-8") as f:
+            with self.file_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
                 if not isinstance(data, list):
                     return []
@@ -61,7 +62,7 @@ class TaskRepository:
         Args:
             tasks: List of tasks to write
         """
-        with open(self.file_path, "w", encoding="utf-8") as f:
+        with self.file_path.open("w", encoding="utf-8") as f:
             tasks_data = []
             for task in tasks:
                 status_value = (
@@ -115,8 +116,8 @@ class TaskRepository:
             title=task.title,
             description=task.description,
             status=task.status,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=datetime.now(tz=UTC),
+            updated_at=datetime.now(tz=UTC),
         )
 
         tasks.append(new_task)
@@ -124,7 +125,7 @@ class TaskRepository:
 
         return new_task
 
-    def list(self) -> list[Task]:
+    def list_all(self) -> list[Task]:
         """
         Retrieve all tasks from the repository.
 
@@ -169,7 +170,7 @@ class TaskRepository:
                     description=task.description,
                     status=task.status,
                     created_at=existing_task.created_at,
-                    updated_at=datetime.now(),
+                    updated_at=datetime.now(tz=UTC),
                 )
                 tasks[i] = updated_task
                 self._write_tasks(tasks)

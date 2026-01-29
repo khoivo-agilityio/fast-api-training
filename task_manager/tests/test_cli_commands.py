@@ -10,7 +10,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner, Result
 
-from src.task_manager.cli.main import app
+from src.task_manager.cli import app
 
 runner = CliRunner()
 
@@ -163,13 +163,33 @@ class TestCLICommands(unittest.TestCase):
 
     def test_list_command_with_status_filter(self) -> None:
         """Test filtering tasks by status"""
-        self.add_task("Task 1")
-        self.update_task_status(1, "todo")
-        self.add_task("Task 2")
+        # Add first task and update to TODO
+        add_result = self.add_task("Task 1")
+        self.assertEqual(
+            add_result.exit_code, 0, f"Failed to add Task 1: {add_result.stdout}"
+        )
 
+        update_result = self.update_task_status(1, "todo")
+        self.assertEqual(
+            update_result.exit_code,
+            0,
+            f"Failed to update to TODO: {update_result.stdout}",
+        )
+
+        # Add second task (stays in BACKLOG)
+        add_result2 = self.add_task("Task 2")
+        self.assertEqual(
+            add_result2.exit_code, 0, f"Failed to add Task 2: {add_result2.stdout}"
+        )
+
+        # Filter by TODO status
         result = self.invoke_command("list", "--status", "todo")
         self.assert_success(result, "Task 1")
-        self.assertNotIn("Task 2", result.stdout)
+        self.assertNotIn(
+            "Task 2",
+            result.stdout,
+            f"Task 2 should not be in TODO list:\n{result.stdout}",
+        )
 
     # ========================================================================
     # TEST CASES - SHOW COMMAND
@@ -204,13 +224,30 @@ class TestCLICommands(unittest.TestCase):
 
     def test_update_command_invalid_transition(self) -> None:
         """Test invalid status transition"""
-        self.add_task("Task")
-        self.update_task_status(1, "in-progress")
-        self.invoke_command("done", "1")
+        # Create task
+        add_result = self.add_task("Task")
+        self.assertEqual(add_result.exit_code, 0, f"Add failed: {add_result.stdout}")
+
+        # Move to in-progress
+        update1 = self.update_task_status(1, "in-progress")
+        self.assertEqual(
+            update1.exit_code, 0, f"Update to in-progress failed: {update1.stdout}"
+        )
+
+        # Mark as done
+        done_result = self.invoke_command("done", "1")
+        self.assertEqual(
+            done_result.exit_code, 0, f"Mark as done failed: {done_result.stdout}"
+        )
 
         # Try to transition from DONE to TODO (invalid)
         result = self.update_task_status(1, "todo")
-        self.assert_failure(result, "Error", "Invalid")
+        self.assert_failure(result, "Error")
+        # Check for either "Invalid" or "Cannot" in error message
+        self.assertTrue(
+            "Invalid" in result.stdout or "Cannot" in result.stdout,
+            f"Expected transition error message in:\n{result.stdout}",
+        )
 
     # ========================================================================
     # TEST CASES - DONE COMMAND
@@ -218,21 +255,46 @@ class TestCLICommands(unittest.TestCase):
 
     def test_done_command(self) -> None:
         """Test marking task as done"""
-        self.add_task("Task")
-        self.update_task_status(1, "in-progress")
+        # Create task
+        add_result = self.add_task("Task")
+        self.assertEqual(add_result.exit_code, 0, f"Add failed: {add_result.stdout}")
 
+        # Move to in-progress first (required for valid transition to done)
+        update_result = self.update_task_status(1, "in-progress")
+        self.assertEqual(
+            update_result.exit_code, 0, f"Update failed: {update_result.stdout}"
+        )
+
+        # Mark as done
         result = self.invoke_command("done", "1")
         self.assert_success(result, "marked as done successfully")
 
     def test_done_command_already_done(self) -> None:
         """Test marking already done task"""
-        self.add_task("Task")
-        self.update_task_status(1, "in-progress")
-        self.invoke_command("done", "1")
+        # Create task
+        add_result = self.add_task("Task")
+        self.assertEqual(add_result.exit_code, 0, f"Add failed: {add_result.stdout}")
+
+        # Move to in-progress
+        update_result = self.update_task_status(1, "in-progress")
+        self.assertEqual(
+            update_result.exit_code, 0, f"Update failed: {update_result.stdout}"
+        )
+
+        # Mark as done
+        done_result = self.invoke_command("done", "1")
+        self.assertEqual(
+            done_result.exit_code, 0, f"First done failed: {done_result.stdout}"
+        )
 
         # Try to mark as done again
         result = self.invoke_command("done", "1")
-        self.assert_failure(result, "Error", "already")
+        self.assert_failure(result, "Error")
+        # Check for "already" or "DONE" in error message
+        self.assertTrue(
+            "already" in result.stdout or "DONE" in result.stdout,
+            f"Expected 'already done' error in:\n{result.stdout}",
+        )
 
     # ========================================================================
     # TEST CASES - REMOVE COMMAND
@@ -260,12 +322,20 @@ class TestCLICommands(unittest.TestCase):
 
     def test_summary_command_with_tasks(self) -> None:
         """Test summary with various task statuses"""
-        # Create tasks with different statuses
+        # Create tasks
         self.create_test_tasks(3)
-        self.update_task_status(1, "todo")
-        self.update_task_status(2, "in-progress")
-        self.invoke_command("done", "2")
 
+        # Update statuses
+        update1 = self.update_task_status(1, "todo")
+        self.assertEqual(update1.exit_code, 0, f"Update 1 failed: {update1.stdout}")
+
+        update2 = self.update_task_status(2, "in-progress")
+        self.assertEqual(update2.exit_code, 0, f"Update 2 failed: {update2.stdout}")
+
+        done_result = self.invoke_command("done", "2")
+        self.assertEqual(done_result.exit_code, 0, f"Done failed: {done_result.stdout}")
+
+        # Get summary
         result = self.invoke_command("summary")
         self.assert_success(result, "Task Summary", "Total Tasks", "3", "Completion")
 

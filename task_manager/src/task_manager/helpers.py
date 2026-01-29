@@ -2,9 +2,10 @@ from pathlib import Path
 
 import typer
 
-from ..models import Task, TaskStatus
-from ..services import TaskService
-from ..storage.task_repo import TaskRepository
+from .enums import TaskStatus
+from .models import Task
+from .repositories.task_repo import TaskRepository
+from .services import TaskService
 
 # Default data file location
 DEFAULT_DATA_FILE = Path.home() / ".task_manager" / "tasks.json"
