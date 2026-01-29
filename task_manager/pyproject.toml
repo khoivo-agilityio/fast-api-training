@@ -1,0 +1,202 @@
+[project]
+name = "task-manager"
+version = "0.1.0"
+description = "A command-line task management application with status tracking"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Khoi Vo Minh", email = "khoi.vo@asnet.com" }
+]
+keywords = ["task", "management", "cli", "todo", "productivity"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# Core runtime dependencies
+dependencies = [
+    "typer[all]>=0.9.0,<1.0.0",
+    "pydantic>=2.5.0,<3.0.0",
+    "rich>=13.7.0,<14.0.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "ruff>=0.1.9,<1.0.0",
+    "mypy>=1.8.0,<2.0.0",
+    "pre-commit>=3.5.0,<4.0.0",
+]
+
+# Testing dependencies
+test = [
+    "pytest>=7.4.4,<8.0.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "coverage[toml]>=7.4.0,<8.0.0",
+]
+
+# YAML support (optional)
+yaml = [
+    "pyyaml>=6.0.1,<7.0.0",
+]
+
+# All optional dependencies
+all = [
+    "task-manager[dev,test,yaml]",
+]
+
+[project.scripts]
+task = "task_manager.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/task-manager"
+Documentation = "https://github.com/yourusername/task-manager#readme"
+Repository = "https://github.com/yourusername/task-manager"
+Issues = "https://github.com/yourusername/task-manager/issues"
+
+# Build system configuration
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Ruff configuration (linting and formatting)
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+# Enable these rule categories
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort (import sorting)
+    "UP",     # pyupgrade (modern Python syntax)
+    "B",      # flake8-bugbear (bug detection)
+    "SIM",    # flake8-simplify (code simplification)
+    "ANN",    # flake8-annotations (type hints)
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez (timezone aware)
+    "T20",    # flake8-print (no print statements)
+    "RET",    # flake8-return (return statement improvements)
+    "PTH",    # flake8-use-pathlib (use Path instead of os.path)
+]
+
+ignore = [
+    "ANN101",  # Missing type annotation for self
+    "ANN102",  # Missing type annotation for cls
+    "ANN401",  # Dynamically typed expressions (Any) allowed in some cases
+]
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "dist",
+    "build",
+    "*.egg-info",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "ANN",     # Don't require type hints in tests
+    "S101",    # Allow assert in tests
+    "PLR2004", # Allow magic values in tests
+]
+"__init__.py" = [
+    "F401",    # Allow unused imports in __init__.py
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["task_manager"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+# MyPy configuration (type checking)
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=src/task_manager",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-branch",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+]
