@@ -51,8 +51,6 @@ def add(
         task = service.add(title=title, description=desc)
         print_task_created(task)
 
-    except ValueError as e:
-        handle_error(e)
     except Exception as e:
         handle_error(e)
 
@@ -109,8 +107,6 @@ def update(
 
         print_task_updated(updated_task)
 
-    except ValueError as e:
-        handle_error(e)
     except Exception as e:
         handle_error(e)
 
@@ -133,8 +129,6 @@ def done(
         updated_task = service.mark_as_done(task_id)
         print_task_updated(updated_task, action="marked as done")
 
-    except ValueError as e:
-        handle_error(e)
     except Exception as e:
         handle_error(e)
 
@@ -175,10 +169,6 @@ def remove(
         service.delete(task_id)
         print_task_deleted(task_id, task.title)
 
-    except ValueError as e:
-        handle_error(e)
-    except typer.Abort:
-        raise
     except Exception as e:
         handle_error(e)
 
@@ -250,8 +240,6 @@ def show(
         task = service.get(task_id)
         print_task_info(task)
 
-    except ValueError as e:
-        handle_error(e)
     except Exception as e:
         handle_error(e)
 

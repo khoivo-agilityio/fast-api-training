@@ -103,9 +103,6 @@ class TaskService:
         """
         tasks = self.repository.list_all()
 
-        if status is None:
-            return tasks
-
         return [task for task in tasks if task.status == status]
 
     def get(self, task_id: int) -> Task:
