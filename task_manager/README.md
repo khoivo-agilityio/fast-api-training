@@ -50,8 +50,6 @@ pip install -e ".[dev]"
 # Using uv
 uv run task --help
 
-# Or if installed globally
-task --help
 ```
 
 You should see the main help menu with all available commands.
