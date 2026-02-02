@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 
 from pydantic import ValidationError
 
-from src.task_manager.enums import TaskStatus
-from src.task_manager.models import (
+from enums import TaskStatus
+from models import (
     Task,
     TaskBase,
     TaskCreate,

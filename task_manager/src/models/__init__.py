@@ -1,6 +1,6 @@
 """Task models and schemas"""
 
-from .task import (
+from models.task import (
     Task,
     TaskBase,
     TaskCreate,

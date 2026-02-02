@@ -4,9 +4,9 @@ Task service for business logic and workflow management.
 
 from datetime import UTC, datetime
 
-from ..enums import TaskStatus
-from ..models import Task, TaskCreate, TaskSummary, TaskUpdate
-from ..repositories.task_repo import TaskRepository
+from enums import TaskStatus
+from models import Task, TaskCreate, TaskSummary, TaskUpdate
+from repositories.task_repo import TaskRepository
 
 
 class TaskService:
@@ -102,9 +102,6 @@ class TaskService:
             List of tasks with the specified status
         """
         tasks = self.repository.list_all()
-
-        if status is None:
-            return tasks
 
         return [task for task in tasks if task.status == status]
 

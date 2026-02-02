@@ -3,7 +3,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..enums import TaskStatus
+from enums import TaskStatus
 
 
 class TaskBase(BaseModel):
@@ -15,6 +15,7 @@ class TaskBase(BaseModel):
     """
 
     model_config = ConfigDict(
+        # Depends on storage layer support enums as strings
         use_enum_values=False,
         json_encoders={TaskStatus: lambda v: v.value},  # Serialize enums as strings
         str_strip_whitespace=True,  # Auto-strip whitespace

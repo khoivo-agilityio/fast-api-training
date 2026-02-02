@@ -2,11 +2,12 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ..enums import TaskStatus
-from ..models import Task
+from enums import TaskStatus
+from models import Task
+from repositories import BaseTaskRepository
 
 
-class TaskRepository:
+class TaskRepository(BaseTaskRepository):
     """JSON file-based task repository implementation"""
 
     def __init__(self, file_path: str | Path) -> None:
