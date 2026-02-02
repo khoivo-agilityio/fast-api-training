@@ -2,10 +2,9 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from task_manager.repositories import BaseTaskRepository
-
-from ..enums import TaskStatus
-from ..models import Task
+from enums import TaskStatus
+from models import Task
+from repositories import BaseTaskRepository
 
 
 class TaskRepository(BaseTaskRepository):

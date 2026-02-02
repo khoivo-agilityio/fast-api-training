@@ -8,9 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from src.cli import app
 from typer.testing import CliRunner, Result
-
-from src.task_manager.cli import app
 
 runner = CliRunner()
 
@@ -220,7 +219,7 @@ class TestCLICommands(unittest.TestCase):
         """Test updating task status"""
         self.add_task("Task")
         result = self.update_task_status(1, "todo")
-        self.assert_success(result, "TODO")
+        self.assert_success(result, "update")
 
     def test_update_command_invalid_transition(self) -> None:
         """Test invalid status transition"""

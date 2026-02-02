@@ -51,13 +51,7 @@ all = [
 ]
 
 [project.scripts]
-task = "task_manager.cli:app"
-
-[project.urls]
-Homepage = "https://github.com/yourusername/task-manager"
-Documentation = "https://github.com/yourusername/task-manager#readme"
-Repository = "https://github.com/yourusername/task-manager"
-Issues = "https://github.com/yourusername/task-manager/issues"
+task = "cli:app"
 
 # Build system configuration
 [build-system]
@@ -71,8 +65,21 @@ where = ["src"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+src = ["src"]
 
-# Enable these rule categories
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "dist",
+    "build",
+    "*.egg-info",
+]
+
+# Move 'select' and 'ignore' to [tool.ruff.lint]
+[tool.ruff.lint]
 select = [
     "E",      # pycodestyle errors
     "F",      # pyflakes
@@ -89,27 +96,10 @@ select = [
 ]
 
 ignore = [
-    "ANN101",  # Missing type annotation for self
-    "ANN102",  # Missing type annotation for cls
+    "ANN101",  # Missing type annotation for self (deprecated, not needed)
+    "ANN102",  # Missing type annotation for cls (deprecated, not needed)
     "ANN401",  # Dynamically typed expressions (Any) allowed in some cases
 ]
-
-# Exclude directories
-exclude = [
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    "__pycache__",
-    "dist",
-    "build",
-    "*.egg-info",
-]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
@@ -122,7 +112,6 @@ line-ending = "auto"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["task_manager"]
 section-order = [
     "future",
     "standard-library",
@@ -130,6 +119,11 @@ section-order = [
     "first-party",
     "local-folder",
 ]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 # MyPy configuration (type checking)
 [tool.mypy]

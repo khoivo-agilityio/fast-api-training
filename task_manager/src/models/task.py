@@ -3,7 +3,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..enums import TaskStatus
+from enums import TaskStatus
 
 
 class TaskBase(BaseModel):

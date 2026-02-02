@@ -5,10 +5,10 @@ from datetime import datetime
 
 from pydantic import ValidationError
 
-from src.task_manager.enums import TaskStatus
-from src.task_manager.models import Task, TaskSummary
-from src.task_manager.repositories import TaskRepository
-from src.task_manager.services import TaskService
+from enums import TaskStatus
+from models import Task, TaskSummary
+from repositories import TaskRepository
+from services import TaskService
 
 
 class MockTaskRepository(TaskRepository):

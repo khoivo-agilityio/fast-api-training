@@ -1,6 +1,6 @@
 import unittest
 
-from src.task_manager.enums import TaskStatus
+from enums import TaskStatus
 
 
 class TestTaskStatus(unittest.TestCase):
