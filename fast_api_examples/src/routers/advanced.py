@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Path, Query, status
 from fastapi.responses import JSONResponse
-from models import ErrorResponse, ItemCategory, ItemResponse
+from src.models import ErrorResponse, ItemCategory, ItemResponse
 
 router = APIRouter(tags=["Advanced"])
 
