@@ -1,7 +1,7 @@
 """Basic routes for items - demonstrating standard status codes."""
 
 from fastapi import APIRouter, Body, HTTPException, Path, status
-from models import Item, ItemCategory, ItemResponse
+from src.models import Item, ItemCategory, ItemResponse
 
 router = APIRouter(prefix="/items", tags=["Items"])
 

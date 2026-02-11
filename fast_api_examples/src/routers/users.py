@@ -1,7 +1,7 @@
 """User routes - demonstrating error handling and validation."""
 
 from fastapi import APIRouter, HTTPException, Path, status
-from models import User, UserResponse
+from src.models import User, UserResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
