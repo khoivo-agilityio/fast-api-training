@@ -2,9 +2,8 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
-
 from models.item import ItemStatus
+from pydantic import BaseModel, Field
 
 
 class ItemBase(BaseModel):

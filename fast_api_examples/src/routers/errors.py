@@ -7,9 +7,8 @@ Based on FastAPI documentation:
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
-from pydantic import BaseModel, Field, field_validator
-
 from models import ItemCategory
+from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/errors", tags=["Error Handling"])
 

@@ -8,7 +8,6 @@ Models and route handlers are organized in separate modules for better maintaina
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-
 from routers import (
     advanced_router,
     errors_router,
