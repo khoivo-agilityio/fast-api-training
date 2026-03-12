@@ -30,6 +30,7 @@ class Settings(BaseSettings):
         extra="ignore",  # Ignore extra variables in .env
         str_strip_whitespace=True,  # Auto-strip whitespace
         validate_assignment=True,  # Validate when setting attributes
+        env_parse_enums=True,  # Parse enums from environment
     )
 
     # ========================================================================
@@ -124,8 +125,8 @@ class Settings(BaseSettings):
     # ========================================================================
     # CORS
     # ========================================================================
-    CORS_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+    CORS_ORIGINS: str | list[str] = Field(
+        default="http://localhost:3000,http://localhost:8000",
         description="Allowed CORS origins (comma-separated in .env)",
     )
 
@@ -177,12 +178,17 @@ class Settings(BaseSettings):
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def parse_cors_origins(cls: type[Self], v: str | list[str]) -> list[str]:
+    def parse_cors_origins(cls: type[Self], v: str | list[str] | None) -> list[str]:
         """Parse CORS origins from string or list."""
+        if v is None:
+            return ["http://localhost:3000", "http://localhost:8000"]
         if isinstance(v, str):
             # Handle comma-separated string from .env
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+            origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+            return origins if origins else ["http://localhost:3000", "http://localhost:8000"]
+        if isinstance(v, list):
+            return v
+        return ["http://localhost:3000", "http://localhost:8000"]
 
     # ========================================================================
     # COMPUTED PROPERTIES
@@ -196,6 +202,13 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if running in development."""
         return self.ENV == "development"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Get CORS origins as a list."""
+        if isinstance(self.CORS_ORIGINS, list):
+            return self.CORS_ORIGINS
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     def __repr__(self) -> str:
         """Safe string representation (hides sensitive data)."""
