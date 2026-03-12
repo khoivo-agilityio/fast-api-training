@@ -1,12 +1,12 @@
 """Task Pydantic schemas for request/response validation."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Task status enumeration."""
 
     TODO = "todo"
@@ -14,7 +14,7 @@ class TaskStatus(str, Enum):
     DONE = "done"
 
 
-class TaskPriority(str, Enum):
+class TaskPriority(StrEnum):
     """Task priority enumeration."""
 
     LOW = "low"

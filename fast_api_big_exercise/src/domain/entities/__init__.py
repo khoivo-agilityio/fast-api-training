@@ -1,7 +1,7 @@
 """Domain entities - pure Python business objects."""
 
-from src.domain.entities.task import Task
-from src.domain.entities.user import User
+from ..entities.task import Task
+from ..entities.user import User
 
 __all__ = [
     "User",

@@ -12,7 +12,7 @@ from typing import Any
 import bcrypt
 import jwt
 
-from src.core.config import get_settings
+from .config import get_settings
 
 # ============================================================================
 # PASSWORD HASHING

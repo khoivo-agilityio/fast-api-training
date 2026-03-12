@@ -1,6 +1,6 @@
 """Pydantic schemas for request/response validation."""
 
-from src.schemas.task_schemas import (
+from ..schemas.task_schemas import (
     TaskBase,
     TaskCreate,
     TaskListResponse,
@@ -10,8 +10,8 @@ from src.schemas.task_schemas import (
     TaskStatus,
     TaskUpdate,
 )
-from src.schemas.token_schemas import Token, TokenData
-from src.schemas.user_schemas import UserBase, UserCreate, UserInDB, UserResponse, UserUpdate
+from ..schemas.token_schemas import Token, TokenData
+from ..schemas.user_schemas import UserBase, UserCreate, UserInDB, UserResponse, UserUpdate
 
 __all__ = [
     # User schemas
