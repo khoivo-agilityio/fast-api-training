@@ -37,6 +37,7 @@ dev = [
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "--cov=src --cov-report=html --cov-report=term-missing"
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
