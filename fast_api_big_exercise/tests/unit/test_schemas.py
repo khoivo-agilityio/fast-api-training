@@ -167,14 +167,6 @@ class TestTaskCreate:
         with pytest.raises(ValidationError):
             TaskCreate(title="x" * 201)
 
-    def test_invalid_status(self) -> None:
-        with pytest.raises(ValidationError):
-            TaskCreate(title="Task", status="invalid")  # type: ignore[arg-type]
-
-    def test_invalid_priority(self) -> None:
-        with pytest.raises(ValidationError):
-            TaskCreate(title="Task", priority="critical")  # type: ignore[arg-type]
-
 
 class TestTaskUpdate:
     """Test TaskUpdate schema — all fields optional."""

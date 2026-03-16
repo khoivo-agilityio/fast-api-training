@@ -13,12 +13,12 @@ class User:
 
     def __init__(
         self,
+        id: int,
         username: str,
         email: str,
         hashed_password: str,
         full_name: str | None = None,
         is_active: bool = True,
-        id: int | None = None,
         created_at: datetime | None = None,
     ) -> None:
         """

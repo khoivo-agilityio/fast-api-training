@@ -35,7 +35,7 @@ def create_task(
     - **priority**: low | medium | high (default: medium)
     - **due_date**: optional ISO datetime
     """
-    task = task_service.create_task(task_data, owner_id=current_user.id)  # type: ignore[arg-type]
+    task = task_service.create_task(task_data, owner_id=current_user.id)
     return TaskResponse.model_validate(task.__dict__)
 
 
@@ -55,7 +55,7 @@ def list_tasks(
     List tasks for the current user with pagination and optional status filter.
     """
     return task_service.list_tasks(
-        owner_id=current_user.id,  # type: ignore[arg-type]
+        owner_id=current_user.id,
         page=page,
         size=size,
         status=status,
@@ -75,7 +75,7 @@ def get_stats(
     Get task statistics for the current user:
     counts by status, priority, and number of overdue tasks.
     """
-    return task_service.get_stats(owner_id=current_user.id)  # type: ignore[arg-type]
+    return task_service.get_stats(owner_id=current_user.id)
 
 
 @router.get(
@@ -90,7 +90,7 @@ def get_task(
 ) -> TaskResponse:
     """Get a single task by ID. Only the task owner can access it."""
     try:
-        task = task_service.get_task(task_id, owner_id=current_user.id)  # type: ignore[arg-type]
+        task = task_service.get_task(task_id, owner_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
@@ -115,7 +115,7 @@ def update_task(
     Only the task owner can update it.
     """
     try:
-        task = task_service.update_task(task_id, task_data, owner_id=current_user.id)  # type: ignore[arg-type]
+        task = task_service.update_task(task_id, task_data, owner_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:
@@ -136,7 +136,7 @@ def delete_task(
 ) -> None:
     """Delete a task by ID. Only the task owner can delete it."""
     try:
-        task_service.delete_task(task_id, owner_id=current_user.id)  # type: ignore[arg-type]
+        task_service.delete_task(task_id, owner_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:

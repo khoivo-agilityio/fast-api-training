@@ -35,10 +35,17 @@ def register(user_data: UserCreate, auth_service: AuthServiceDep) -> UserRespons
             detail=str(e),
         )
 
+    # Ensure the returned user has an id (DB should have assigned one); fail fast if missing.
+    if user.id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="User registration failed: missing user id",
+        )
+
     return UserResponse(
-        id=user.id,  # type: ignore[arg-type]
+        id=user.id,
         username=user.username,
-        email=user.email,  # type: ignore[arg-type]
+        email=user.email,
         full_name=user.full_name,
         is_active=user.is_active,
         created_at=user.created_at,
@@ -78,11 +85,17 @@ def login(
     summary="Get current user profile",
 )
 def get_me(current_user: CurrentUser) -> UserResponse:
+    # Ensure the returned user has an id (DB should have assigned one); fail fast if missing.
+    if current_user.id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="User registration failed: missing user id",
+        )
     """Get the currently authenticated user's profile."""
     return UserResponse(
-        id=current_user.id,  # type: ignore[arg-type]
+        id=current_user.id,
         username=current_user.username,
-        email=current_user.email,  # type: ignore[arg-type]
+        email=current_user.email,
         full_name=current_user.full_name,
         is_active=current_user.is_active,
         created_at=current_user.created_at,
