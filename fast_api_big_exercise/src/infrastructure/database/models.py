@@ -1,16 +1,15 @@
 """SQLAlchemy database models."""
 
-from datetime import datetime
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Task status enumeration."""
 
     TODO = "todo"
@@ -18,7 +17,7 @@ class TaskStatus(str, Enum):
     DONE = "done"
 
 
-class TaskPriority(str, Enum):
+class TaskPriority(StrEnum):
     """Task priority enumeration."""
 
     LOW = "low"
@@ -37,7 +36,7 @@ class UserModel(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     tasks = relationship("TaskModel", back_populates="owner", cascade="all, delete-orphan")
@@ -57,8 +56,13 @@ class TaskModel(Base):
     status = Column(String(20), default=TaskStatus.TODO.value, nullable=False)
     priority = Column(String(20), default=TaskPriority.MEDIUM.value, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
     due_date = Column(DateTime, nullable=True)
 
     # Relationships

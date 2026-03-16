@@ -1,6 +1,6 @@
 """Task domain entity - pure Python business object."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from src.schemas.task_schemas import TaskPriority, TaskStatus
 
@@ -45,8 +45,8 @@ class Task:
         self.status = status
         self.priority = priority
         self.owner_id = owner_id
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
         self.due_date = due_date
 
     def mark_as_done(self) -> None:
@@ -56,7 +56,7 @@ class Task:
         Business rule: Completed tasks should have DONE status.
         """
         self.status = TaskStatus.DONE
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def mark_as_in_progress(self) -> None:
         """
@@ -65,7 +65,7 @@ class Task:
         Business rule: Use this when starting work on a task.
         """
         self.status = TaskStatus.IN_PROGRESS
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def mark_as_todo(self) -> None:
         """
@@ -74,7 +74,7 @@ class Task:
         Business rule: Use this to reset a task or move it back to backlog.
         """
         self.status = TaskStatus.TODO
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def update_title(self, new_title: str) -> None:
         """
@@ -84,7 +84,7 @@ class Task:
             new_title: New task title
         """
         self.title = new_title
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def update_description(self, new_description: str | None) -> None:
         """
@@ -94,7 +94,7 @@ class Task:
             new_description: New description (can be None to clear)
         """
         self.description = new_description
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def update_priority(self, new_priority: TaskPriority) -> None:
         """
@@ -104,7 +104,7 @@ class Task:
             new_priority: New priority level
         """
         self.priority = new_priority
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def update_due_date(self, new_due_date: datetime | None) -> None:
         """
@@ -114,7 +114,7 @@ class Task:
             new_due_date: New due date (can be None to clear)
         """
         self.due_date = new_due_date
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def is_overdue(self) -> bool:
         """
@@ -132,7 +132,9 @@ class Task:
             return False
         if self.status == TaskStatus.DONE:
             return False
-        return datetime.utcnow() > self.due_date
+        now = datetime.now(UTC)
+        due = self.due_date if self.due_date.tzinfo else self.due_date.replace(tzinfo=UTC)
+        return now > due
 
     def is_high_priority(self) -> bool:
         """
@@ -161,7 +163,7 @@ class Task:
         """
         if not self.due_date:
             return None
-        delta = self.due_date - datetime.utcnow()
+        delta = self.due_date - datetime.now(UTC)
         return delta.days
 
     def __repr__(self) -> str:

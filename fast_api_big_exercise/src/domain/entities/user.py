@@ -1,6 +1,6 @@
 """User domain entity - pure Python business object."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 class User:
@@ -39,7 +39,7 @@ class User:
         self.hashed_password = hashed_password
         self.full_name = full_name
         self.is_active = is_active
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
 
     def deactivate(self) -> None:
         """
