@@ -11,54 +11,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.domain.entities.user import User
 from src.domain.services.auth_service import AuthService
 from src.schemas.user_schemas import UserCreate
-
-
-# ============================================================================
-# FIXTURES
-# ============================================================================
-def make_user(
-    id: int = 1,
-    username: str = "alice",
-    email: str = "alice@example.com",
-    hashed_password: str = "",
-    is_active: bool = True,
-    full_name: str | None = "Alice",
-) -> User:
-    """Helper to build a User entity for tests."""
-    from src.core.security import hash_password
-
-    return User(
-        id=id,
-        username=username,
-        email=email,
-        hashed_password=hashed_password or hash_password("secret123"),
-        full_name=full_name,
-        is_active=is_active,
-    )
-
-
-@pytest.fixture
-def mock_user_repo() -> MagicMock:
-    """Return a MagicMock that satisfies the UserRepository interface."""
-    repo = MagicMock()
-    repo.get_by_username.return_value = None
-    repo.get_by_email.return_value = None
-    repo.create.side_effect = lambda user: user  # echo the entity back
-    return repo
-
-
-@pytest.fixture
-def auth_service(mock_user_repo: MagicMock) -> AuthService:
-    return AuthService(user_repository=mock_user_repo)
+from tests.base import BaseUnitTestCase
 
 
 # ============================================================================
 # REGISTER TESTS
 # ============================================================================
-class TestRegisterUser:
+class TestRegisterUser(BaseUnitTestCase):
     """Tests for AuthService.register_user."""
 
     def test_register_success(self, auth_service: AuthService, mock_user_repo: MagicMock) -> None:
@@ -75,7 +36,6 @@ class TestRegisterUser:
         assert result.email == "alice@example.com"
         assert result.full_name == "Alice"
         assert result.is_active is True
-        # Password should be hashed, not stored in plain text
         assert result.hashed_password != "secret123"
         assert result.hashed_password.startswith("$2b$")
         mock_user_repo.create.assert_called_once()
@@ -84,7 +44,7 @@ class TestRegisterUser:
         self, auth_service: AuthService, mock_user_repo: MagicMock
     ) -> None:
         """Duplicate username raises ValueError."""
-        mock_user_repo.get_by_username.return_value = make_user()
+        mock_user_repo.get_by_username.return_value = self.make_user()
         user_data = UserCreate(username="alice", email="new@example.com", password="secret123")
         with pytest.raises(ValueError, match="Username already registered"):
             auth_service.register_user(user_data)
@@ -95,7 +55,7 @@ class TestRegisterUser:
     ) -> None:
         """Duplicate email raises ValueError."""
         mock_user_repo.get_by_username.return_value = None
-        mock_user_repo.get_by_email.return_value = make_user()
+        mock_user_repo.get_by_email.return_value = self.make_user()
         user_data = UserCreate(username="newuser", email="alice@example.com", password="secret123")
         with pytest.raises(ValueError, match="Email already registered"):
             auth_service.register_user(user_data)
@@ -113,16 +73,14 @@ class TestRegisterUser:
 # ============================================================================
 # AUTHENTICATE TESTS
 # ============================================================================
-class TestAuthenticateUser:
+class TestAuthenticateUser(BaseUnitTestCase):
     """Tests for AuthService.authenticate_user."""
 
     def test_authenticate_success(
         self, auth_service: AuthService, mock_user_repo: MagicMock
     ) -> None:
         """Correct credentials return the User entity."""
-        user = make_user()
-        mock_user_repo.get_by_username.return_value = user
-
+        mock_user_repo.get_by_username.return_value = self.make_user()
         result = auth_service.authenticate_user("alice", "secret123")
         assert result is not None
         assert result.username == "alice"
@@ -131,7 +89,7 @@ class TestAuthenticateUser:
         self, auth_service: AuthService, mock_user_repo: MagicMock
     ) -> None:
         """Wrong password returns None."""
-        mock_user_repo.get_by_username.return_value = make_user()
+        mock_user_repo.get_by_username.return_value = self.make_user()
         result = auth_service.authenticate_user("alice", "wrongpassword")
         assert result is None
 
@@ -147,8 +105,7 @@ class TestAuthenticateUser:
         self, auth_service: AuthService, mock_user_repo: MagicMock
     ) -> None:
         """Inactive user account returns None even with correct credentials."""
-        inactive_user = make_user(is_active=False)
-        mock_user_repo.get_by_username.return_value = inactive_user
+        mock_user_repo.get_by_username.return_value = self.make_user(is_active=False)
         result = auth_service.authenticate_user("alice", "secret123")
         assert result is None
 
@@ -156,31 +113,25 @@ class TestAuthenticateUser:
 # ============================================================================
 # CREATE TOKEN TESTS
 # ============================================================================
-class TestCreateToken:
+class TestCreateToken(BaseUnitTestCase):
     """Tests for AuthService.create_token."""
 
     def test_create_token_returns_bearer(self, auth_service: AuthService) -> None:
         """Token has the correct structure and token_type."""
-        user = make_user()
-        token = auth_service.create_token(user)
-
+        token = auth_service.create_token(self.make_user())
         assert token.token_type == "bearer"
         assert len(token.access_token) > 0
-        # JWT has 3 parts separated by dots
-        parts = token.access_token.split(".")
-        assert len(parts) == 3
+        assert len(token.access_token.split(".")) == 3
 
     def test_create_token_encodes_username(self, auth_service: AuthService) -> None:
         """The token subject should be the user's username."""
         from src.core.security import extract_token_subject
 
-        user = make_user(username="charlie")
-        token = auth_service.create_token(user)
-        subject = extract_token_subject(token.access_token)
-        assert subject == "charlie"
+        token = auth_service.create_token(self.make_user(username="charlie"))
+        assert extract_token_subject(token.access_token) == "charlie"
 
     def test_different_users_get_different_tokens(self, auth_service: AuthService) -> None:
         """Two different users get different tokens."""
-        token1 = auth_service.create_token(make_user(id=1, username="user1"))
-        token2 = auth_service.create_token(make_user(id=2, username="user2"))
+        token1 = auth_service.create_token(self.make_user(id=1, username="user1"))
+        token2 = auth_service.create_token(self.make_user(id=2, username="user2"))
         assert token1.access_token != token2.access_token

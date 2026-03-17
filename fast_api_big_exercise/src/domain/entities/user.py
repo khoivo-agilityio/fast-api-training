@@ -13,13 +13,13 @@ class User:
 
     def __init__(
         self,
-        id: int,
         username: str,
         email: str,
         hashed_password: str,
         full_name: str | None = None,
         is_active: bool = True,
         created_at: datetime | None = None,
+        id: int | None = None,
     ) -> None:
         """
         Initialize a User entity.
