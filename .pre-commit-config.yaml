@@ -1,6 +1,10 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.14
+    rev: v0.8.0
     hooks:
       - id: ruff
+        files: ^fast_api_big_exercise/
+        args: ["--fix", "--config", "fast_api_big_exercise/pyproject.toml"]
       - id: ruff-format
+        files: ^fast_api_big_exercise/
+        args: ["--config", "fast_api_big_exercise/pyproject.toml"]

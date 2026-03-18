@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes import auth, tasks
 from src.core.config import get_settings
-from src.infrastructure.database.connection import init_db
+from src.infrastructure.database.connection import run_migrations
 from src.infrastructure.logging import LoggingMiddleware, setup_logging
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup and shutdown events."""
     # Startup
     setup_logging()
-    init_db()
+    run_migrations()
     logger.info("app_started", app=get_settings().APP_NAME, env=get_settings().ENV)
     yield
     # Shutdown

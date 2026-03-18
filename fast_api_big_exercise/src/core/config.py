@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     # DATABASE
     # ========================================================================
     DATABASE_URL: str = Field(
-        default="sqlite:///./taskmanager.db",
+        default="postgresql://taskmanager:taskmanager_dev@localhost/taskmanager_dev",
         min_length=1,
         description="Database connection string",
     )
