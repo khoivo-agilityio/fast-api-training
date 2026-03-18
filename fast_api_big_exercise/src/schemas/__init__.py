@@ -4,10 +4,8 @@ from ..schemas.task_schemas import (
     TaskBase,
     TaskCreate,
     TaskListResponse,
-    TaskPriority,
     TaskResponse,
     TaskStatsResponse,
-    TaskStatus,
     TaskUpdate,
 )
 from ..schemas.token_schemas import Token, TokenData
@@ -27,8 +25,6 @@ __all__ = [
     "TaskResponse",
     "TaskListResponse",
     "TaskStatsResponse",
-    "TaskStatus",
-    "TaskPriority",
     # Token schemas
     "Token",
     "TokenData",

@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from src.schemas.task_schemas import TaskPriority, TaskStatus
+from src.infrastructure.database.models import TaskPriority, TaskStatus
 
 
 class Task:

@@ -1,25 +1,10 @@
 """Task Pydantic schemas for request/response validation."""
 
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-
-class TaskStatus(StrEnum):
-    """Task status enumeration."""
-
-    TODO = "todo"
-    IN_PROGRESS = "in_progress"
-    DONE = "done"
-
-
-class TaskPriority(StrEnum):
-    """Task priority enumeration."""
-
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+from src.infrastructure.database.models import TaskPriority, TaskStatus
 
 
 class TaskBase(BaseModel):

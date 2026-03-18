@@ -4,13 +4,12 @@ from math import ceil
 
 from src.domain.entities.task import Task
 from src.domain.repositories.task_repository import TaskRepository
+from src.infrastructure.database.models import TaskPriority, TaskStatus
 from src.schemas.task_schemas import (
     TaskCreate,
     TaskListResponse,
-    TaskPriority,
     TaskResponse,
     TaskStatsResponse,
-    TaskStatus,
     TaskUpdate,
 )
 
@@ -175,7 +174,7 @@ class TaskService:
         done = self.task_repository.count(owner_id, TaskStatus.DONE)
 
         # Fetch all tasks to calculate overdue and priority counts
-        all_tasks = self.task_repository.get_all(owner_id, skip=0, limit=max(total, 1))
+        all_tasks = self.task_repository.get_all(owner_id, skip=0, limit=max(total, 1000))
         overdue = sum(1 for t in all_tasks if t.is_overdue())
         by_priority = {
             TaskPriority.LOW.value: sum(1 for t in all_tasks if t.priority == TaskPriority.LOW),

@@ -4,14 +4,16 @@ Concrete implementations of the repository interfaces using SQLAlchemy ORM.
 These live in the infrastructure layer and depend on the database models.
 """
 
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy.orm import Session
 
 from src.domain.entities.task import Task as TaskEntity
 from src.domain.entities.user import User as UserEntity
 from src.domain.repositories.task_repository import TaskRepository
 from src.domain.repositories.user_repository import UserRepository
-from src.infrastructure.database.models import TaskModel, UserModel
-from src.schemas.task_schemas import TaskPriority, TaskStatus
+from src.infrastructure.database.models import TaskModel, TaskPriority, TaskStatus, UserModel
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -74,8 +76,9 @@ class SQLAlchemyUserRepository(UserRepository):
         return False
 
     @staticmethod
-    def _to_entity(model: UserModel) -> UserEntity:
+    def _to_entity(model: Any) -> UserEntity:
         """Convert database model → domain entity."""
+        created = model.created_at
         return UserEntity(
             id=model.id,
             username=model.username,
@@ -83,7 +86,7 @@ class SQLAlchemyUserRepository(UserRepository):
             hashed_password=model.hashed_password,
             full_name=model.full_name,
             is_active=model.is_active,
-            created_at=model.created_at,
+            created_at=created if not created or created.tzinfo else created.replace(tzinfo=UTC),
         )
 
 
@@ -161,8 +164,15 @@ class SQLAlchemyTaskRepository(TaskRepository):
         return False
 
     @staticmethod
-    def _to_entity(model: TaskModel) -> TaskEntity:
+    def _to_entity(model: Any) -> TaskEntity:
         """Convert database model → domain entity."""
+
+        def _as_utc(dt: datetime | None) -> datetime | None:
+            """Attach UTC tzinfo to a naive datetime from the DB."""
+            if dt is None:
+                return None
+            return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
         return TaskEntity(
             id=model.id,
             title=model.title,
@@ -170,7 +180,7 @@ class SQLAlchemyTaskRepository(TaskRepository):
             status=TaskStatus(model.status),
             priority=TaskPriority(model.priority),
             owner_id=model.owner_id,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
-            due_date=model.due_date,
+            created_at=_as_utc(model.created_at),
+            updated_at=_as_utc(model.updated_at),
+            due_date=_as_utc(model.due_date),
         )

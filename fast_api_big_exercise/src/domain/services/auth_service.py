@@ -1,6 +1,7 @@
 """Authentication service - business logic for user registration and login."""
 
 from datetime import timedelta
+from uuid import uuid4
 
 from src.core.config import get_settings
 from src.core.security import create_access_token, hash_password, verify_password
@@ -46,6 +47,7 @@ class AuthService:
 
         # Build domain entity with hashed password
         user = User(
+            id=uuid4().int,
             username=user_data.username,
             email=str(user_data.email),
             hashed_password=hash_password(user_data.password),

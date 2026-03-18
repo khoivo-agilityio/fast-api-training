@@ -7,7 +7,7 @@ The actual implementation will be in the infrastructure layer.
 from abc import ABC, abstractmethod
 
 from src.domain.entities.task import Task
-from src.schemas.task_schemas import TaskStatus
+from src.infrastructure.database.models import TaskStatus
 
 
 class TaskRepository(ABC):

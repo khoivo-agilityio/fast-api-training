@@ -3,12 +3,12 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
 from src.api.dependencies import CurrentUser, TaskServiceDep
+from src.infrastructure.database.models import TaskStatus
 from src.schemas.task_schemas import (
     TaskCreate,
     TaskListResponse,
     TaskResponse,
     TaskStatsResponse,
-    TaskStatus,
     TaskUpdate,
 )
 
