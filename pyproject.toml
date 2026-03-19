@@ -14,3 +14,13 @@ ambiguous-protocol-member = "warn"
 
 # Disabled
 unsupported-bool-conversion = "ignore"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
