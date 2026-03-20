@@ -1,0 +1,112 @@
+[project]
+name = "fast-api-practice"
+version = "0.1.0"
+description = "Collaborative Project & Task Management API — Trello/Jira-like backend"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    # --- Web framework ---
+    "fastapi[standard]>=0.115",
+    "uvicorn[standard]>=0.34",
+
+    # --- Database ---
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",               # Async PostgreSQL driver
+    "alembic>=1.15",
+
+    # --- Auth ---
+    "pyjwt>=2.10",
+    "passlib[bcrypt]>=1.7",
+    "bcrypt>=4.3",
+
+    # --- Config ---
+    "pydantic>=2.11",
+    "pydantic-settings>=2.9",
+    "python-dotenv>=1.1",
+
+    # --- Logging ---
+    "structlog>=25.1",
+
+    # --- Validation ---
+    "email-validator>=2.2",         # Required by Pydantic EmailStr
+
+    # --- Multipart form support (OAuth2 password flow) ---
+    "python-multipart>=0.0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    # --- Testing ---
+    "pytest>=8.3",
+    "pytest-asyncio>=0.26",
+    "httpx>=0.28",                  # Async test client for FastAPI
+    "aiosqlite>=0.21",              # Async SQLite for test DB (in-memory)
+    "coverage>=7.6",
+    "pytest-cov>=6.1",
+
+    # --- Linting & formatting ---
+    "ruff>=0.11",
+
+    # --- Type checking ---
+    # "ty"  # Install separately if needed — not yet on PyPI
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # Ruff-specific rules
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "pass",
+]
