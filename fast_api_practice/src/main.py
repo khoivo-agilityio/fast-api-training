@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -7,7 +8,7 @@ from src.schemas.common import HealthResponse
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     from src.infrastructure.database.connection import async_engine
 
@@ -23,7 +24,7 @@ def create_app() -> FastAPI:
     )
 
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
-    async def health_check():
+    async def health_check() -> HealthResponse:
         return HealthResponse(status="healthy", version="0.1.0")
 
     app.include_router(auth.router, prefix="/api/v1")
