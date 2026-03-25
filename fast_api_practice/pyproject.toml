@@ -96,6 +96,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore::DeprecationWarning",
+    "ignore::jwt.warnings.InsecureKeyLengthWarning",
 ]
 
 # ---------------------------------------------------------------------------

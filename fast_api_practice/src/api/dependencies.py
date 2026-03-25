@@ -5,8 +5,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.security import decode_token
 from src.domain.entities.user import UserEntity
+from src.domain.services.comment_service import CommentService
+from src.domain.services.project_service import ProjectService
+from src.domain.services.task_service import TaskService
 from src.infrastructure.database.connection import get_async_session
-from src.infrastructure.database.repositories import SQLAlchemyUserRepository
+from src.infrastructure.database.repositories import (
+    SQLAlchemyCommentRepository,
+    SQLAlchemyProjectRepository,
+    SQLAlchemyTaskRepository,
+    SQLAlchemyUserRepository,
+)
 
 security_scheme = HTTPBearer()
 
@@ -41,3 +49,31 @@ async def get_current_user(
         )
 
     return user
+
+
+async def get_project_service(
+    session: AsyncSession = Depends(get_async_session),
+) -> ProjectService:
+    return ProjectService(
+        project_repo=SQLAlchemyProjectRepository(session),
+        user_repo=SQLAlchemyUserRepository(session),
+    )
+
+
+async def get_task_service(
+    session: AsyncSession = Depends(get_async_session),
+) -> TaskService:
+    return TaskService(
+        task_repo=SQLAlchemyTaskRepository(session),
+        project_repo=SQLAlchemyProjectRepository(session),
+    )
+
+
+async def get_comment_service(
+    session: AsyncSession = Depends(get_async_session),
+) -> CommentService:
+    return CommentService(
+        comment_repo=SQLAlchemyCommentRepository(session),
+        task_repo=SQLAlchemyTaskRepository(session),
+        project_repo=SQLAlchemyProjectRepository(session),
+    )
