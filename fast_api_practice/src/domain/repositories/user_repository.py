@@ -33,3 +33,11 @@ class UserRepository(BaseRepository):
     @abstractmethod
     async def update(self, id: int, **fields: object) -> UserEntity | None:
         ...
+
+    @abstractmethod
+    async def list_all(self, limit: int = 20, offset: int = 0) -> list[UserEntity]:
+        ...
+
+    @abstractmethod
+    async def count_all(self) -> int:
+        ...

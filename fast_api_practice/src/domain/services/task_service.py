@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 
+from src.domain.entities.project_member import ProjectMemberRole
 from src.domain.entities.task import TaskEntity, TaskPriority, TaskStatus
 from src.domain.repositories.project_repository import ProjectRepository
 from src.domain.repositories.task_repository import TaskRepository
@@ -61,11 +62,30 @@ class TaskService:
         *,
         task_status: TaskStatus | None = None,
         assignee_id: int | None = None,
-    ) -> list[TaskEntity]:
+        priority: TaskPriority | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[TaskEntity], int]:
         await self._require_project_member(project_id, requester_id)
-        return await self._tasks.list_for_project(
-            project_id, status=task_status, assignee_id=assignee_id
+        items = await self._tasks.list_for_project(
+            project_id,
+            status=task_status,
+            assignee_id=assignee_id,
+            priority=priority,
+            sort_by=sort_by,
+            sort_order=sort_order,
+            limit=limit,
+            offset=offset,
         )
+        total = await self._tasks.count_for_project(
+            project_id,
+            status=task_status,
+            assignee_id=assignee_id,
+            priority=priority,
+        )
+        return items, total
 
     async def update_task(
         self,
@@ -78,7 +98,7 @@ class TaskService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
-        await self._require_project_member(task.project_id, requester_id)
+        await self._require_task_mutator(task, requester_id)
 
         new_assignee_id = fields.get("assignee_id")
         if new_assignee_id is not None:
@@ -101,7 +121,7 @@ class TaskService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
-        await self._require_project_member(task.project_id, requester_id)
+        await self._require_task_deleter(task, requester_id)
         await self._tasks.delete(task_id)
 
     # ── Helpers ───────────────────────────────────────────────────────────────
@@ -122,3 +142,38 @@ class TaskService:
         member = await self._projects.get_member(project_id, user_id)
         if member is None:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error_msg)
+
+    async def _require_task_mutator(self, task: TaskEntity, user_id: int) -> None:
+        """Creator, assignee, or project manager can update a task."""
+        if task.creator_id == user_id:
+            return
+        if task.assignee_id is not None and task.assignee_id == user_id:
+            return
+        project = await self._projects.get_by_id(task.project_id)
+        if project is not None and project.owner_id == user_id:
+            return
+        member = await self._projects.get_member(task.project_id, user_id)
+        if member is not None and member.role == ProjectMemberRole.MANAGER:
+            return
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Only the task creator, assignee, or a project manager"
+                " can update this task"
+            ),
+        )
+
+    async def _require_task_deleter(self, task: TaskEntity, user_id: int) -> None:
+        """Creator or project manager can delete a task."""
+        if task.creator_id == user_id:
+            return
+        project = await self._projects.get_by_id(task.project_id)
+        if project is not None and project.owner_id == user_id:
+            return
+        member = await self._projects.get_member(task.project_id, user_id)
+        if member is not None and member.role == ProjectMemberRole.MANAGER:
+            return
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the task creator or a project manager can delete this task",
+        )

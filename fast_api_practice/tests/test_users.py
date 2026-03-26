@@ -43,3 +43,56 @@ class TestUserRoutes:
             json={},
         )
         assert resp.status_code == 400
+
+
+class TestAdminUserListing:
+    LIST_URL = "/api/v1/users"
+
+    async def test_admin_can_list_users(self, client, admin_headers, create_test_user):
+        # create an extra regular user
+        await create_test_user(username="extra", email="extra@example.com")
+        resp = await client.get(self.LIST_URL, headers=admin_headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "items" in data
+        assert "total" in data
+        # admin user + extra user = 2
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
+        # no hashed_password leaked
+        for u in data["items"]:
+            assert "hashed_password" not in u
+
+    async def test_non_admin_cannot_list_users(self, client, auth_headers):
+        resp = await client.get(self.LIST_URL, headers=auth_headers)
+        assert resp.status_code == 403
+
+    async def test_unauthenticated_cannot_list_users(self, client):
+        resp = await client.get(self.LIST_URL)
+        assert resp.status_code in (401, 403)
+
+    async def test_admin_list_pagination(self, client, admin_headers, create_test_user):
+        # Create 4 extra users (admin already exists = 5 total)
+        for i in range(4):
+            await create_test_user(username=f"user{i}", email=f"user{i}@example.com")
+        r1 = await client.get(
+            f"{self.LIST_URL}?limit=2&offset=0", headers=admin_headers
+        )
+        assert r1.status_code == 200
+        d1 = r1.json()
+        assert d1["total"] == 5
+        assert len(d1["items"]) == 2
+        assert d1["limit"] == 2
+        assert d1["offset"] == 0
+
+        r2 = await client.get(
+            f"{self.LIST_URL}?limit=2&offset=2", headers=admin_headers
+        )
+        d2 = r2.json()
+        assert len(d2["items"]) == 2
+
+        r3 = await client.get(
+            f"{self.LIST_URL}?limit=2&offset=4", headers=admin_headers
+        )
+        d3 = r3.json()
+        assert len(d3["items"]) == 1

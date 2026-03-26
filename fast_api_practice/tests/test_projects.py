@@ -34,9 +34,9 @@ class TestProjectCRUD:
     async def test_list_projects_empty(self, client: AsyncClient, auth_headers: dict):
         r = await client.get("/api/v1/projects", headers=auth_headers)
         assert r.status_code == 200
-        # Owner is added as member, so project appears in list after creation
-        # but here we haven't created any, so list is empty
-        assert r.json() == []
+        data = r.json()
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_list_projects_shows_owned(
         self, client: AsyncClient, auth_headers: dict
@@ -45,8 +45,10 @@ class TestProjectCRUD:
         await client.post("/api/v1/projects", json={"name": "P2"}, headers=auth_headers)
         r = await client.get("/api/v1/projects", headers=auth_headers)
         assert r.status_code == 200
-        names = {p["name"] for p in r.json()}
+        data = r.json()
+        names = {p["name"] for p in data["items"]}
         assert {"P1", "P2"} == names
+        assert data["total"] == 2
 
     async def test_get_project_success(self, client: AsyncClient, auth_headers: dict):
         create_r = await client.post(
@@ -137,6 +139,44 @@ class TestProjectCRUD:
 
         r = await client.delete(f"/api/v1/projects/{project_id}", headers=other_headers)
         assert r.status_code == 403
+
+    async def test_admin_can_delete_any_project(
+        self,
+        client: AsyncClient,
+        auth_headers: dict,
+        admin_headers: dict,
+    ):
+        create_r = await client.post(
+            "/api/v1/projects", json={"name": "AdminTarget"}, headers=auth_headers
+        )
+        project_id = create_r.json()["id"]
+        # Admin (non-owner) deletes it
+        r = await client.delete(f"/api/v1/projects/{project_id}", headers=admin_headers)
+        assert r.status_code == 204
+
+    async def test_list_projects_pagination(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        for i in range(5):
+            await client.post(
+                "/api/v1/projects", json={"name": f"Proj{i}"}, headers=auth_headers
+            )
+        # First page of 2
+        r = await client.get("/api/v1/projects?limit=2&offset=0", headers=auth_headers)
+        assert r.status_code == 200
+        data = r.json()
+        assert data["total"] == 5
+        assert len(data["items"]) == 2
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+        # Second page
+        r2 = await client.get("/api/v1/projects?limit=2&offset=2", headers=auth_headers)
+        data2 = r2.json()
+        assert len(data2["items"]) == 2
+        # Third page (1 item left)
+        r3 = await client.get("/api/v1/projects?limit=2&offset=4", headers=auth_headers)
+        data3 = r3.json()
+        assert len(data3["items"]) == 1
 
 
 class TestProjectMembers:

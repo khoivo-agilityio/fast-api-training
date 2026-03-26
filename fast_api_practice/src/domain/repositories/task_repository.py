@@ -32,7 +32,23 @@ class TaskRepository(BaseRepository):
         *,
         status: TaskStatus | None = None,
         assignee_id: int | None = None,
+        priority: TaskPriority | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        limit: int = 20,
+        offset: int = 0,
     ) -> list[TaskEntity]:
+        ...
+
+    @abstractmethod
+    async def count_for_project(
+        self,
+        project_id: int,
+        *,
+        status: TaskStatus | None = None,
+        assignee_id: int | None = None,
+        priority: TaskPriority | None = None,
+    ) -> int:
         ...
 
     @abstractmethod

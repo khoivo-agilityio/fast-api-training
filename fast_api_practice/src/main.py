@@ -1,16 +1,28 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.api.middleware import request_context_middleware, timing_middleware
 from src.api.v1 import auth, comments, projects, tasks, users
 from src.core.config import get_settings
 from src.infrastructure.logging.setup import configure_logging
-from src.schemas.common import HealthResponse
+from src.schemas.common import ErrorResponse, HealthResponse
 
 settings = get_settings()
+
+_STATUS_TO_ERROR_CODE: dict[int, str] = {
+    400: "BAD_REQUEST",
+    401: "UNAUTHORIZED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    409: "CONFLICT",
+    422: "VALIDATION_ERROR",
+    500: "INTERNAL_SERVER_ERROR",
+}
 
 
 @asynccontextmanager
@@ -29,6 +41,27 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+
+    # ── Exception handlers ────────────────────────────────────────────────────
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(
+        request: Request, exc: HTTPException
+    ) -> JSONResponse:
+        error_code = _STATUS_TO_ERROR_CODE.get(exc.status_code, "HTTP_ERROR")
+        body = ErrorResponse(detail=exc.detail, error_code=error_code).model_dump()
+        return JSONResponse(status_code=exc.status_code, content=body)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content=ErrorResponse(
+                detail=str(exc.errors()),
+                error_code="VALIDATION_ERROR",
+            ).model_dump(),
+        )
 
     # ── Middleware (outermost first) ──────────────────────────────────────────
     app.middleware("http")(request_context_middleware)

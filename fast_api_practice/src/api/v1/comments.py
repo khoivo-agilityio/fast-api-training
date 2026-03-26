@@ -8,6 +8,7 @@ from src.schemas.comment import (
     CommentResponse,
     CommentUpdateRequest,
 )
+from src.schemas.common import PaginatedResponse, PaginationParams
 
 router = APIRouter(prefix="/tasks/{task_id}/comments", tags=["Comments"])
 
@@ -27,16 +28,25 @@ async def create_comment(
     return CommentResponse.model_validate(comment)
 
 
-@router.get("", response_model=list[CommentResponse])
+@router.get("", response_model=PaginatedResponse[CommentResponse])
 async def list_comments(
     task_id: int,
+    pagination: PaginationParams = Depends(),
     current_user: UserEntity = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
-) -> list[CommentResponse]:
-    comments = await service.list_comments(
-        task_id=task_id, requester_id=current_user.id
+) -> PaginatedResponse[CommentResponse]:
+    items, total = await service.list_comments(
+        task_id=task_id,
+        requester_id=current_user.id,
+        limit=pagination.limit,
+        offset=pagination.offset,
     )
-    return [CommentResponse.model_validate(c) for c in comments]
+    return PaginatedResponse(
+        items=[CommentResponse.model_validate(c) for c in items],
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
 
 
 @router.patch("/{comment_id}", response_model=CommentResponse)

@@ -40,8 +40,12 @@ class ProjectService:
             )
         return project
 
-    async def list_projects(self, user_id: int) -> list[ProjectEntity]:
-        return await self._projects.list_for_user(user_id)
+    async def list_projects(
+        self, user_id: int, *, limit: int = 20, offset: int = 0
+    ) -> tuple[list[ProjectEntity], int]:
+        items = await self._projects.list_for_user(user_id, limit=limit, offset=offset)
+        total = await self._projects.count_for_user(user_id)
+        return items, total
 
     async def update_project(
         self,
@@ -58,12 +62,14 @@ class ProjectService:
             )
         return updated
 
-    async def delete_project(self, project_id: int, requester_id: int) -> None:
+    async def delete_project(
+        self, project_id: int, requester_id: int, requester_role: str = "member"
+    ) -> None:
         project = await self.get_project(project_id)
-        if project.owner_id != requester_id:
+        if project.owner_id != requester_id and requester_role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only the project owner can delete this project",
+                detail="Only the project owner or an admin can delete this project",
             )
         await self._projects.delete(project_id)
 

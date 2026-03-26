@@ -66,7 +66,9 @@ class TestTaskCRUD:
         project_id, headers = await self._setup(client, auth_headers)
         r = await client.get(f"/api/v1/projects/{project_id}/tasks", headers=headers)
         assert r.status_code == 200
-        assert r.json() == []
+        data = r.json()
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_list_tasks_with_status_filter(
         self, client: AsyncClient, auth_headers: dict
@@ -87,8 +89,10 @@ class TestTaskCRUD:
             headers=headers,
         )
         assert r.status_code == 200
-        assert len(r.json()) == 1
-        assert r.json()[0]["title"] == "Todo task"
+        data = r.json()
+        assert data["total"] == 1
+        assert len(data["items"]) == 1
+        assert data["items"][0]["title"] == "Todo task"
 
     async def test_get_task_success(self, client: AsyncClient, auth_headers: dict):
         project_id, headers = await self._setup(client, auth_headers)
@@ -231,3 +235,206 @@ class TestTaskCRUD:
             headers=other_headers,
         )
         assert r.status_code == 403
+
+
+class TestTaskRBAC:
+    """RBAC hardening tests for task update/delete."""
+
+    async def _setup_with_member(
+        self, client: AsyncClient, auth_headers: dict, create_test_user
+    ) -> tuple[int, int, dict]:
+        """Create project+task as owner; add a plain member.
+
+        Returns (project_id, task_id, member_headers).
+        """
+        proj_r = await client.post(
+            "/api/v1/projects", json={"name": "RBAC Project"}, headers=auth_headers
+        )
+        project_id = proj_r.json()["id"]
+        task_r = await client.post(
+            f"/api/v1/projects/{project_id}/tasks",
+            json={"title": "RBAC Task"},
+            headers=auth_headers,
+        )
+        task_id = task_r.json()["id"]
+        member, _ = await create_test_user(
+            username="plain_member", email="plain_member@example.com"
+        )
+        await client.post(
+            f"/api/v1/projects/{project_id}/members",
+            json={"user_id": member.id, "role": "member"},
+            headers=auth_headers,
+        )
+        member_headers = {
+            "Authorization": f"Bearer {create_access_token(member.id, member.role)}"
+        }
+        return project_id, task_id, member_headers
+
+    async def test_plain_member_cannot_update_task(
+        self, client: AsyncClient, auth_headers: dict, create_test_user
+    ):
+        project_id, task_id, member_headers = await self._setup_with_member(
+            client, auth_headers, create_test_user
+        )
+        r = await client.patch(
+            f"/api/v1/projects/{project_id}/tasks/{task_id}",
+            json={"title": "Stolen update"},
+            headers=member_headers,
+        )
+        assert r.status_code == 403
+
+    async def test_plain_member_cannot_delete_task(
+        self, client: AsyncClient, auth_headers: dict, create_test_user
+    ):
+        project_id, task_id, member_headers = await self._setup_with_member(
+            client, auth_headers, create_test_user
+        )
+        r = await client.delete(
+            f"/api/v1/projects/{project_id}/tasks/{task_id}",
+            headers=member_headers,
+        )
+        assert r.status_code == 403
+
+    async def test_assignee_can_update_task(
+        self, client: AsyncClient, auth_headers: dict, create_test_user
+    ):
+        proj_r = await client.post(
+            "/api/v1/projects", json={"name": "Assignee Project"}, headers=auth_headers
+        )
+        project_id = proj_r.json()["id"]
+        assignee, _ = await create_test_user(
+            username="assignee2", email="assignee2@example.com"
+        )
+        await client.post(
+            f"/api/v1/projects/{project_id}/members",
+            json={"user_id": assignee.id},
+            headers=auth_headers,
+        )
+        task_r = await client.post(
+            f"/api/v1/projects/{project_id}/tasks",
+            json={"title": "Assigned Task", "assignee_id": assignee.id},
+            headers=auth_headers,
+        )
+        task_id = task_r.json()["id"]
+        assignee_headers = {
+            "Authorization": f"Bearer {create_access_token(assignee.id, assignee.role)}"
+        }
+        r = await client.patch(
+            f"/api/v1/projects/{project_id}/tasks/{task_id}",
+            json={"title": "Updated by assignee"},
+            headers=assignee_headers,
+        )
+        assert r.status_code == 200
+        assert r.json()["title"] == "Updated by assignee"
+
+    async def test_project_manager_can_update_any_task(
+        self, client: AsyncClient, auth_headers: dict, create_test_user
+    ):
+        proj_r = await client.post(
+            "/api/v1/projects", json={"name": "Mgr Project"}, headers=auth_headers
+        )
+        project_id = proj_r.json()["id"]
+        manager, _ = await create_test_user(
+            username="proj_manager", email="proj_manager@example.com"
+        )
+        await client.post(
+            f"/api/v1/projects/{project_id}/members",
+            json={"user_id": manager.id, "role": "manager"},
+            headers=auth_headers,
+        )
+        task_r = await client.post(
+            f"/api/v1/projects/{project_id}/tasks",
+            json={"title": "Task for manager"},
+            headers=auth_headers,
+        )
+        task_id = task_r.json()["id"]
+        mgr_headers = {
+            "Authorization": f"Bearer {create_access_token(manager.id, manager.role)}"
+        }
+        r = await client.patch(
+            f"/api/v1/projects/{project_id}/tasks/{task_id}",
+            json={"title": "Manager updated"},
+            headers=mgr_headers,
+        )
+        assert r.status_code == 200
+
+    async def test_project_manager_can_delete_any_task(
+        self, client: AsyncClient, auth_headers: dict, create_test_user
+    ):
+        proj_r = await client.post(
+            "/api/v1/projects",
+            json={"name": "Mgr Delete Project"},
+            headers=auth_headers,
+        )
+        project_id = proj_r.json()["id"]
+        manager, _ = await create_test_user(
+            username="proj_manager2", email="proj_manager2@example.com"
+        )
+        await client.post(
+            f"/api/v1/projects/{project_id}/members",
+            json={"user_id": manager.id, "role": "manager"},
+            headers=auth_headers,
+        )
+        task_r = await client.post(
+            f"/api/v1/projects/{project_id}/tasks",
+            json={"title": "Task to delete"},
+            headers=auth_headers,
+        )
+        task_id = task_r.json()["id"]
+        mgr_headers = {
+            "Authorization": f"Bearer {create_access_token(manager.id, manager.role)}"
+        }
+        r = await client.delete(
+            f"/api/v1/projects/{project_id}/tasks/{task_id}",
+            headers=mgr_headers,
+        )
+        assert r.status_code == 204
+
+
+class TestTaskPagination:
+    async def test_list_tasks_pagination(self, client: AsyncClient, auth_headers: dict):
+        proj_r = await client.post(
+            "/api/v1/projects", json={"name": "Paginate Project"}, headers=auth_headers
+        )
+        project_id = proj_r.json()["id"]
+        for i in range(5):
+            await client.post(
+                f"/api/v1/projects/{project_id}/tasks",
+                json={"title": f"Task{i}"},
+                headers=auth_headers,
+            )
+        r = await client.get(
+            f"/api/v1/projects/{project_id}/tasks?limit=2&offset=0",
+            headers=auth_headers,
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["total"] == 5
+        assert len(data["items"]) == 2
+        assert data["limit"] == 2
+
+    async def test_list_tasks_priority_filter(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        proj_r = await client.post(
+            "/api/v1/projects", json={"name": "Priority Project"}, headers=auth_headers
+        )
+        project_id = proj_r.json()["id"]
+        await client.post(
+            f"/api/v1/projects/{project_id}/tasks",
+            json={"title": "High task", "priority": "high"},
+            headers=auth_headers,
+        )
+        await client.post(
+            f"/api/v1/projects/{project_id}/tasks",
+            json={"title": "Low task", "priority": "low"},
+            headers=auth_headers,
+        )
+        r = await client.get(
+            f"/api/v1/projects/{project_id}/tasks?priority=high",
+            headers=auth_headers,
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["total"] == 1
+        assert data["items"][0]["priority"] == "high"

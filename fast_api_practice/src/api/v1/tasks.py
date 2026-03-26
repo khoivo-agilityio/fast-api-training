@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Query, status
 
 from src.api.dependencies import get_current_user, get_task_service
-from src.domain.entities.task import TaskEntity, TaskStatus
+from src.domain.entities.task import TaskEntity, TaskPriority, TaskStatus
 from src.domain.entities.user import UserEntity
 from src.domain.services.task_service import TaskService
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.task import TaskCreateRequest, TaskResponse, TaskUpdateRequest
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["Tasks"])
@@ -47,21 +48,37 @@ async def create_task(
     return _task_response(task)
 
 
-@router.get("", response_model=list[TaskResponse])
+@router.get("", response_model=PaginatedResponse[TaskResponse])
 async def list_tasks(
     project_id: int,
     task_status: TaskStatus | None = Query(None, alias="status"),
     assignee_id: int | None = Query(None),
+    priority: TaskPriority | None = Query(None),
+    sort_by: str = Query(
+        "created_at", pattern="^(created_at|due_date|priority|title)$"
+    ),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
+    pagination: PaginationParams = Depends(),
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
-) -> list[TaskResponse]:
-    tasks = await service.list_tasks(
+) -> PaginatedResponse[TaskResponse]:
+    items, total = await service.list_tasks(
         project_id=project_id,
         requester_id=current_user.id,
         task_status=task_status,
         assignee_id=assignee_id,
+        priority=priority,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        limit=pagination.limit,
+        offset=pagination.offset,
     )
-    return [_task_response(t) for t in tasks]
+    return PaginatedResponse(
+        items=[_task_response(t) for t in items],
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
