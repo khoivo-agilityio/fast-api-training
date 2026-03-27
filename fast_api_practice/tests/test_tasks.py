@@ -351,52 +351,51 @@ class TestTaskRBAC:
         assert r.status_code == 200
         assert r.json()["title"] == "Updated by assignee"
 
-    async def test_project_manager_can_update_any_task(
+    async def test_project_admin_can_update_any_task(
         self, client: AsyncClient, auth_headers: dict, create_test_user
     ):
         proj_r = await client.post(
-            "/api/v1/projects", json={"name": "Mgr Project"}, headers=auth_headers
+            "/api/v1/projects", json={"name": "Admin Project"}, headers=auth_headers
         )
         project_id = proj_r.json()["id"]
-        manager, _ = await create_test_user(
-            username="proj_manager", email="proj_manager@example.com"
+        admin_user, _ = await create_test_user(
+            username="proj_admin", email="proj_admin@example.com"
         )
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": manager.id, "role": "manager"},
+            json={"user_id": admin_user.id, "role": "admin"},
             headers=auth_headers,
         )
         task_r = await client.post(
             f"/api/v1/projects/{project_id}/tasks",
-            json={"title": "Task for manager"},
+            json={"title": "Task for admin"},
             headers=auth_headers,
         )
         task_id = task_r.json()["id"]
-        mgr_headers = {
-            "Authorization": f"Bearer {create_access_token(manager.id, manager.role)}"
-        }
+        token = create_access_token(admin_user.id, admin_user.role)
+        admin_hdrs = {"Authorization": f"Bearer {token}"}
         r = await client.patch(
             f"/api/v1/projects/{project_id}/tasks/{task_id}",
-            json={"title": "Manager updated"},
-            headers=mgr_headers,
+            json={"title": "Admin updated"},
+            headers=admin_hdrs,
         )
         assert r.status_code == 200
 
-    async def test_project_manager_can_delete_any_task(
+    async def test_project_admin_can_delete_any_task(
         self, client: AsyncClient, auth_headers: dict, create_test_user
     ):
         proj_r = await client.post(
             "/api/v1/projects",
-            json={"name": "Mgr Delete Project"},
+            json={"name": "Admin Delete Project"},
             headers=auth_headers,
         )
         project_id = proj_r.json()["id"]
-        manager, _ = await create_test_user(
-            username="proj_manager2", email="proj_manager2@example.com"
+        admin_user, _ = await create_test_user(
+            username="proj_admin2", email="proj_admin2@example.com"
         )
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": manager.id, "role": "manager"},
+            json={"user_id": admin_user.id, "role": "admin"},
             headers=auth_headers,
         )
         task_r = await client.post(
@@ -405,12 +404,11 @@ class TestTaskRBAC:
             headers=auth_headers,
         )
         task_id = task_r.json()["id"]
-        mgr_headers = {
-            "Authorization": f"Bearer {create_access_token(manager.id, manager.role)}"
-        }
+        token = create_access_token(admin_user.id, admin_user.role)
+        admin_hdrs = {"Authorization": f"Bearer {token}"}
         r = await client.delete(
             f"/api/v1/projects/{project_id}/tasks/{task_id}",
-            headers=mgr_headers,
+            headers=admin_hdrs,
         )
         assert r.status_code == 204
 

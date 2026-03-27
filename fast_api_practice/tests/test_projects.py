@@ -140,17 +140,34 @@ class TestProjectCRUD:
         r = await client.delete(f"/api/v1/projects/{project_id}", headers=other_headers)
         assert r.status_code == 403
 
-    async def test_admin_can_delete_any_project(
+    async def test_project_admin_can_delete_project(
         self,
         client: AsyncClient,
         auth_headers: dict,
-        admin_headers: dict,
+        create_test_user,
     ):
+        """A user promoted to project admin (not owner) can delete."""
+        from src.core.security import create_access_token
+
         create_r = await client.post(
-            "/api/v1/projects", json={"name": "AdminTarget"}, headers=auth_headers
+            "/api/v1/projects",
+            json={"name": "AdminTarget"},
+            headers=auth_headers,
         )
         project_id = create_r.json()["id"]
-        # Admin (non-owner) deletes it
+
+        admin_user, _ = await create_test_user(
+            username="projadmin", email="projadmin@example.com"
+        )
+        # Add as member then promote to admin
+        await client.post(
+            f"/api/v1/projects/{project_id}/members",
+            json={"user_id": admin_user.id, "role": "admin"},
+            headers=auth_headers,
+        )
+        admin_token = create_access_token(admin_user.id, admin_user.role)
+        admin_headers = {"Authorization": f"Bearer {admin_token}"}
+
         r = await client.delete(f"/api/v1/projects/{project_id}", headers=admin_headers)
         assert r.status_code == 204
 
@@ -273,11 +290,11 @@ class TestProjectMembers:
         )
         r = await client.patch(
             f"/api/v1/projects/{project_id}/members/{other_user.id}",
-            json={"role": "manager"},
+            json={"role": "admin"},
             headers=auth_headers,
         )
         assert r.status_code == 200
-        assert r.json()["role"] == "manager"
+        assert r.json()["role"] == "admin"
 
     async def test_remove_member_success(
         self,
@@ -301,7 +318,7 @@ class TestProjectMembers:
         assert r.status_code == 204
 
     async def test_remove_owner_forbidden(
-        self, client: AsyncClient, auth_headers: dict, create_test_user
+        self, client: AsyncClient, auth_headers: dict
     ):
         project_id = await self._create_project(client, auth_headers)
 
@@ -309,7 +326,7 @@ class TestProjectMembers:
         members_r = await client.get(
             f"/api/v1/projects/{project_id}/members", headers=auth_headers
         )
-        owner_member = next(m for m in members_r.json() if m["role"] == "manager")
+        owner_member = next(m for m in members_r.json() if m["role"] == "admin")
         owner_id = owner_member["user_id"]
 
         r = await client.delete(

@@ -47,13 +47,13 @@ class TestProjectSchemas:
         s = AddMemberRequest(user_id=5)
         assert s.role == ProjectMemberRole.MEMBER
 
-    def test_add_member_manager_role(self):
-        s = AddMemberRequest(user_id=5, role=ProjectMemberRole.MANAGER)
-        assert s.role == ProjectMemberRole.MANAGER
+    def test_add_member_admin_role(self):
+        s = AddMemberRequest(user_id=5, role=ProjectMemberRole.ADMIN)
+        assert s.role == ProjectMemberRole.ADMIN
 
     def test_update_member_role_valid(self):
-        s = UpdateMemberRoleRequest(role=ProjectMemberRole.MANAGER)
-        assert s.role == ProjectMemberRole.MANAGER
+        s = UpdateMemberRoleRequest(role=ProjectMemberRole.ADMIN)
+        assert s.role == ProjectMemberRole.ADMIN
 
     def test_update_member_role_invalid(self):
         with pytest.raises(ValidationError):
