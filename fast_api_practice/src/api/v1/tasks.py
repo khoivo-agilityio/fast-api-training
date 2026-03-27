@@ -88,7 +88,7 @@ async def get_task(
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> TaskResponse:
-    task = await service.get_task(task_id, current_user.id)
+    task = await service.get_task(task_id, current_user.id, project_id=project_id)
     return _task_response(task)
 
 
@@ -108,6 +108,7 @@ async def update_task(
     task = await service.update_task(
         task_id=task_id,
         requester_id=current_user.id,
+        project_id=project_id,
         **updates,
     )
     return _task_response(task)
@@ -120,4 +121,6 @@ async def delete_task(
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> None:
-    await service.delete_task(task_id=task_id, requester_id=current_user.id)
+    await service.delete_task(
+        task_id=task_id, requester_id=current_user.id, project_id=project_id
+    )

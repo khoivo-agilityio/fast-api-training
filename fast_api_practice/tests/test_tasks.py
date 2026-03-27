@@ -115,6 +115,30 @@ class TestTaskCRUD:
         )
         assert r.status_code == 404
 
+    async def test_get_task_wrong_project(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        """Task ID exists but belongs to a different project — must return 404."""
+        project_id, headers = await self._setup(client, auth_headers)
+        # Create a second project and a task in it
+        other_project_r = await client.post(
+            "/api/v1/projects",
+            json={"name": "Other Project"},
+            headers=headers,
+        )
+        other_project_id = other_project_r.json()["id"]
+        task_r = await client.post(
+            f"/api/v1/projects/{other_project_id}/tasks",
+            json={"title": "Other Task"},
+            headers=headers,
+        )
+        task_id = task_r.json()["id"]
+        # Try to fetch the task under the wrong project
+        r = await client.get(
+            f"/api/v1/projects/{project_id}/tasks/{task_id}", headers=headers
+        )
+        assert r.status_code == 404
+
     async def test_update_task_status(self, client: AsyncClient, auth_headers: dict):
         project_id, headers = await self._setup(client, auth_headers)
         create_r = await client.post(

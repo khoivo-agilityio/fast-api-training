@@ -46,9 +46,15 @@ class TaskService:
             due_date=due_date,
         )
 
-    async def get_task(self, task_id: int, requester_id: int) -> TaskEntity:
+    async def get_task(
+        self, task_id: int, requester_id: int, project_id: int | None = None
+    ) -> TaskEntity:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+            )
+        if project_id is not None and task.project_id != project_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
@@ -91,10 +97,15 @@ class TaskService:
         self,
         task_id: int,
         requester_id: int,
+        project_id: int | None = None,
         **fields: object,
     ) -> TaskEntity:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+            )
+        if project_id is not None and task.project_id != project_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
@@ -115,9 +126,15 @@ class TaskService:
             )
         return updated
 
-    async def delete_task(self, task_id: int, requester_id: int) -> None:
+    async def delete_task(
+        self, task_id: int, requester_id: int, project_id: int | None = None
+    ) -> None:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+            )
+        if project_id is not None and task.project_id != project_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )

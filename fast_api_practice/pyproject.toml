@@ -76,6 +76,8 @@ select = [
     "B",    # flake8-bugbear
     "SIM",  # flake8-simplify
     "RUF",  # Ruff-specific rules
+    "F841", # Unused variable 
+    "ARG",  # unused function argument
 ]
 ignore = [
     "B008"
