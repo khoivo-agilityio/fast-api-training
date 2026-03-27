@@ -24,11 +24,11 @@ class ProjectService:
         project = await self._projects.create(
             name=name, owner_id=owner_id, description=description
         )
-        # Auto-add owner as manager member
+        # Auto-add owner as admin member
         await self._projects.add_member(
             project_id=project.id,
             user_id=owner_id,
-            role=ProjectMemberRole.MANAGER,
+            role=ProjectMemberRole.ADMIN,
         )
         return project
 
@@ -54,7 +54,7 @@ class ProjectService:
         **fields: object,
     ) -> ProjectEntity:
         project = await self.get_project(project_id)
-        await self._require_manager(project, requester_id)
+        await self._require_project_admin(project, requester_id)
         updated = await self._projects.update(project_id, **fields)
         if updated is None:
             raise HTTPException(
@@ -62,15 +62,9 @@ class ProjectService:
             )
         return updated
 
-    async def delete_project(
-        self, project_id: int, requester_id: int, requester_role: str = "member"
-    ) -> None:
+    async def delete_project(self, project_id: int, requester_id: int) -> None:
         project = await self.get_project(project_id)
-        if project.owner_id != requester_id and requester_role != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only the project owner or an admin can delete this project",
-            )
+        await self._require_project_admin(project, requester_id)
         await self._projects.delete(project_id)
 
     # ── Members ──────────────────────────────────────────────────────────────
@@ -83,7 +77,7 @@ class ProjectService:
         role: ProjectMemberRole = ProjectMemberRole.MEMBER,
     ) -> ProjectMemberEntity:
         project = await self.get_project(project_id)
-        await self._require_manager(project, requester_id)
+        await self._require_project_admin(project, requester_id)
 
         target_user = await self._users.get_by_id(user_id)
         if target_user is None:
@@ -114,7 +108,7 @@ class ProjectService:
         role: ProjectMemberRole,
     ) -> ProjectMemberEntity:
         project = await self.get_project(project_id)
-        await self._require_manager(project, requester_id)
+        await self._require_project_admin(project, requester_id)
 
         if user_id == project.owner_id:
             raise HTTPException(
@@ -134,7 +128,7 @@ class ProjectService:
         self, project_id: int, requester_id: int, user_id: int
     ) -> None:
         project = await self.get_project(project_id)
-        await self._require_manager(project, requester_id)
+        await self._require_project_admin(project, requester_id)
 
         if user_id == project.owner_id:
             raise HTTPException(
@@ -151,13 +145,15 @@ class ProjectService:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
-    async def _require_manager(self, project: ProjectEntity, user_id: int) -> None:
-        """Raise 403 unless user is owner or project manager."""
+    async def _require_project_admin(
+        self, project: ProjectEntity, user_id: int
+    ) -> None:
+        """Raise 403 unless user is owner or project admin."""
         if project.owner_id == user_id:
             return
         member = await self._projects.get_member(project.id, user_id)
-        if member is None or member.role != ProjectMemberRole.MANAGER:
+        if member is None or member.role != ProjectMemberRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have manager access to this project",
+                detail="You do not have admin access to this project",
             )

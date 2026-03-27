@@ -161,7 +161,7 @@ class TaskService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error_msg)
 
     async def _require_task_mutator(self, task: TaskEntity, user_id: int) -> None:
-        """Creator, assignee, or project manager can update a task."""
+        """Creator, assignee, or project admin can update a task."""
         if task.creator_id == user_id:
             return
         if task.assignee_id is not None and task.assignee_id == user_id:
@@ -170,27 +170,27 @@ class TaskService:
         if project is not None and project.owner_id == user_id:
             return
         member = await self._projects.get_member(task.project_id, user_id)
-        if member is not None and member.role == ProjectMemberRole.MANAGER:
+        if member is not None and member.role == ProjectMemberRole.ADMIN:
             return
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
-                "Only the task creator, assignee, or a project manager"
+                "Only the task creator, assignee, or a project admin"
                 " can update this task"
             ),
         )
 
     async def _require_task_deleter(self, task: TaskEntity, user_id: int) -> None:
-        """Creator or project manager can delete a task."""
+        """Creator or project admin can delete a task."""
         if task.creator_id == user_id:
             return
         project = await self._projects.get_by_id(task.project_id)
         if project is not None and project.owner_id == user_id:
             return
         member = await self._projects.get_member(task.project_id, user_id)
-        if member is not None and member.role == ProjectMemberRole.MANAGER:
+        if member is not None and member.role == ProjectMemberRole.ADMIN:
             return
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the task creator or a project manager can delete this task",
+            detail="Only the task creator or a project admin can delete this task",
         )

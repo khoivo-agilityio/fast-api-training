@@ -26,7 +26,7 @@ _STATUS_TO_ERROR_CODE: dict[int, str] = {
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     configure_logging(debug=settings.DEBUG)
     yield
     from src.infrastructure.database.connection import async_engine
@@ -45,7 +45,7 @@ def create_app() -> FastAPI:
     # ── Exception handlers ────────────────────────────────────────────────────
     @app.exception_handler(HTTPException)
     async def http_exception_handler(
-        request: Request, exc: HTTPException
+        _request: Request, exc: HTTPException
     ) -> JSONResponse:
         error_code = _STATUS_TO_ERROR_CODE.get(exc.status_code, "HTTP_ERROR")
         body = ErrorResponse(detail=exc.detail, error_code=error_code).model_dump()
@@ -53,7 +53,7 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
-        request: Request, exc: RequestValidationError
+        _request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         return JSONResponse(
             status_code=422,

@@ -14,7 +14,7 @@ class UserRepository(BaseRepository):
         email: str,
         hashed_password: str,
         full_name: str | None = None,
-        role: str = "member",
+        role: str = "user",
     ) -> UserEntity:
         ...
 

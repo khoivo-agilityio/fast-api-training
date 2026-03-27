@@ -50,7 +50,7 @@ async def list_projects(
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: int,
-    current_user: UserEntity = Depends(get_current_user),
+    _current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     project = await service.get_project(project_id)
@@ -82,7 +82,6 @@ async def delete_project(
     await service.delete_project(
         project_id=project_id,
         requester_id=current_user.id,
-        requester_role=str(current_user.role.value),
     )
 
 
@@ -112,7 +111,7 @@ async def add_member(
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
 async def list_members(
     project_id: int,
-    current_user: UserEntity = Depends(get_current_user),
+    _current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> list[ProjectMemberResponse]:
     members = await service.list_members(project_id)

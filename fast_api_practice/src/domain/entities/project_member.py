@@ -4,7 +4,7 @@ from enum import StrEnum
 
 
 class ProjectMemberRole(StrEnum):
-    MANAGER = "manager"
+    ADMIN = "admin"
     MEMBER = "member"
 
 

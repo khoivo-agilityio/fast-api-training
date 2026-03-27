@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.dependencies import get_current_user, get_user_service
-from src.core.permissions import require_role
-from src.domain.entities.user import UserEntity, UserRole
+from src.domain.entities.user import UserEntity
 from src.domain.services.user_service import UserService
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.user import UserResponse, UserUpdateRequest
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.get("", response_model=PaginatedResponse[UserResponse])
 async def list_users(
     pagination: PaginationParams = Depends(),
-    current_user: UserEntity = Depends(require_role(UserRole.ADMIN)),
+    _current_user: UserEntity = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> PaginatedResponse[UserResponse]:
     items, total = await service.list_users(
