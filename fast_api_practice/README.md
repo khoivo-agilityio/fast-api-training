@@ -25,7 +25,7 @@ A **Trello/Jira-like** project and task management backend built with
 
 ```
 src/
-├── core/               # Config, security, RBAC permissions
+├── core/               # Config, security, permissions
 ├── domain/
 │   ├── entities/       # Pure Python dataclasses (no ORM)
 │   ├── repositories/   # Abstract base interfaces (ABCs)
@@ -53,27 +53,27 @@ src/
 ### Users
 - `GET  /api/v1/users/me` — get own profile
 - `PATCH /api/v1/users/me` — update name / email / password
-- `GET  /api/v1/users` — list all users **(admin only)**
+- `GET  /api/v1/users` — list all users (any authenticated user)
 
 ### Projects
-- `POST   /api/v1/projects` — create project (auto-adds creator as manager)
+- `POST   /api/v1/projects` — create project (auto-adds creator as **admin**)
 - `GET    /api/v1/projects` — list projects the current user belongs to
 - `GET    /api/v1/projects/{id}` — get project details
-- `PATCH  /api/v1/projects/{id}` — update name/description (owner or manager)
-- `DELETE /api/v1/projects/{id}` — delete project (owner only)
+- `PATCH  /api/v1/projects/{id}` — update name/description (owner or project admin)
+- `DELETE /api/v1/projects/{id}` — delete project (project admin only)
 
 ### Project Members
-- `POST   /api/v1/projects/{id}/members` — add member (manager+)
+- `POST   /api/v1/projects/{id}/members` — add member (project admin)
 - `GET    /api/v1/projects/{id}/members` — list members
-- `PATCH  /api/v1/projects/{id}/members/{uid}` — change member role (manager+)
-- `DELETE /api/v1/projects/{id}/members/{uid}` — remove member (manager+)
+- `PATCH  /api/v1/projects/{id}/members/{uid}` — change member role (project admin)
+- `DELETE /api/v1/projects/{id}/members/{uid}` — remove member (project admin)
 
 ### Tasks
 - `POST   /api/v1/projects/{id}/tasks` — create task (project members)
-- `GET    /api/v1/projects/{id}/tasks` — list tasks (optional `status`/`assignee_id` filters)
+- `GET    /api/v1/projects/{id}/tasks` — list tasks (optional `status`/`assignee_id`/`priority` filters)
 - `GET    /api/v1/projects/{id}/tasks/{tid}` — get task
-- `PATCH  /api/v1/projects/{id}/tasks/{tid}` — update task
-- `DELETE /api/v1/projects/{id}/tasks/{tid}` — delete task
+- `PATCH  /api/v1/projects/{id}/tasks/{tid}` — update task (creator, assignee, or project admin)
+- `DELETE /api/v1/projects/{id}/tasks/{tid}` — delete task (creator or project admin)
 
 ### Comments
 - `POST   /api/v1/tasks/{tid}/comments` — add comment (project members)
@@ -83,16 +83,19 @@ src/
 
 ---
 
-## RBAC Roles
+## RBAC — Project-Level Authorization
+
+All authorization is **project-scoped**. There is no global admin hierarchy.
 
 | Role | Scope | Capabilities |
 |---|---|---|
-| `admin` | Global | Everything, including listing all users |
-| `manager` | Project | Create/update/delete projects, manage members |
-| `member` | Project | Read projects, create/update tasks & comments |
+| `admin` | Per-project | Full project control: update/delete project, manage members, update/delete any task |
+| `member` | Per-project | Read project, create tasks, update/delete own tasks, create comments |
 
-Project-level roles (`ProjectMemberRole.MANAGER` / `MEMBER`) are separate from
-global user roles and are set per-project via the members API.
+- Every user signs up with a flat `user` global role (no global privileges).
+- When a user **creates a project**, they automatically become its `admin`.
+- Project admins can **add other users** as `member` (or `admin`).
+- Authorization checks happen in the service layer via project membership lookups.
 
 ---
 
@@ -126,7 +129,7 @@ cp .env.example .env
 uv run alembic upgrade head
 
 # 4. Start the server
-uv run uvicorn main:app --reload
+uv run uvicorn src.main:app --reload
 ```
 
 ### Environment Variables
@@ -157,19 +160,19 @@ uv run pytest tests/ --cov=src --cov-report=term-missing
 uv run pytest tests/test_permissions.py -v
 ```
 
-**Current coverage: 93.55%** (target: ≥80%)
+**Current coverage: 91%+** (target: ≥80%)
 
 ### Test Files
 
 | File | What it tests |
 |---|---|
 | `test_auth.py` | Registration, login, token refresh (19 tests) |
-| `test_users.py` | Profile endpoints (6 tests) |
+| `test_users.py` | Profile + user listing endpoints (9 tests) |
 | `test_projects.py` | Project CRUD + member management (18 tests) |
-| `test_tasks.py` | Task CRUD + filters (13 tests) |
+| `test_tasks.py` | Task CRUD + filters + RBAC (17 tests) |
 | `test_comments.py` | Comment CRUD + ownership (9 tests) |
 | `test_schemas.py` | Pydantic schema validation (20 tests) |
-| `test_permissions.py` | RBAC + middleware headers (11 tests) |
+| `test_permissions.py` | Permission helpers + role enums (11 tests) |
 
 ---
 
