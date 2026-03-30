@@ -71,7 +71,7 @@ async def create_test_user(db_session: AsyncSession):
         username: str = "testuser",
         email: str = "test@example.com",
         password: str = "password123",
-        role: str = "member",
+        role: str = "user",
     ) -> tuple[UserModel, str]:
         user = UserModel(
             username=username,
@@ -97,9 +97,9 @@ async def auth_headers(create_test_user) -> dict[str, str]:
 
 @pytest.fixture
 async def admin_headers(create_test_user) -> dict[str, str]:
-    """Auth headers for an admin user."""
+    """Auth headers for a second regular user (used where two users are needed)."""
     user, _ = await create_test_user(
-        username="admin", email="admin@example.com", role="admin"
+        username="admin", email="admin@example.com", role="user"
     )
     token = create_access_token(user.id, user.role)
     return {"Authorization": f"Bearer {token}"}

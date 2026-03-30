@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 
 from src.api.dependencies import get_current_user, get_project_service
 from src.domain.entities.user import UserEntity
 from src.domain.services.project_service import ProjectService
+from src.infrastructure.background import simulate_project_created_email
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.project import (
     AddMemberRequest,
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
     body: ProjectCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
@@ -26,6 +28,12 @@ async def create_project(
         name=body.name,
         owner_id=current_user.id,
         description=body.description,
+    )
+    background_tasks.add_task(
+        simulate_project_created_email,
+        project_id=project.id,
+        project_name=project.name,
+        owner_id=current_user.id,
     )
     return ProjectResponse.model_validate(project)
 

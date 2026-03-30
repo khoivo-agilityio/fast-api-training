@@ -8,30 +8,25 @@ dependencies = [
     # --- Web framework ---
     "fastapi[standard]>=0.115",
     "uvicorn[standard]>=0.34",
-
     # --- Database ---
     "sqlalchemy[asyncio]>=2.0",
     "asyncpg>=0.30",               # Async PostgreSQL driver
     "alembic>=1.15",
-
     # --- Auth ---
     "pyjwt>=2.10",
     "passlib[bcrypt]>=1.7",
     "bcrypt>=4.3",
-
     # --- Config ---
     "pydantic>=2.11",
     "pydantic-settings>=2.9",
     "python-dotenv>=1.1",
-
     # --- Logging ---
     "structlog>=25.1",
-
     # --- Validation ---
     "email-validator>=2.2",         # Required by Pydantic EmailStr
-
     # --- Multipart form support (OAuth2 password flow) ---
     "python-multipart>=0.0.20",
+    "certifi>=2026.2.25",
 ]
 
 [project.optional-dependencies]
