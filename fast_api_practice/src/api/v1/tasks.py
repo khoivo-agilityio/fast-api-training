@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 
 from src.api.dependencies import get_current_user, get_task_service
 from src.domain.entities.task import TaskEntity, TaskPriority, TaskStatus
 from src.domain.entities.user import UserEntity
 from src.domain.services.task_service import TaskService
+from src.infrastructure.background import simulate_task_assignment_email
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.task import TaskCreateRequest, TaskResponse, TaskUpdateRequest
 
@@ -32,6 +33,7 @@ def _task_response(task: TaskEntity) -> TaskResponse:
 async def create_task(
     project_id: int,
     body: TaskCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> TaskResponse:
@@ -45,6 +47,14 @@ async def create_task(
         assignee_id=body.assignee_id,
         due_date=body.due_date,
     )
+    if task.assignee_id is not None:
+        background_tasks.add_task(
+            simulate_task_assignment_email,
+            task_id=task.id,
+            task_title=task.title,
+            assignee_id=task.assignee_id,
+            project_id=task.project_id,
+        )
     return _task_response(task)
 
 
@@ -97,6 +107,7 @@ async def update_task(
     project_id: int,
     task_id: int,
     body: TaskUpdateRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> TaskResponse:
@@ -111,6 +122,14 @@ async def update_task(
         project_id=project_id,
         **updates,
     )
+    if "assignee_id" in updates and task.assignee_id is not None:
+        background_tasks.add_task(
+            simulate_task_assignment_email,
+            task_id=task.id,
+            task_title=task.title,
+            assignee_id=task.assignee_id,
+            project_id=task.project_id,
+        )
     return _task_response(task)
 
 
