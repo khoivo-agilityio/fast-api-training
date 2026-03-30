@@ -22,7 +22,13 @@ class ProjectRepository(BaseRepository):
         ...
 
     @abstractmethod
-    async def list_for_user(self, user_id: int) -> list[ProjectEntity]:
+    async def list_for_user(
+        self, user_id: int, *, limit: int = 20, offset: int = 0
+    ) -> list[ProjectEntity]:
+        ...
+
+    @abstractmethod
+    async def count_for_user(self, user_id: int) -> int:
         ...
 
     @abstractmethod

@@ -81,8 +81,10 @@ class TestCommentCRUD:
         )
         r = await client.get(f"/api/v1/tasks/{task_id}/comments", headers=auth_headers)
         assert r.status_code == 200
-        contents = {c["content"] for c in r.json()}
+        data = r.json()
+        contents = {c["content"] for c in data["items"]}
         assert {"Comment A", "Comment B"} == contents
+        assert data["total"] == 2
 
     async def test_list_comments_nonexistent_task(
         self, client: AsyncClient, auth_headers: dict

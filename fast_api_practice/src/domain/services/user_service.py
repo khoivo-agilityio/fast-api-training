@@ -10,6 +10,13 @@ class UserService:
     async def get_profile(self, user_id: int) -> UserEntity | None:
         return await self._user_repo.get_by_id(user_id)
 
+    async def list_users(
+        self, limit: int = 20, offset: int = 0
+    ) -> tuple[list[UserEntity], int]:
+        items = await self._user_repo.list_all(limit=limit, offset=offset)
+        total = await self._user_repo.count_all()
+        return items, total
+
     async def update_profile(
         self,
         user_id: int,
