@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     APP_NAME: str = model_config.get("APP_NAME", "Collaborative Task Manager")
     DEBUG: bool = model_config.get("DEBUG", True)
 
+    # Email / SMTP
+    # Set SMTP_ENABLED=true and fill in the credentials to send real emails.
+    # When false (default) the functions only log — useful for dev/test.
+    SMTP_ENABLED: bool = model_config.get("SMTP_ENABLED", False)
+    SMTP_HOST: str = model_config.get("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = model_config.get("SMTP_PORT", 465)  # 465 = SSL, 587 = STARTTLS
+    SMTP_USERNAME: str = model_config.get("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = model_config.get("SMTP_PASSWORD", "")  # App-password
+    SMTP_FROM: str = model_config.get("SMTP_FROM", "")
+
 
 def get_settings() -> Settings:
     return Settings()
