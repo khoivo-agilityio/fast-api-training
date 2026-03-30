@@ -41,7 +41,7 @@ class TestUserRepository:
         )
         assert user.id is not None
         assert user.username == "alice"
-        assert user.role == UserRole.MEMBER
+        assert user.role == UserRole.USER
 
     async def test_get_by_username(self, db_session):
         repo = SQLAlchemyUserRepository(db_session)

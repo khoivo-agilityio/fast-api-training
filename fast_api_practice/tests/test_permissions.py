@@ -1,15 +1,13 @@
-"""Unit tests for src/core/permissions.py — has_role, require_role, assert_is_admin."""
+"""Unit tests for src/core/permissions.py and role enums."""
 
 from datetime import UTC, datetime
 
-import pytest
-from fastapi import HTTPException
-
-from src.core.permissions import assert_is_admin, has_role, require_role
+from src.core.permissions import require_authenticated
+from src.domain.entities.project_member import ProjectMemberRole
 from src.domain.entities.user import UserEntity, UserRole
 
 
-def _make_user(role: UserRole) -> UserEntity:
+def _make_user() -> UserEntity:
     return UserEntity(
         id=1,
         username="tester",
@@ -17,97 +15,61 @@ def _make_user(role: UserRole) -> UserEntity:
         hashed_password="x",
         full_name=None,
         is_active=True,
-        role=role,
+        role=UserRole.USER,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
 
 
-# ── has_role ──────────────────────────────────────────────────────────────────
+# ── require_authenticated ─────────────────────────────────────────────────────
 
 
-class TestHasRole:
-    def test_member_meets_member(self):
-        assert has_role(_make_user(UserRole.MEMBER), UserRole.MEMBER) is True
+class TestRequireAuthenticated:
+    async def test_returns_user_when_authenticated(self):
+        user = _make_user()
+        result = await require_authenticated(current_user=user)
+        assert result is user
 
-    def test_member_fails_manager(self):
-        assert has_role(_make_user(UserRole.MEMBER), UserRole.MANAGER) is False
+    async def test_returns_correct_user_id(self):
+        user = _make_user()
+        result = await require_authenticated(current_user=user)
+        assert result.id == 1
 
-    def test_member_fails_admin(self):
-        assert has_role(_make_user(UserRole.MEMBER), UserRole.ADMIN) is False
+    async def test_is_async_callable(self):
+        import inspect
 
-    def test_manager_meets_member(self):
-        assert has_role(_make_user(UserRole.MANAGER), UserRole.MEMBER) is True
-
-    def test_manager_meets_manager(self):
-        assert has_role(_make_user(UserRole.MANAGER), UserRole.MANAGER) is True
-
-    def test_manager_fails_admin(self):
-        assert has_role(_make_user(UserRole.MANAGER), UserRole.ADMIN) is False
-
-    def test_admin_meets_member(self):
-        assert has_role(_make_user(UserRole.ADMIN), UserRole.MEMBER) is True
-
-    def test_admin_meets_manager(self):
-        assert has_role(_make_user(UserRole.ADMIN), UserRole.MANAGER) is True
-
-    def test_admin_meets_admin(self):
-        assert has_role(_make_user(UserRole.ADMIN), UserRole.ADMIN) is True
+        assert inspect.iscoroutinefunction(require_authenticated)
 
 
-# ── require_role ──────────────────────────────────────────────────────────────
+# ── ProjectMemberRole ─────────────────────────────────────────────────────────
 
 
-class TestRequireRole:
-    def test_returns_callable(self):
-        dep = require_role(UserRole.ADMIN)
-        assert callable(dep)
+class TestProjectMemberRole:
+    def test_admin_value(self):
+        assert ProjectMemberRole.ADMIN.value == "admin"
 
-    @pytest.mark.asyncio
-    async def test_passes_when_role_sufficient(self):
-        # require_role returns the inner async _dependency function directly
-        inner = require_role(UserRole.MEMBER)
-        admin = _make_user(UserRole.ADMIN)
-        result = await inner(current_user=admin)
-        assert result == admin
+    def test_member_value(self):
+        assert ProjectMemberRole.MEMBER.value == "member"
 
-    @pytest.mark.asyncio
-    async def test_raises_403_when_role_insufficient(self):
-        inner = require_role(UserRole.ADMIN)
-        member = _make_user(UserRole.MEMBER)
-        with pytest.raises(HTTPException) as exc_info:
-            await inner(current_user=member)
-        assert exc_info.value.status_code == 403
+    def test_only_two_values(self):
+        assert len(ProjectMemberRole) == 2
 
-    @pytest.mark.asyncio
-    async def test_manager_passes_member_gate(self):
-        inner = require_role(UserRole.MEMBER)
-        manager = _make_user(UserRole.MANAGER)
-        result = await inner(current_user=manager)
-        assert result.role == UserRole.MANAGER
-
-    @pytest.mark.asyncio
-    async def test_member_fails_manager_gate(self):
-        inner = require_role(UserRole.MANAGER)
-        member = _make_user(UserRole.MEMBER)
-        with pytest.raises(HTTPException) as exc_info:
-            await inner(current_user=member)
-        assert exc_info.value.status_code == 403
+    def test_no_manager_value(self):
+        values = {r.value for r in ProjectMemberRole}
+        assert "manager" not in values
 
 
-# ── assert_is_admin ───────────────────────────────────────────────────────────
+# ── UserRole ──────────────────────────────────────────────────────────────────
 
 
-class TestAssertIsAdmin:
-    def test_admin_passes(self):
-        assert_is_admin(_make_user(UserRole.ADMIN))  # no exception
+class TestUserRole:
+    def test_user_value(self):
+        assert UserRole.USER.value == "user"
 
-    def test_manager_raises(self):
-        with pytest.raises(HTTPException) as exc_info:
-            assert_is_admin(_make_user(UserRole.MANAGER))
-        assert exc_info.value.status_code == 403
+    def test_single_value(self):
+        assert len(UserRole) == 1
 
-    def test_member_raises(self):
-        with pytest.raises(HTTPException) as exc_info:
-            assert_is_admin(_make_user(UserRole.MEMBER))
-        assert exc_info.value.status_code == 403
+    def test_no_admin_or_manager(self):
+        values = {r.value for r in UserRole}
+        assert "admin" not in values
+        assert "manager" not in values

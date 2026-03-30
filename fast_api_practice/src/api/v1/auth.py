@@ -1,9 +1,10 @@
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.services.auth_service import AuthService
+from src.infrastructure.background import simulate_welcome_email
 from src.infrastructure.database.connection import get_async_session
 from src.infrastructure.database.repositories import SQLAlchemyUserRepository
 from src.schemas.user import (
@@ -29,6 +30,7 @@ def _get_auth_service(
 )
 async def register(
     body: UserRegisterRequest,
+    background_tasks: BackgroundTasks,
     service: AuthService = Depends(_get_auth_service),
 ):
     try:
@@ -40,6 +42,12 @@ async def register(
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    background_tasks.add_task(
+        simulate_welcome_email,
+        user_id=user.id,
+        username=user.username,
+        email=user.email,
+    )
     return user
 
 
