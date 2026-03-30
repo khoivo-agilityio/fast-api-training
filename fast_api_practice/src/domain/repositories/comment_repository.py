@@ -21,7 +21,13 @@ class CommentRepository(BaseRepository):
         ...
 
     @abstractmethod
-    async def list_for_task(self, task_id: int) -> list[CommentEntity]:
+    async def list_for_task(
+        self, task_id: int, *, limit: int = 20, offset: int = 0
+    ) -> list[CommentEntity]:
+        ...
+
+    @abstractmethod
+    async def count_for_task(self, task_id: int) -> int:
         ...
 
     @abstractmethod

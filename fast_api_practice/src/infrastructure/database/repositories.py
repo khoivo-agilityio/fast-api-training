@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.comment import CommentEntity
@@ -51,7 +51,7 @@ class SQLAlchemyUserRepository(UserRepository):
         email: str,
         hashed_password: str,
         full_name: str | None = None,
-        role: str = "member",
+        role: str = "user",
     ) -> UserEntity:
         user = UserModel(
             username=username,
@@ -99,6 +99,18 @@ class SQLAlchemyUserRepository(UserRepository):
         await self._session.refresh(model)
         return self._to_entity(model)
 
+    async def list_all(self, limit: int = 20, offset: int = 0) -> list[UserEntity]:
+        result = await self._session.execute(
+            select(UserModel).order_by(UserModel.id).limit(limit).offset(offset)
+        )
+        return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def count_all(self) -> int:
+        result = await self._session.execute(
+            select(func.count()).select_from(UserModel)
+        )
+        return result.scalar_one()
+
 
 # ── Project repository ────────────────────────────────────────────────────────
 
@@ -145,7 +157,9 @@ class SQLAlchemyProjectRepository(ProjectRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def list_for_user(self, user_id: int) -> list[ProjectEntity]:
+    async def list_for_user(
+        self, user_id: int, *, limit: int = 20, offset: int = 0
+    ) -> list[ProjectEntity]:
         result = await self._session.execute(
             select(ProjectModel)
             .join(
@@ -153,8 +167,22 @@ class SQLAlchemyProjectRepository(ProjectRepository):
                 ProjectMemberModel.project_id == ProjectModel.id,
             )
             .where(ProjectMemberModel.user_id == user_id)
+            .limit(limit)
+            .offset(offset)
         )
         return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def count_for_user(self, user_id: int) -> int:
+        result = await self._session.execute(
+            select(func.count())
+            .select_from(ProjectModel)
+            .join(
+                ProjectMemberModel,
+                ProjectMemberModel.project_id == ProjectModel.id,
+            )
+            .where(ProjectMemberModel.user_id == user_id)
+        )
+        return result.scalar_one()
 
     async def update(self, id: int, **fields: object) -> ProjectEntity | None:
         result = await self._session.execute(
@@ -309,14 +337,51 @@ class SQLAlchemyTaskRepository(TaskRepository):
         *,
         status: TaskStatus | None = None,
         assignee_id: int | None = None,
+        priority: TaskPriority | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        limit: int = 20,
+        offset: int = 0,
     ) -> list[TaskEntity]:
-        query = select(TaskModel).where(TaskModel.project_id == project_id)
+        sort_col = getattr(TaskModel, sort_by, TaskModel.created_at)
+        order = sort_col.desc() if sort_order == "desc" else sort_col.asc()
+        query = (
+            select(TaskModel)
+            .where(TaskModel.project_id == project_id)
+            .order_by(order)
+            .limit(limit)
+            .offset(offset)
+        )
         if status is not None:
             query = query.where(TaskModel.status == status.value)
         if assignee_id is not None:
             query = query.where(TaskModel.assignee_id == assignee_id)
+        if priority is not None:
+            query = query.where(TaskModel.priority == priority.value)
         result = await self._session.execute(query)
         return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def count_for_project(
+        self,
+        project_id: int,
+        *,
+        status: TaskStatus | None = None,
+        assignee_id: int | None = None,
+        priority: TaskPriority | None = None,
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(TaskModel)
+            .where(TaskModel.project_id == project_id)
+        )
+        if status is not None:
+            query = query.where(TaskModel.status == status.value)
+        if assignee_id is not None:
+            query = query.where(TaskModel.assignee_id == assignee_id)
+        if priority is not None:
+            query = query.where(TaskModel.priority == priority.value)
+        result = await self._session.execute(query)
+        return result.scalar_one()
 
     async def update(self, id: int, **fields: object) -> TaskEntity | None:
         result = await self._session.execute(
@@ -374,11 +439,25 @@ class SQLAlchemyCommentRepository(CommentRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def list_for_task(self, task_id: int) -> list[CommentEntity]:
+    async def list_for_task(
+        self, task_id: int, *, limit: int = 20, offset: int = 0
+    ) -> list[CommentEntity]:
         result = await self._session.execute(
-            select(CommentModel).where(CommentModel.task_id == task_id)
+            select(CommentModel)
+            .where(CommentModel.task_id == task_id)
+            .order_by(CommentModel.created_at.asc())
+            .limit(limit)
+            .offset(offset)
         )
         return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def count_for_task(self, task_id: int) -> int:
+        result = await self._session.execute(
+            select(func.count())
+            .select_from(CommentModel)
+            .where(CommentModel.task_id == task_id)
+        )
+        return result.scalar_one()
 
     async def update(self, id: int, content: str) -> CommentEntity | None:
         result = await self._session.execute(

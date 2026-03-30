@@ -8,6 +8,7 @@ from src.domain.entities.user import UserEntity
 from src.domain.services.comment_service import CommentService
 from src.domain.services.project_service import ProjectService
 from src.domain.services.task_service import TaskService
+from src.domain.services.user_service import UserService
 from src.infrastructure.database.connection import get_async_session
 from src.infrastructure.database.repositories import (
     SQLAlchemyCommentRepository,
@@ -77,3 +78,9 @@ async def get_comment_service(
         task_repo=SQLAlchemyTaskRepository(session),
         project_repo=SQLAlchemyProjectRepository(session),
     )
+
+
+async def get_user_service(
+    session: AsyncSession = Depends(get_async_session),
+) -> UserService:
+    return UserService(user_repo=SQLAlchemyUserRepository(session))

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, status
 from src.api.dependencies import get_current_user, get_project_service
 from src.domain.entities.user import UserEntity
 from src.domain.services.project_service import ProjectService
+from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.project import (
     AddMemberRequest,
     ProjectCreateRequest,
@@ -29,19 +30,27 @@ async def create_project(
     return ProjectResponse.model_validate(project)
 
 
-@router.get("", response_model=list[ProjectResponse])
+@router.get("", response_model=PaginatedResponse[ProjectResponse])
 async def list_projects(
+    pagination: PaginationParams = Depends(),
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
-) -> list[ProjectResponse]:
-    projects = await service.list_projects(current_user.id)
-    return [ProjectResponse.model_validate(p) for p in projects]
+) -> PaginatedResponse[ProjectResponse]:
+    items, total = await service.list_projects(
+        current_user.id, limit=pagination.limit, offset=pagination.offset
+    )
+    return PaginatedResponse(
+        items=[ProjectResponse.model_validate(p) for p in items],
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: int,
-    current_user: UserEntity = Depends(get_current_user),
+    _current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     project = await service.get_project(project_id)
@@ -70,7 +79,10 @@ async def delete_project(
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> None:
-    await service.delete_project(project_id=project_id, requester_id=current_user.id)
+    await service.delete_project(
+        project_id=project_id,
+        requester_id=current_user.id,
+    )
 
 
 # ── Members ───────────────────────────────────────────────────────────────────
@@ -99,7 +111,7 @@ async def add_member(
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
 async def list_members(
     project_id: int,
-    current_user: UserEntity = Depends(get_current_user),
+    _current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> list[ProjectMemberResponse]:
     members = await service.list_members(project_id)

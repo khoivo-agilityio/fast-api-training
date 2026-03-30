@@ -18,8 +18,8 @@ class UserModel(Base):
     full_name: Mapped[str | None] = mapped_column(String(100))
     is_active: Mapped[bool] = mapped_column(default=True)
     role: Mapped[str] = mapped_column(
-        Enum("admin", "manager", "member", name="user_role_enum"),
-        default="member",
+        Enum("user", name="user_role_enum"),
+        default="user",
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -62,7 +62,7 @@ class ProjectMemberModel(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     role: Mapped[str] = mapped_column(
-        Enum("manager", "member", name="project_member_role_enum"),
+        Enum("admin", "member", name="project_member_role_enum"),
         default="member",
     )
     joined_at: Mapped[datetime] = mapped_column(

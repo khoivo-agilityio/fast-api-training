@@ -31,15 +31,17 @@ class CommentService:
         )
 
     async def list_comments(
-        self, task_id: int, requester_id: int
-    ) -> list[CommentEntity]:
+        self, task_id: int, requester_id: int, *, limit: int = 20, offset: int = 0
+    ) -> tuple[list[CommentEntity], int]:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
         await self._require_project_member(task.project_id, requester_id)
-        return await self._comments.list_for_task(task_id)
+        items = await self._comments.list_for_task(task_id, limit=limit, offset=offset)
+        total = await self._comments.count_for_task(task_id)
+        return items, total
 
     async def update_comment(
         self, comment_id: int, requester_id: int, content: str
