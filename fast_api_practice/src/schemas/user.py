@@ -6,25 +6,27 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    email: EmailStr
-    password: str = Field(..., min_length=8, max_length=128)
-    full_name: str | None = Field(None, max_length=100)
+    username: str = Field(..., min_length=3, max_length=50, examples=["john_doe"])
+    email: EmailStr = Field(..., examples=["john@example.com"])
+    password: str = Field(..., min_length=8, max_length=128, examples=["Secur3P@ss!"])
+    full_name: str | None = Field(None, max_length=100, examples=["John Doe"])
 
 
 class UserLoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., examples=["john_doe"])
+    password: str = Field(..., examples=["Secur3P@ss!"])
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(..., examples=["<your_refresh_token>"])
 
 
 class UserUpdateRequest(BaseModel):
-    full_name: str | None = Field(None, max_length=100)
-    email: EmailStr | None = None
-    password: str | None = Field(None, min_length=8, max_length=128)
+    full_name: str | None = Field(None, max_length=100, examples=["Jane Doe"])
+    email: EmailStr | None = Field(None, examples=["jane@example.com"])
+    password: str | None = Field(
+        None, min_length=8, max_length=128, examples=["NewP@ss123!"]
+    )
 
 
 # --- Response schemas ---

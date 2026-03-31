@@ -11,6 +11,7 @@ from src.api.v1 import auth, comments, projects, tasks, users
 from src.core.config import get_settings
 from src.infrastructure.logging.setup import configure_logging
 from src.schemas.common import ErrorResponse, HealthResponse
+from src.websockets.router import router as ws_router
 
 settings = get_settings()
 
@@ -37,9 +38,48 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Collaborative Task Manager API",
-        description="A Trello/Jira-like project & task management backend",
+        description=(
+            "A **Trello/Jira-like** project & task management backend.\n\n"
+            "Features:\n"
+            "- 🔐 JWT authentication (access + refresh tokens)\n"
+            "- 👥 Multi-user with role-based permissions (Admin / Manager / Member)\n"
+            "- 📋 Project & task CRUD with filtering, sorting, and pagination\n"
+            "- 💬 Task comments\n"
+            "- 📧 Background email notifications (simulated)\n"
+            "- 🔔 Real-time WebSocket notifications on task status changes\n\n"
+            "Connect to WebSocket: `ws://localhost:8000/ws/notifications?token=<access_jwt>`"
+        ),
         version="0.1.0",
         lifespan=lifespan,
+        openapi_tags=[
+            {"name": "Health", "description": "Health check endpoint."},
+            {
+                "name": "Auth",
+                "description": "Register, login, and refresh JWT tokens.",
+            },
+            {"name": "Users", "description": "User profile — view and update."},
+            {
+                "name": "Projects",
+                "description": "Project CRUD and member management.",
+            },
+            {
+                "name": "Tasks",
+                "description": (
+                    "Task CRUD with assignment, status transitions, "
+                    "filtering, sorting, and pagination."
+                ),
+            },
+            {"name": "Comments", "description": "Comments on tasks."},
+            {
+                "name": "WebSocket",
+                "description": (
+                    "Real-time notifications. "
+                    "Connect via `GET /ws/notifications?token=<access_jwt>`."
+                ),
+            },
+        ],
+        contact={"name": "API Support"},
+        license_info={"name": "MIT"},
     )
 
     # ── Exception handlers ────────────────────────────────────────────────────
@@ -84,6 +124,7 @@ def create_app() -> FastAPI:
     app.include_router(projects.router, prefix="/api/v1")
     app.include_router(tasks.router, prefix="/api/v1")
     app.include_router(comments.router, prefix="/api/v1")
+    app.include_router(ws_router)
 
     return app
 

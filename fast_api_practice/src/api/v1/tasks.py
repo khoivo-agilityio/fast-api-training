@@ -7,6 +7,7 @@ from src.domain.services.task_service import TaskService
 from src.infrastructure.background import simulate_task_assignment_email
 from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.task import TaskCreateRequest, TaskResponse, TaskUpdateRequest
+from src.websockets.notifications import manager as ws_manager
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["Tasks"])
 
@@ -129,6 +130,20 @@ async def update_task(
             task_title=task.title,
             assignee_id=task.assignee_id,
             project_id=task.project_id,
+        )
+    if "status" in updates and task.assignee_id is not None:
+        new_status = (
+            task.status.value if hasattr(task.status, "value") else str(task.status)
+        )
+        await ws_manager.send_to_user(
+            task.assignee_id,
+            {
+                "type": "task_status_changed",
+                "task_id": task.id,
+                "task_title": task.title,
+                "new_status": new_status,
+                "project_id": task.project_id,
+            },
         )
     return _task_response(task)
 
