@@ -25,13 +25,12 @@ def _encode(payload: dict[str, Any]) -> str:
     return token if isinstance(token, str) else token.decode("utf-8")
 
 
-def create_access_token(user_id: int, role: str) -> str:
+def create_access_token(user_id: int) -> str:
     expire = datetime.now(UTC) + timedelta(
         minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
     )
     payload = {
         "sub": str(user_id),
-        "role": role,
         "type": "access",
         "exp": expire,
         "iat": datetime.now(UTC),

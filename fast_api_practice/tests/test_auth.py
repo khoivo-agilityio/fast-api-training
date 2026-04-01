@@ -5,7 +5,6 @@ from src.core.security import (
     hash_password,
     verify_password,
 )
-from src.domain.entities.user import UserRole
 from src.infrastructure.database.repositories import SQLAlchemyUserRepository
 
 
@@ -17,10 +16,9 @@ class TestSecurity:
         assert not verify_password("wrongpassword", hashed)
 
     def test_access_token_roundtrip(self):
-        token = create_access_token(user_id=42, role="admin")
+        token = create_access_token(user_id=42)
         payload = decode_token(token)
         assert payload["sub"] == "42"
-        assert payload["role"] == "admin"
         assert payload["type"] == "access"
 
     def test_refresh_token_roundtrip(self):
@@ -41,7 +39,6 @@ class TestUserRepository:
         )
         assert user.id is not None
         assert user.username == "alice"
-        assert user.role == UserRole.USER
 
     async def test_get_by_username(self, db_session):
         repo = SQLAlchemyUserRepository(db_session)
