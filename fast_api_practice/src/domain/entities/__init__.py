@@ -1,6 +1,5 @@
-from src.domain.entities.user import UserEntity, UserRole
+from src.domain.entities.user import UserEntity
 
 __all__ = [
     "UserEntity",
-    "UserRole",
 ]

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from src.api.dependencies import get_current_user, get_project_service
 from src.domain.entities.user import UserEntity
@@ -24,11 +24,14 @@ async def create_project(
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
-    project = await service.create_project(
-        name=body.name,
-        owner_id=current_user.id,
-        description=body.description,
-    )
+    try:
+        project = await service.create_project(
+            name=body.name,
+            owner_id=current_user.id,
+            description=body.description,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     background_tasks.add_task(
         simulate_project_created_email,
         project_id=project.id,
@@ -61,7 +64,10 @@ async def get_project(
     _current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
-    project = await service.get_project(project_id)
+    try:
+        project = await service.get_project(project_id)
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ProjectResponse.model_validate(project)
 
 
@@ -73,11 +79,16 @@ async def update_project(
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     updates = body.model_dump(exclude_unset=True)
-    project = await service.update_project(
-        project_id=project_id,
-        requester_id=current_user.id,
-        **updates,
-    )
+    try:
+        project = await service.update_project(
+            project_id=project_id,
+            requester_id=current_user.id,
+            **updates,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     return ProjectResponse.model_validate(project)
 
 
@@ -87,10 +98,15 @@ async def delete_project(
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> None:
-    await service.delete_project(
-        project_id=project_id,
-        requester_id=current_user.id,
-    )
+    try:
+        await service.delete_project(
+            project_id=project_id,
+            requester_id=current_user.id,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
 
 # ── Members ───────────────────────────────────────────────────────────────────
@@ -107,12 +123,19 @@ async def add_member(
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectMemberResponse:
-    member = await service.add_member(
-        project_id=project_id,
-        requester_id=current_user.id,
-        user_id=body.user_id,
-        role=body.role,
-    )
+    try:
+        member = await service.add_member(
+            project_id=project_id,
+            requester_id=current_user.id,
+            user_id=body.user_id,
+            role=body.role,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     return ProjectMemberResponse.model_validate(member)
 
 
@@ -122,7 +145,10 @@ async def list_members(
     _current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> list[ProjectMemberResponse]:
-    members = await service.list_members(project_id)
+    try:
+        members = await service.list_members(project_id)
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return [ProjectMemberResponse.model_validate(m) for m in members]
 
 
@@ -134,12 +160,17 @@ async def update_member_role(
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectMemberResponse:
-    member = await service.update_member_role(
-        project_id=project_id,
-        requester_id=current_user.id,
-        user_id=user_id,
-        role=body.role,
-    )
+    try:
+        member = await service.update_member_role(
+            project_id=project_id,
+            requester_id=current_user.id,
+            user_id=user_id,
+            role=body.role,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     return ProjectMemberResponse.model_validate(member)
 
 
@@ -152,8 +183,13 @@ async def remove_member(
     current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> None:
-    await service.remove_member(
-        project_id=project_id,
-        requester_id=current_user.id,
-        user_id=user_id,
-    )
+    try:
+        await service.remove_member(
+            project_id=project_id,
+            requester_id=current_user.id,
+            user_id=user_id,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e

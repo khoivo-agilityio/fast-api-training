@@ -52,9 +52,7 @@ class TestTaskCRUD:
         other, _ = await create_test_user(
             username="outsider", email="outsider@example.com"
         )
-        other_headers = {
-            "Authorization": f"Bearer {create_access_token(other.id, other.role)}"
-        }
+        other_headers = {"Authorization": f"Bearer {create_access_token(other.id)}"}
         r = await client.post(
             f"/api/v1/projects/{project_id}/tasks",
             json={"title": "Intruder task"},
@@ -251,9 +249,7 @@ class TestTaskCRUD:
         other, _ = await create_test_user(
             username="nodeleter", email="nodeleter@example.com"
         )
-        other_headers = {
-            "Authorization": f"Bearer {create_access_token(other.id, other.role)}"
-        }
+        other_headers = {"Authorization": f"Bearer {create_access_token(other.id)}"}
         r = await client.delete(
             f"/api/v1/projects/{project_id}/tasks/{task_id}",
             headers=other_headers,
@@ -289,9 +285,7 @@ class TestTaskRBAC:
             json={"user_id": member.id, "role": "member"},
             headers=auth_headers,
         )
-        member_headers = {
-            "Authorization": f"Bearer {create_access_token(member.id, member.role)}"
-        }
+        member_headers = {"Authorization": f"Bearer {create_access_token(member.id)}"}
         return project_id, task_id, member_headers
 
     async def test_plain_member_cannot_update_task(
@@ -341,7 +335,7 @@ class TestTaskRBAC:
         )
         task_id = task_r.json()["id"]
         assignee_headers = {
-            "Authorization": f"Bearer {create_access_token(assignee.id, assignee.role)}"
+            "Authorization": f"Bearer {create_access_token(assignee.id)}"
         }
         r = await client.patch(
             f"/api/v1/projects/{project_id}/tasks/{task_id}",
@@ -372,9 +366,7 @@ class TestTaskRBAC:
             headers=auth_headers,
         )
         task_id = task_r.json()["id"]
-        mgr_headers = {
-            "Authorization": f"Bearer {create_access_token(manager.id, manager.role)}"
-        }
+        mgr_headers = {"Authorization": f"Bearer {create_access_token(manager.id)}"}
         r = await client.patch(
             f"/api/v1/projects/{project_id}/tasks/{task_id}",
             json={"title": "Manager updated"},
@@ -405,9 +397,7 @@ class TestTaskRBAC:
             headers=auth_headers,
         )
         task_id = task_r.json()["id"]
-        mgr_headers = {
-            "Authorization": f"Bearer {create_access_token(manager.id, manager.role)}"
-        }
+        mgr_headers = {"Authorization": f"Bearer {create_access_token(manager.id)}"}
         r = await client.delete(
             f"/api/v1/projects/{project_id}/tasks/{task_id}",
             headers=mgr_headers,

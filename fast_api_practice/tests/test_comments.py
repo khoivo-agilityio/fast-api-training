@@ -57,9 +57,7 @@ class TestCommentCRUD:
         other, _ = await create_test_user(
             username="commentoutsider", email="commentoutsider@example.com"
         )
-        other_headers = {
-            "Authorization": f"Bearer {create_access_token(other.id, other.role)}"
-        }
+        other_headers = {"Authorization": f"Bearer {create_access_token(other.id)}"}
         r = await client.post(
             f"/api/v1/tasks/{task_id}/comments",
             json={"content": "Hacked!"},
@@ -125,9 +123,7 @@ class TestCommentCRUD:
         member, _ = await create_test_user(
             username="commentmember", email="commentmember@example.com"
         )
-        member_headers = {
-            "Authorization": f"Bearer {create_access_token(member.id, member.role)}"
-        }
+        member_headers = {"Authorization": f"Bearer {create_access_token(member.id)}"}
         r = await client.patch(
             f"/api/v1/tasks/{task_id}/comments/{comment_id}",
             json={"content": "Stolen edit"},
@@ -164,9 +160,7 @@ class TestCommentCRUD:
         comment_id = create_r.json()["id"]
 
         other, _ = await create_test_user(username="thief", email="thief@example.com")
-        other_headers = {
-            "Authorization": f"Bearer {create_access_token(other.id, other.role)}"
-        }
+        other_headers = {"Authorization": f"Bearer {create_access_token(other.id)}"}
         r = await client.delete(
             f"/api/v1/tasks/{task_id}/comments/{comment_id}",
             headers=other_headers,

@@ -71,13 +71,11 @@ async def create_test_user(db_session: AsyncSession):
         username: str = "testuser",
         email: str = "test@example.com",
         password: str = "password123",
-        role: str = "user",
     ) -> tuple[UserModel, str]:
         user = UserModel(
             username=username,
             email=email,
             hashed_password=hash_password(password),
-            role=role,
         )
         db_session.add(user)
         await db_session.flush()
@@ -91,15 +89,13 @@ async def create_test_user(db_session: AsyncSession):
 async def auth_headers(create_test_user) -> dict[str, str]:
     """Auth headers for a regular member user."""
     user, _ = await create_test_user()
-    token = create_access_token(user.id, user.role)
+    token = create_access_token(user.id)
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 async def admin_headers(create_test_user) -> dict[str, str]:
     """Auth headers for a second regular user (used where two users are needed)."""
-    user, _ = await create_test_user(
-        username="admin", email="admin@example.com", role="user"
-    )
-    token = create_access_token(user.id, user.role)
+    user, _ = await create_test_user(username="admin", email="admin@example.com")
+    token = create_access_token(user.id)
     return {"Authorization": f"Bearer {token}"}

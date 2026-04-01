@@ -101,7 +101,7 @@ def test_ws_connect_valid_token() -> None:
     """A valid access token must be accepted."""
     with _make_sync_client() as tc:
         user = _register(tc, "wsuser", "ws@example.com")
-        token = create_access_token(user["id"], "user")
+        token = create_access_token(user["id"])
 
         with tc.websocket_connect(f"/ws/notifications?token={token}") as ws:
             assert ws is not None
@@ -136,8 +136,8 @@ def test_ws_receives_task_status_notification() -> None:
         owner = _register(tc, "owner", "owner@example.com")
         assignee = _register(tc, "assignee", "assignee@example.com")
 
-        owner_token = create_access_token(owner["id"], "user")
-        assignee_token = create_access_token(assignee["id"], "user")
+        owner_token = create_access_token(owner["id"])
+        assignee_token = create_access_token(assignee["id"])
 
         proj = tc.post(
             "/api/v1/projects",
@@ -182,7 +182,7 @@ def test_ws_no_notification_when_no_assignee() -> None:
     """A status update on an unassigned task must NOT push any WS message."""
     with _make_sync_client() as tc:
         user = _register(tc, "solo", "solo@example.com")
-        token = create_access_token(user["id"], "user")
+        token = create_access_token(user["id"])
         headers = _headers(token)
 
         proj = tc.post(

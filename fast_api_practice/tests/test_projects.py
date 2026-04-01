@@ -94,7 +94,7 @@ class TestProjectCRUD:
         other_user, _ = await create_test_user(
             username="other", email="other@example.com"
         )
-        other_token = create_access_token(other_user.id, other_user.role)
+        other_token = create_access_token(other_user.id)
         other_headers = {"Authorization": f"Bearer {other_token}"}
 
         r = await client.patch(
@@ -134,7 +134,7 @@ class TestProjectCRUD:
         other_user, _ = await create_test_user(
             username="other2", email="other2@example.com"
         )
-        other_token = create_access_token(other_user.id, other_user.role)
+        other_token = create_access_token(other_user.id)
         other_headers = {"Authorization": f"Bearer {other_token}"}
 
         r = await client.delete(f"/api/v1/projects/{project_id}", headers=other_headers)

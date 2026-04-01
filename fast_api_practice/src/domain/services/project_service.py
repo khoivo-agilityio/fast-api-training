@@ -1,5 +1,3 @@
-from fastapi import HTTPException, status
-
 from src.domain.entities.project import ProjectEntity
 from src.domain.entities.project_member import ProjectMemberEntity, ProjectMemberRole
 from src.domain.repositories.project_repository import ProjectRepository
@@ -35,9 +33,7 @@ class ProjectService:
     async def get_project(self, project_id: int) -> ProjectEntity:
         project = await self._projects.get_by_id(project_id)
         if project is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
+            raise LookupError("Project not found")
         return project
 
     async def list_projects(
@@ -57,9 +53,7 @@ class ProjectService:
         await self._require_project_admin(project, requester_id)
         updated = await self._projects.update(project_id, **fields)
         if updated is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
+            raise LookupError("Project not found")
         return updated
 
     async def delete_project(self, project_id: int, requester_id: int) -> None:
@@ -81,16 +75,11 @@ class ProjectService:
 
         target_user = await self._users.get_by_id(user_id)
         if target_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise LookupError("User not found")
 
         existing = await self._projects.get_member(project_id, user_id)
         if existing is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User is already a member of this project",
-            )
+            raise ValueError("User is already a member of this project")
 
         return await self._projects.add_member(
             project_id=project_id, user_id=user_id, role=role
@@ -111,17 +100,11 @@ class ProjectService:
         await self._require_project_admin(project, requester_id)
 
         if user_id == project.owner_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot change role of project owner",
-            )
+            raise PermissionError("Cannot change role of project owner")
 
         updated = await self._projects.update_member_role(project_id, user_id, role)
         if updated is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Member not found in this project",
-            )
+            raise LookupError("Member not found in this project")
         return updated
 
     async def remove_member(
@@ -131,29 +114,20 @@ class ProjectService:
         await self._require_project_admin(project, requester_id)
 
         if user_id == project.owner_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot remove the project owner",
-            )
+            raise PermissionError("Cannot remove the project owner")
 
         removed = await self._projects.remove_member(project_id, user_id)
         if not removed:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Member not found in this project",
-            )
+            raise LookupError("Member not found in this project")
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     async def _require_project_admin(
         self, project: ProjectEntity, user_id: int
     ) -> None:
-        """Raise 403 unless user is owner or project admin."""
+        """Raise PermissionError unless user is owner or project admin."""
         if project.owner_id == user_id:
             return
         member = await self._projects.get_member(project.id, user_id)
         if member is None or member.role != ProjectMemberRole.ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have admin access to this project",
-            )
+            raise PermissionError("You do not have admin access to this project")
