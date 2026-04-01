@@ -39,7 +39,7 @@ class AuthService:
         if not user.is_active:
             raise ValueError("Account is deactivated")
         return {
-            "access_token": create_access_token(user.id, user.role),
+            "access_token": create_access_token(user.id),
             "refresh_token": create_refresh_token(user.id),
             "token_type": "bearer",
         }
@@ -53,7 +53,7 @@ class AuthService:
         if user is None or not user.is_active:
             raise ValueError("User not found or deactivated")
         return {
-            "access_token": create_access_token(user.id, user.role),
+            "access_token": create_access_token(user.id),
             "refresh_token": create_refresh_token(user.id),
             "token_type": "bearer",
         }

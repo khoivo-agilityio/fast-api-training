@@ -6,18 +6,26 @@ from src.domain.entities.project_member import ProjectMemberRole
 
 
 class ProjectCreateRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    description: str | None = Field(None, max_length=2000)
+    name: str = Field(
+        ..., min_length=1, max_length=100, examples=["My Awesome Project"]
+    )
+    description: str | None = Field(
+        None, max_length=2000, examples=["A project for tracking tasks and milestones"]
+    )
 
 
 class ProjectUpdateRequest(BaseModel):
-    name: str | None = Field(None, min_length=1, max_length=100)
-    description: str | None = Field(None, max_length=2000)
+    name: str | None = Field(
+        None, min_length=1, max_length=100, examples=["Renamed Project"]
+    )
+    description: str | None = Field(
+        None, max_length=2000, examples=["Updated project description"]
+    )
 
 
 class AddMemberRequest(BaseModel):
-    user_id: int
-    role: ProjectMemberRole = ProjectMemberRole.MEMBER
+    user_id: int = Field(..., examples=[42])
+    role: ProjectMemberRole = Field(ProjectMemberRole.MEMBER, examples=["member"])
 
 
 class UpdateMemberRoleRequest(BaseModel):

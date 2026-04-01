@@ -7,7 +7,7 @@ from src.domain.entities.comment import CommentEntity
 from src.domain.entities.project import ProjectEntity
 from src.domain.entities.project_member import ProjectMemberEntity, ProjectMemberRole
 from src.domain.entities.task import TaskEntity, TaskPriority, TaskStatus
-from src.domain.entities.user import UserEntity, UserRole
+from src.domain.entities.user import UserEntity
 from src.domain.repositories.comment_repository import CommentRepository
 from src.domain.repositories.project_repository import ProjectRepository
 from src.domain.repositories.task_repository import TaskRepository
@@ -29,6 +29,16 @@ def _as_utc(dt: datetime) -> datetime:
 
 
 class SQLAlchemyUserRepository(UserRepository):
+    _ALLOWED_UPDATE_FIELDS = frozenset(
+        {
+            "username",
+            "email",
+            "hashed_password",
+            "full_name",
+            "is_active",
+        }
+    )
+
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -40,7 +50,6 @@ class SQLAlchemyUserRepository(UserRepository):
             hashed_password=model.hashed_password,
             full_name=model.full_name,
             is_active=model.is_active,
-            role=UserRole(model.role),
             created_at=_as_utc(model.created_at),
             updated_at=_as_utc(model.updated_at),
         )
@@ -51,14 +60,12 @@ class SQLAlchemyUserRepository(UserRepository):
         email: str,
         hashed_password: str,
         full_name: str | None = None,
-        role: str = "user",
     ) -> UserEntity:
         user = UserModel(
             username=username,
             email=email,
             hashed_password=hashed_password,
             full_name=full_name,
-            role=role,
         )
         self._session.add(user)
         await self._session.flush()
@@ -87,6 +94,9 @@ class SQLAlchemyUserRepository(UserRepository):
         return self._to_entity(model) if model else None
 
     async def update(self, id: int, **fields: object) -> UserEntity | None:
+        invalid = set(fields) - self._ALLOWED_UPDATE_FIELDS
+        if invalid:
+            raise ValueError(f"Invalid update field(s): {', '.join(sorted(invalid))}")
         result = await self._session.execute(
             select(UserModel).where(UserModel.id == id)
         )
@@ -116,6 +126,8 @@ class SQLAlchemyUserRepository(UserRepository):
 
 
 class SQLAlchemyProjectRepository(ProjectRepository):
+    _ALLOWED_UPDATE_FIELDS = frozenset({"name", "description"})
+
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -185,6 +197,9 @@ class SQLAlchemyProjectRepository(ProjectRepository):
         return result.scalar_one()
 
     async def update(self, id: int, **fields: object) -> ProjectEntity | None:
+        invalid = set(fields) - self._ALLOWED_UPDATE_FIELDS
+        if invalid:
+            raise ValueError(f"Invalid update field(s): {', '.join(sorted(invalid))}")
         result = await self._session.execute(
             select(ProjectModel).where(ProjectModel.id == id)
         )
@@ -280,6 +295,25 @@ class SQLAlchemyProjectRepository(ProjectRepository):
 
 
 class SQLAlchemyTaskRepository(TaskRepository):
+    _ALLOWED_UPDATE_FIELDS = frozenset(
+        {
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee_id",
+            "due_date",
+        }
+    )
+    _ALLOWED_SORT_FIELDS = frozenset(
+        {
+            "created_at",
+            "due_date",
+            "priority",
+            "title",
+        }
+    )
+
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -343,7 +377,12 @@ class SQLAlchemyTaskRepository(TaskRepository):
         limit: int = 20,
         offset: int = 0,
     ) -> list[TaskEntity]:
-        sort_col = getattr(TaskModel, sort_by, TaskModel.created_at)
+        if sort_by not in self._ALLOWED_SORT_FIELDS:
+            raise ValueError(
+                f"Invalid sort_by field '{sort_by}'. "
+                f"Allowed: {', '.join(sorted(self._ALLOWED_SORT_FIELDS))}"
+            )
+        sort_col = getattr(TaskModel, sort_by)
         order = sort_col.desc() if sort_order == "desc" else sort_col.asc()
         query = (
             select(TaskModel)
@@ -384,6 +423,9 @@ class SQLAlchemyTaskRepository(TaskRepository):
         return result.scalar_one()
 
     async def update(self, id: int, **fields: object) -> TaskEntity | None:
+        invalid = set(fields) - self._ALLOWED_UPDATE_FIELDS
+        if invalid:
+            raise ValueError(f"Invalid update field(s): {', '.join(sorted(invalid))}")
         result = await self._session.execute(
             select(TaskModel).where(TaskModel.id == id)
         )

@@ -8,21 +8,29 @@ from src.domain.entities.task import TaskPriority, TaskStatus
 
 
 class TaskCreateRequest(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200)
-    description: str | None = Field(None, max_length=5000)
-    status: TaskStatus = TaskStatus.TODO
-    priority: TaskPriority = TaskPriority.MEDIUM
-    assignee_id: int | None = None
-    due_date: datetime | None = None
+    title: str = Field(
+        ..., min_length=1, max_length=200, examples=["Implement login page"]
+    )
+    description: str | None = Field(
+        None,
+        max_length=5000,
+        examples=["Build the login UI with email/password validation"],
+    )
+    status: TaskStatus = Field(TaskStatus.TODO, examples=["todo"])
+    priority: TaskPriority = Field(TaskPriority.MEDIUM, examples=["medium"])
+    assignee_id: int | None = Field(None, examples=[42])
+    due_date: datetime | None = Field(None, examples=["2025-12-31T23:59:59Z"])
 
 
 class TaskUpdateRequest(BaseModel):
-    title: str | None = Field(None, min_length=1, max_length=200)
-    description: str | None = None
-    status: TaskStatus | None = None
-    priority: TaskPriority | None = None
-    assignee_id: int | None = None
-    due_date: datetime | None = None
+    title: str | None = Field(
+        None, min_length=1, max_length=200, examples=["Updated task title"]
+    )
+    description: str | None = Field(None, examples=["Revised description"])
+    status: TaskStatus | None = Field(None, examples=["in_progress"])
+    priority: TaskPriority | None = Field(None, examples=["high"])
+    assignee_id: int | None = Field(None, examples=[42])
+    due_date: datetime | None = Field(None, examples=["2025-12-31T23:59:59Z"])
 
 
 # ── Response schemas ──────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from src.core.permissions import require_authenticated
 from src.domain.entities.project_member import ProjectMemberRole
-from src.domain.entities.user import UserEntity, UserRole
+from src.domain.entities.user import UserEntity
 
 
 def _make_user() -> UserEntity:
@@ -15,7 +15,6 @@ def _make_user() -> UserEntity:
         hashed_password="x",
         full_name=None,
         is_active=True,
-        role=UserRole.USER,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
@@ -56,20 +55,4 @@ class TestProjectMemberRole:
 
     def test_no_manager_value(self):
         values = {r.value for r in ProjectMemberRole}
-        assert "manager" not in values
-
-
-# ── UserRole ──────────────────────────────────────────────────────────────────
-
-
-class TestUserRole:
-    def test_user_value(self):
-        assert UserRole.USER.value == "user"
-
-    def test_single_value(self):
-        assert len(UserRole) == 1
-
-    def test_no_admin_or_manager(self):
-        values = {r.value for r in UserRole}
-        assert "admin" not in values
         assert "manager" not in values
