@@ -1,23 +1,23 @@
 # Collaborative Task Manager API
 
-A **Trello/Jira-like** project and task management backend built with
-**FastAPI**, **async SQLAlchemy**, and **PostgreSQL**, following Clean Architecture principles.
+A **Trello/Jira-like** project & task management REST API built with FastAPI, async SQLAlchemy, and PostgreSQL. Features JWT authentication, role-based access control, real-time WebSocket notifications, and background email simulations.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Web framework | FastAPI (Python 3.12+) |
-| ORM | SQLAlchemy 2 (async) |
-| Database | PostgreSQL (asyncpg driver) |
+|-------|-----------|
+| Framework | [FastAPI](https://fastapi.tiangolo.com/) — Python 3.12+ |
+| Database | PostgreSQL 17 (async via `asyncpg`) |
+| ORM | SQLAlchemy 2.0 (async) |
 | Migrations | Alembic |
-| Auth | JWT (PyJWT) + bcrypt |
+| Auth | PyJWT + passlib[bcrypt] |
 | Validation | Pydantic v2 |
-| Logging | structlog |
-| Testing | pytest-asyncio + httpx + aiosqlite |
-| Packaging | uv |
+| Logging | structlog (JSON) |
+| Testing | pytest + httpx + starlette TestClient |
+| Linting | Ruff |
+| Package manager | uv |
 
 ---
 
@@ -126,21 +126,26 @@ cp .env.example .env
 uv run alembic upgrade head
 
 # 4. Start the server
-uv run uvicorn main:app --reload
+uv run uvicorn src.main:app --reload
 ```
 
 ### Environment Variables
 
 | Variable | Default | Description |
-|---|---|---|
-| `DATABASE_URL` | `postgresql+asyncpg://...` | Dev database |
-| `DATABASE_URL_TEST` | `postgresql+asyncpg://...` | Test database |
-| `JWT_SECRET_KEY` | `change-me-in-production` | JWT signing secret |
+|----------|---------|-------------|
+| `DATABASE_URL` | — | Async PostgreSQL URL (`postgresql+asyncpg://...`) |
+| `DATABASE_URL_TEST` | — | Test database URL |
+| `JWT_SECRET_KEY` | — | JWT signing secret — **change in production** |
 | `JWT_ALGORITHM` | `HS256` | JWT algorithm |
-| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Access token TTL |
-| `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | `7` | Refresh token TTL |
-| `DEBUG` | `True` | Enables coloured console logs |
-| `CORS_ORIGINS` | `["http://localhost:3000"]` | Allowed CORS origins |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | Access token TTL |
+| `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | `5` | Refresh token TTL |
+| `DEBUG` | `false` | Enables SQL echo + debug logging |
+| `SMTP_ENABLED` | `false` | Send real emails when `true` |
+| `SMTP_HOST` | `smtp.gmail.com` | SMTP server hostname |
+| `SMTP_PORT` | `587` | SMTP port |
+| `SMTP_USERNAME` | — | SMTP login username |
+| `SMTP_PASSWORD` | — | SMTP app password |
+| `SMTP_FROM` | — | Sender email address |
 
 ---
 
