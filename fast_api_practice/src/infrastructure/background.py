@@ -7,12 +7,28 @@ entry — no network I/O, no credentials required.
 
 All functions are plain sync callables so FastAPI ``BackgroundTasks`` runs them
 in a thread pool, keeping the async event-loop free.
+
+Logging
+-------
+Every public task function is wrapped with ``@_log_task``.  On each run the
+decorator emits two structured log events:
+
+* ``background_task_started``  — task name + keyword arguments
+* ``background_task_finished`` — task name + wall-clock duration (ms)
+
+On an unhandled exception it emits:
+
+* ``background_task_failed``   — task name + duration + exc_info
 """
 
+import functools
 import smtplib
 import ssl
+import time
+from collections.abc import Callable
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any
 
 import certifi
 import structlog
@@ -20,6 +36,38 @@ import structlog
 from src.core.config import get_settings
 
 logger = structlog.get_logger(__name__)
+
+
+# ── logging decorator ─────────────────────────────────────────────────────────
+
+
+def _log_task[F: Callable[..., None]](fn: F) -> F:
+    """Wrap a background-task function with structured start/finish/fail logs.
+
+    Usage::
+
+        @_log_task
+        def my_task(foo: str, bar: int) -> None:
+            ...
+    """
+
+    @functools.wraps(fn)
+    def wrapper(*args: Any, **kwargs: Any) -> None:
+        task_name = fn.__name__
+        log = logger.bind(task=task_name)
+
+        log.info("background_task_started", kwargs=kwargs)
+        start = time.perf_counter()
+        try:
+            fn(*args, **kwargs)
+            duration_ms = round((time.perf_counter() - start) * 1_000, 2)
+            log.info("background_task_finished", duration_ms=duration_ms)
+        except Exception:
+            duration_ms = round((time.perf_counter() - start) * 1_000, 2)
+            log.exception("background_task_failed", duration_ms=duration_ms)
+            raise
+
+    return wrapper  # type: ignore[return-value]  # inner wrapper preserves signature via functools.wraps
 
 
 # ── internal SMTP helper ──────────────────────────────────────────────────────
@@ -81,6 +129,7 @@ def _send_email(
         raise
 
 
+@_log_task
 def simulate_task_assignment_email(
     task_id: int,
     task_title: str,
@@ -106,6 +155,7 @@ def simulate_task_assignment_email(
     )
 
 
+@_log_task
 def simulate_project_created_email(
     project_id: int,
     project_name: str,
@@ -125,6 +175,7 @@ def simulate_project_created_email(
     )
 
 
+@_log_task
 def simulate_welcome_email(
     user_id: int,
     username: str,
