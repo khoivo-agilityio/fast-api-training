@@ -61,13 +61,17 @@ async def list_projects(
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: int,
-    _current_user: UserEntity = Depends(get_current_user),
+    current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     try:
         project = await service.get_project(project_id)
     except LookupError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    try:
+        await service.require_member(project_id, current_user.id)
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     return ProjectResponse.model_validate(project)
 
 
@@ -142,9 +146,13 @@ async def add_member(
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
 async def list_members(
     project_id: int,
-    _current_user: UserEntity = Depends(get_current_user),
+    current_user: UserEntity = Depends(get_current_user),
     service: ProjectService = Depends(get_project_service),
 ) -> list[ProjectMemberResponse]:
+    try:
+        await service.require_member(project_id, current_user.id)
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     try:
         members = await service.list_members(project_id)
     except LookupError as e:

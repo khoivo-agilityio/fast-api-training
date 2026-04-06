@@ -122,6 +122,17 @@ class ProjectService:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
+    async def require_member(self, project_id: int, user_id: int) -> None:
+        """Raise PermissionError if the user is not a member (or owner)."""
+        project = await self._projects.get_by_id(project_id)
+        if project is None:
+            raise LookupError("Project not found")
+        if project.owner_id == user_id:
+            return
+        member = await self._projects.get_member(project_id, user_id)
+        if member is None:
+            raise PermissionError("You are not a member of this project")
+
     async def _require_project_admin(
         self, project: ProjectEntity, user_id: int
     ) -> None:

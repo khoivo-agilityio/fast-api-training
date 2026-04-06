@@ -3,27 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.api.dependencies import get_current_user, get_user_service
 from src.domain.entities.user import UserEntity
 from src.domain.services.user_service import UserService
-from src.schemas.common import PaginatedResponse, PaginationParams
 from src.schemas.user import UserResponse, UserUpdateRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])
-
-
-@router.get("", response_model=PaginatedResponse[UserResponse])
-async def list_users(
-    pagination: PaginationParams = Depends(),
-    _current_user: UserEntity = Depends(get_current_user),
-    service: UserService = Depends(get_user_service),
-) -> PaginatedResponse[UserResponse]:
-    items, total = await service.list_users(
-        limit=pagination.limit, offset=pagination.offset
-    )
-    return PaginatedResponse(
-        items=[UserResponse.model_validate(u) for u in items],
-        total=total,
-        limit=pagination.limit,
-        offset=pagination.offset,
-    )
 
 
 @router.get("/me", response_model=UserResponse)
