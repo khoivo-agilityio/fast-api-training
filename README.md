@@ -1,185 +1,355 @@
-# Python Training Plan
+# FastAPI Training Plan
 
-**_Dec 17, 2025_**
+## **Feb 02, 2026**
 
-## **OVERVIEW**
+# **OVERVIEW**
 
-This training plan focuses on building core Python programming skills, emphasizing problem-solving, coding best practices, and foundational concepts. Ensuring a well-rounded learning experience through practical exercises, coding tasks, and unit testing.
+This training is designed to help learners move from Python basics to building production‑ready FastAPI services. It focuses on correct API design, async mindset, validation, persistence, security, and best practices commonly used in real-world backend systems.
 
 ## **PREREQUISITES**
 
-### **General**
+**General**
 
-- Understanding basic programming concepts like loops, variables, and conditionals is helpful.
+* Basic knowledge of Python programming.
 
-- Basic knowledge of web development.
+* Familiarity with web development concepts such as HTTP, client-server architecture, and databases.
 
-- **Important**: Please walk through the [ACCELERATE LEARNING WITH AI ASSISTANCE](https://docs.google.com/document/d/1vrHTP0oUX39HoLSHbA-oU69TQCLTRWNbFTbcgRNKIh4/edit?usp=sharing) section to get a quick overview of how to use AI to learn more efficiently and effectively.
+* **Important**: Please walk through the [ACCELERATE LEARNING WITH AI ASSISTANCE](https://docs.google.com/document/d/1vrHTP0oUX39HoLSHbA-oU69TQCLTRWNbFTbcgRNKIh4/edit?usp=sharing) section to get a quick overview of how to use AI to learn more efficiently and effectively.
 
-### **Environment**
+**Environment**
 
-- [Python 3.13](https://www.python.org/)
+* [Python 3.13](https://www.python.org/)\+
 
-- [Package manager: uv](https://docs.astral.sh/uv/)
+* [Package manager: uv](https://docs.astral.sh/uv/)
 
-- [Linter and formatted: Ruff](https://docs.astral.sh/ruff/)
+* [Linter and formatted: Ruff](https://docs.astral.sh/ruff/)
 
-- [Pre-commit](https://pre-commit.com/) hook: [Ruff](https://github.com/astral-sh/ruff-pre-commit)
+* [Pre-commit](https://pre-commit.com/) hook: [Ruff](https://github.com/astral-sh/ruff-pre-commit)
 
-### **Extension suggestions**
+* [Type checker: ty](https://docs.astral.sh/ty/)
 
-- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+**Extension suggestions**
 
-- [Python Debugger](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy)
+* [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 
-- [Python Docstring Generator](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring)
+* [Python Debugger](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy)
 
-- [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+* [Python Docstring Generator](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring)
+
+* [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 
 ## **TIMELINE**
 
-### **Total: 20 days**
+**Total: 31 days**
 
-- Python Fundamentals: **10 days**
+* API Design: **2 days**
 
-- Deep Dive into Python: **10 days**
+* Database Design: **1 day**
+
+* Basic: **5 days**
+
+* Intermediate: **8 days**
+
+* Advanced: **7 days**
+
+* Final practice: **8 days**
 
 ## **OBJECTIVES**
 
-- **Core Syntax & Concepts:** Learn Python's basic data types, control structures, functions, and error handling.
+* Build RESTful APIs using FastAPI
 
-- **Problem Solving**: Develop algorithms, debug code, and optimize for efficiency.
+* Design clean request/response models with Pydantic
 
-- **Data Structures & File Handling**: Understand lists, dictionaries, tuples, and file operations.
+* Work with async endpoints and understand performance implications
 
-- **Typing**: Understand and apply Python's typing system \- support for type hints.
+* Implement CRUD operations with databases
 
-- **Unit Testing**: Learn writing tests, and focus on Test-Driven Development (TDD).
+* Secure APIs with authentication and authorization
 
-- AI assistance: Leverage AI tools for enhanced learning and development; automate the generation of unit tests, improving code coverage and testing efficiency.
+* Write tests and maintain clean, scalable code
 
-## **PYTHON FUNDAMENTALS**
+* Use FastAPI’s automatic documentation effectively
 
-**Objective**: Focus on core concepts like data types, functions, and loops, progressing to advanced topics such as recursion and object-oriented programming. It emphasizes hands-on learning with exercises, promoting problem-solving and Pythonic coding practices.
+# **API DESIGN**
 
-## **Timeline: 10 days**
+**Objective**: To familiarize yourself with APIs and understand RESTful API principles, focusing on HTTP methods and best practices for designing efficient and scalable APIs.
 
-## **Official document:** [Think Python](https://allendowney.github.io/ThinkPython/index.html)
+**Timeline**: **2 days**
 
-## **Part 1: Core Concepts**
+## **1\. An introduction to APIs**
 
-- [Chapter 1:](https://allendowney.github.io/ThinkPython/chap01.html) The Way of the Program \- Introduction to programming principles and Python setup.
+* [API introduction](https://zapier.com/resources/guides/apis/introduction)
 
-- [Chapter 2](https://allendowney.github.io/ThinkPython/chap02.html): Variables and Statements \- Learn about data types, variables, and simple expressions.
+* [API protocols](https://zapier.com/resources/guides/apis/protocols)
 
-- [Chapter 3](https://allendowney.github.io/ThinkPython/chap03.html): Functions \- Define and use functions.
+* [API types and formats](https://zapier.com/resources/guides/apis/data-formats)
 
-- [Chapter 5](https://allendowney.github.io/ThinkPython/chap05.html): Conditionals and Recursion \- Apply conditionals and understand recursion.
+* [API authentication, part 1: Basic vs. key](https://zapier.com/resources/guides/apis/authentication-part-1)
 
-- [Chapter 6](https://allendowney.github.io/ThinkPython/chap06.html): Return values
+* [API design](https://zapier.com/resources/guides/apis/design)
 
-- [Chapter 7](https://allendowney.github.io/ThinkPython/chap07.html): Iteration and Search \- Use loops for repetitive tasks.
+* [API implementation](https://zapier.com/resources/guides/apis/implementation)
 
-## **Part 2: Data Structures & Files**
+## **2\. RESTful web API design**
 
-- [Chapter 8](https://allendowney.github.io/ThinkPython/chap08.html): Strings and Regular Expressions \- Work with strings, methods, slicing, and Regular Expressions.
+* [What is REST?](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#what-is-rest)
 
-- [Chapter 9](https://allendowney.github.io/ThinkPython/chap09.html): Lists \- Use lists for managing data collections.
+* [Organize the API design around resources](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#organize-the-api-design-around-resources)
 
-- [Chapter 10](https://allendowney.github.io/ThinkPython/chap10.html): Dictionaries \- Store and retrieve key-value pairs using dictionaries.
+* [Define API operations in terms of HTTP methods](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#define-api-operations-in-terms-of-http-methods)
 
-- [Chapter 11](https://allendowney.github.io/ThinkPython/chap11.html): Tuples \- Explore tuples for immutable data storage and unpacking techniques.
+* [Conform to HTTP semantics](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#conform-to-http-semantics)
 
-- [Chapter 12](https://allendowney.github.io/ThinkPython/chap12.html): Text Analysis and Generation
+* [Filter and paginate data](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#filter-and-paginate-data)
 
-- [Chapter 13](https://allendowney.github.io/ThinkPython/chap13.html): Files and Databases
+* [Versioning a RESTful web API](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#versioning-a-restful-web-api)
 
-## **Part 3: Object-Oriented Programming (OOP) & Extras**
+* [Open API Initiative](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design#open-api-initiative)
 
-- [Chapter 14](https://allendowney.github.io/ThinkPython/chap14.html): Classes and Functions \- Learn how functions interact with classes, including method definitions.
+## **3\. Optional: The Design of Web APIs [eBook](https://drive.google.com/file/d/1cJ1A5PwRybD2d5oyOR1qOWowQrBu6H2T/view?usp=sharing)**
 
-- [Chapter 15](https://allendowney.github.io/ThinkPython/chap15.html): Classes and Methods \- Define and use class methods, instance methods, and object behaviors.
+# **DATABASE DESIGN**
 
-- [Chapter 16](https://allendowney.github.io/ThinkPython/chap16.html): Classes and Objects \- Get introduced to object-oriented programming by defining custom classes.
+**Objective**: Understand how to structure data correctly by learning how to model tables, relationships, and constraints based on examples.
 
-- [Chapter 17](https://allendowney.github.io/ThinkPython/chap17.html): Inheritance \- Explore how to extend classes using inheritance for code reuse.
+**Timeline**: **1 day**
 
-- [Chapter 18](https://allendowney.github.io/ThinkPython/chap18.html). Python Extras \- Learn more about Sets, helpful built-in methods, and debugging skills.
+**References:**
 
-## **DEEP DIVE INTO PYTHON**
+* [ER Diagram Cheat Sheet](https://www.red-gate.com/blog/er-diagram-cheat-sheet)
 
-**Objective**: Focus on mastering idiomatic Python code, along with important practices like type annotations and unit testing.
+# **BASIC (Foundation \- Build & Understand APIs)**
 
-**Timeline**: 10 days
+## **Chapter 1: Introduction to FastAPI**
 
-## **Writing Idiomatic Python 3 (3 days)**
+**Description**: Introduces FastAPI, its ecosystem, and why it is a strong choice for modern APIs.
 
-**Objective**: Learn to write clean, efficient, and Pythonic code by following best practices in control structures, data handling, and code organization, improving readability and maintainability.
+**Objectives**
 
-**Ebook**: [Writing Idiomatic Python 3](https://drive.google.com/file/d/1qSTs6k7KsciEn2rwvTV16TYFkk2hM4hO/view?usp=sharing).
+* Understand what FastAPI is and where it fits
 
-- **Chapter 1: Control Structures and Functions** \- This chapter focuses on improving Python code readability and efficiency by utilizing Pythonic approaches. Topics include If statements, for loops, and functions.
+* Set up a local development environment
 
-- **Chapter 2: Working with Data** \- This chapter covers best practices for manipulating data types such as lists, dictionaries, strings, and sets. Key points include Lists, dictionaries, strings, classes, and generators.
+* Run a simple FastAPI application
 
-- **Chapter 3: Organizing Your Code** \- Focuses on code organization and modularity, encouraging simplicity and clarity. Topics include Modules, formatting, executable scripts, and imports.
+**Topics**
 
-- **Chapter 4: General Advice** \- Provides general Python programming advice for maintaining efficient, readable, and robust code: Avoid Reinventing the Wheel and Learn Key Modules.
+* What FastAPI is & why use it: [FastAPI Overview](https://fastapi.tiangolo.com/), [Features](https://fastapi.tiangolo.com/features/), [Tutorial Introduction](https://fastapi.tiangolo.com/tutorial/)
 
-## **Typing (1 day)**
+* Setting up your FastAPI app and endpoints: [First Steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
 
-**Objective**: Learn to use type hints to improve code clarity, readability, and maintainability, ensuring better static type checking and function annotations in Python.
+## **Chapter 2: Basic Routing & Request Handling**
 
-**Official document**: [Typing](https://docs.python.org/3/library/typing.html).
+**Description**: Covers the core mechanics of handling HTTP requests and responses.
 
-- **Basic Types**: Understand the usage of fundamental types like int, str, and None for basic function annotations.
+**Objectives**
 
-- **Collections**: Learn how to annotate collections such as List, Dict, and Set for more complex data types.
+* Define API endpoints correctly
 
-- **Generics**: Work with TypeVar and Generic to create flexible and reusable functions or classes.
+* Handle different request inputs
 
-- **Callables**: Use Callable to define the types of functions that take specific argument types and return a value.
+* Return proper responses and errors
 
-- **Union & Optional**: Annotate variables that can have multiple types using Union or indicate optional values with Optional.
+**Topics**
 
-- **Type Aliases**: Define custom names for types with TypeAlias for clarity and reuse in the code.
+* [Path Parameters](https://fastapi.tiangolo.com/tutorial/path-params/), [Query Parameters](https://fastapi.tiangolo.com/tutorial/query-params/), [Header Parameters](https://fastapi.tiangolo.com/tutorial/header-params/)
 
-- **Literal Types**: Restrict the values a variable can take using Literal for specific, predefined values.
+* [Request Body](https://fastapi.tiangolo.com/tutorial/body/), JSON data, [Response Model](https://fastapi.tiangolo.com/tutorial/response-model/)
 
-- **Typed Dict**: Use TypedDict to specify dictionaries with fixed keys and their associated types.
+* [Response Status Code](https://fastapi.tiangolo.com/tutorial/response-status-code/), [Handling Errors](https://fastapi.tiangolo.com/tutorial/handling-errors/)
 
-## **Unit testing in Python (4 days)**
+## **Chapter 3: Data Validation & Models**
 
-**Objective**: Learn how to use Python’s unittest framework to write and manage tests. Focus on key concepts like creating test cases, making assertions, and organizing tests. Improve code reliability with tools like mocking, test discovery, and skipping tests for more effective debugging and software maintenance.
+**Description**: Focuses on using Pydantic to validate input and control output.
 
-**Introduction**: [Introduction to Test-Driven Development (TDD)](https://agiledata.org/essays/tdd.html).
+**Objectives**
 
-**Official document**: [unitest \- Unit testing framework](https://docs.python.org/3/library/unittest.html).
+* Create reliable data contracts
 
-- **Introduction**: Learn the basics of **unittest** framework, including test cases, suites, and runners.
+* Validate input automatically
 
-- **Writing Tests**: Write test methods with assertions and use setUp/tearDown for preparation.
+* Control response shape and serialization
 
-- **Running Tests**: Automate test execution with discovery and command-line/IDE runners.
+**Topics**
 
-- **Organizing Tests**: Group tests into suites for better organization.
+* Using Pydantic for request/response models
 
-- **Advanced Features**: Use mocking and skipping tests to handle complex scenarios.
+  * [Body \- Multiple Parameters / Fields / Nested Models](https://fastapi.tiangolo.com/tutorial/body-multiple-params/)
 
-**Reference**: [Writing Unit Tests for Your Code](https://realpython.com/python-unittest/).
+  * [Extra Models](https://fastapi.tiangolo.com/tutorial/extra-models/)
 
-## **Exercise (2 days)**
+* Input validation, output serialization
 
-Refactor previous sample and exercise code by applying best practices, adding type hints, and writing unit tests to ensure code reliability and clarity.
+  * [Query Parameters and String Validations](https://fastapi.tiangolo.com/tutorial/query-params-str-validations/)
 
-## **ADDITIONAL TOOLS AND TOPICS**
+  * [Path Parameters and Numeric Validations](https://fastapi.tiangolo.com/tutorial/path-params-numeric-validations/)
 
-- [What’s New In Python 3.11](https://docs.python.org/3/whatsnew/3.11.html)
+* [Custom exceptions and validation errors](https://fastapi.tiangolo.com/tutorial/handling-errors/#override-the-default-exception-handlers)
 
-- [What’s New In Python 3.12](https://docs.python.org/3/whatsnew/3.12.html)
+***Exercise 1**: in-memory CRUD API with rich validation and interactive docs.*
 
-- [What’s New In Python 3.13](https://docs.python.org/3/whatsnew/3.13.html)
+# **INTERMEDIATE (Production-Ready APIs)**
 
-- [Real Python Tutorials](https://realpython.com/)
+## **Chapter 4: Database Integration & CRUD**
 
-- [Python Debugging](https://code.visualstudio.com/docs/python/debugging)
+**Description**: Applies models and async knowledge to real data persistence.
+
+**Objectives**
+
+* Connect FastAPI to databases
+
+* Design CRUD APIs
+
+* Understand ORM usage
+
+**Topics**
+
+* [Relational databases](https://fastapi.tiangolo.com/tutorial/sql-databases/) (SQL, ORM like SQLAlchemy)
+
+* Writing CRUD operations, migrations
+
+## **Chapter 5: Authentication, Authorization & Security**
+
+**Description**: Secures APIs after core data flows are understood.
+
+**Objectives**:
+
+* Protect endpoints
+
+* Implement authentication flows
+
+* Follow security best practices
+
+**Topics:**
+
+* JWT tokens, OAuth2 flows
+
+  * [OAuth2 with Password (Bearer with JWT tokens)](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
+
+* API keys and role-based access
+
+  * [Security \- First Steps](https://fastapi.tiangolo.com/tutorial/security/first-steps/)
+
+  * [Get Current User](https://fastapi.tiangolo.com/tutorial/security/get-current-user/)
+
+* Secure endpoints, middleware
+
+  * [CORS](https://fastapi.tiangolo.com/tutorial/cors/)
+
+  * [Middleware](https://fastapi.tiangolo.com/tutorial/middleware/)
+
+## **Chapter 6: Testing Fundamentals**
+
+**Description**: Introduces testing as a core development skill, ensuring APIs are reliable, correct, and safe to change.
+
+**Objectives**
+
+* Writing basic API tests
+
+* Understanding TestClient
+
+* Testing request/response contracts
+
+**Topics**
+
+* [FastAPI TestClient](https://fastapi.tiangolo.com/tutorial/testing/)
+
+* Basic pytest structure
+
+* Testing CRUD endpoints
+
+* Testing auth-protected routes
+
+***Exercise 2**: authenticated, database-backed CRUD API with protected routes, add basic unit tests.*
+
+# **ADVANCED (Production Polish & Best Practices)**
+
+## **Chapter 7: Asynchronous Programming & Performance**
+
+**Description**: Introduces async concepts early to build correct mental models.
+
+**Objectives**
+
+* Understand async vs sync endpoints
+
+* Avoid common performance pitfalls
+
+* Use ASGI servers properly
+
+**Topics**
+
+* [Async vs sync endpoints](https://fastapi.tiangolo.com/async/)
+
+* [Using fast ASGI servers](https://fastapi.tiangolo.com/deployment/server-workers/)
+
+## **Chapter 8: Advanced Features & Real‑Time Functionality**
+
+**Description**: Adds background processing and real-time capabilities.
+
+**Objectives**
+
+* Handle long‑running tasks
+
+* Implement real‑time APIs
+
+**Topics**
+
+* [Background tasks, scheduling jobs](https://fastapi.tiangolo.com/tutorial/background-tasks/)
+
+* [WebSockets for real‑time communication](https://fastapi.tiangolo.com/advanced/websockets/)
+
+## **Chapter 9: Debugger, Monitoring & Best Practices**
+
+**Description**: Focuses on diagnosing issues, observing system behavior, and applying best practices to keep FastAPI services stable, maintainable, and production-ready.
+
+**Objectives**
+
+* Debug FastAPI applications effectively
+
+* Add basic monitoring and logging
+
+* Apply best practices for long-term maintainability
+
+**Topics**
+
+* [Debugging FastAPI applications](https://fastapi.tiangolo.com/tutorial/debugging/)
+
+* Logging, metrics, and basic monitoring concepts
+
+* Best practices: clean architecture, dependency injection, configuration
+
+  * [Bigger Applications \- Multiple Files](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+
+  * [Advanced Dependencies](https://fastapi.tiangolo.com/advanced/advanced-dependencies/)
+
+## **Chapter 10:  Documentation & Developer Experience**
+
+**Description**: Polishes APIs for teams and long-term collaboration by leveraging FastAPI’s automatic documentation and developer-friendly features.
+
+**Objectives**:
+
+* Use built-in API documentation effectively
+
+* Manage API evolution safely
+
+* Improve developer productivity and onboarding
+
+**Topics**
+
+* Automatic docs: Swagger UI, ReDoc
+
+  * [Metadata and Docs URLs](https://fastapi.tiangolo.com/tutorial/metadata/)
+
+  * [Path Operation Configuration](https://fastapi.tiangolo.com/tutorial/path-operation-configuration/#tags-with-enums)
+
+* Developer productivity
+
+  * [Settings and Environment Variables](https://fastapi.tiangolo.com/advanced/settings/)
+
+  * [Lifespan Events](https://fastapi.tiangolo.com/advanced/events/)
+
+**Exercise 3**: clean architect, structured logs, rich docs, settings, lifespan events, live deployment.
+
+# **PRACTICE**
+
+[\[KhoiVo\] FastAPI Practice](https://docs.google.com/document/d/1Q1zBMAvUV5L2SzRMgzqNvx9gxdJoen-gDiDCNsZB02Q/edit?usp=sharing)
