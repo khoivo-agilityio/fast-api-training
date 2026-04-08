@@ -155,8 +155,7 @@ class TaskService:
         if member is not None and member.role == ProjectMemberRole.ADMIN:
             return
         raise PermissionError(
-            "Only the task creator, assignee, or a project admin"
-            " can update this task"
+            "Only the task creator, assignee, or a project admin can update this task"
         )
 
     async def _require_task_deleter(self, task: TaskEntity, user_id: int) -> None:

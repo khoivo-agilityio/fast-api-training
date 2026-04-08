@@ -41,12 +41,12 @@ def create_app() -> FastAPI:
         description=(
             "A **Trello/Jira-like** project & task management backend.\n\n"
             "Features:\n"
-            "- 🔐 JWT authentication (access + refresh tokens)\n"
-            "- 👥 Multi-user with role-based permissions (Admin / Manager / Member)\n"
-            "- 📋 Project & task CRUD with filtering, sorting, and pagination\n"
-            "- 💬 Task comments\n"
-            "- 📧 Background email notifications (simulated)\n"
-            "- 🔔 Real-time WebSocket notifications on task status changes\n\n"
+            "- JWT authentication (access + refresh tokens)\n"
+            "- Multi-user with role-based permissions (Admin / Manager / Member)\n"
+            "- Project & task CRUD with filtering, sorting, and pagination\n"
+            "- Task comments\n"
+            "- Background email notifications (simulated)\n"
+            "- Real-time WebSocket notifications on task status changes\n\n"
             "Connect to WebSocket: `ws://localhost:8000/ws/notifications?token=<access_jwt>`"
         ),
         version="0.1.0",
