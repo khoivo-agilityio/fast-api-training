@@ -24,21 +24,36 @@ A **Trello/Jira-like** project & task management REST API built with FastAPI, as
 ## Architecture
 
 ```
-src/
-├── core/               # Config, security, RBAC permissions
-├── domain/
-│   ├── entities/       # Pure Python dataclasses (no ORM)
-│   ├── repositories/   # Abstract base interfaces (ABCs)
-│   └── services/       # Business logic
-├── infrastructure/
-│   ├── database/       # SQLAlchemy models, async engine, repo implementations
-│   └── logging/        # structlog setup
-├── schemas/            # Pydantic request/response models
-├── api/
-│   ├── middleware.py   # Request-ID + timing middleware
-│   ├── dependencies.py # FastAPI Depends factories
-│   └── v1/             # Route handlers
-└── main.py             # App factory + lifespan
+fast_api_practice/
+├── alembic/                          # Alembic migrations
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+├── src/
+│   ├── main.py                       # App factory + lifespan
+│   ├── core/                         # Cross-cutting concerns
+│   │   ├── config.py                 # Settings (pydantic-settings + .env)
+│   │   ├── security.py               # Password hashing, JWT create/decode
+│   │   └── permissions.py            # RBAC permission checker
+│   ├── domain/                    
+│   │   ├── entities/              
+│   │   ├── repositories/             # Abstract repository interfaces (ABCs)
+│   │   └── services/                 # Business logic layer
+│   ├── infrastructure/               # Framework-specific implementations
+│   │   ├── database/
+│   │   ├── logging/
+│   │   └── background.py             # Email notification simulators
+│   ├── schemas/                      # Pydantic request/response schemas
+│   ├── api/                          # Route layer
+│   │   ├── dependencies.py          
+│   │   └── v1/
+│   └── websockets/
+├── tests/
+├── alembic.ini
+├── pyproject.toml
+├── .env.example
+├── .gitignore
+└── README.md
 ```
 
 ---
@@ -53,20 +68,19 @@ src/
 ### Users
 - `GET  /api/v1/users/me` — get own profile
 - `PATCH /api/v1/users/me` — update name / email / password
-- `GET  /api/v1/users` — list all users **(admin only)**
 
 ### Projects
-- `POST   /api/v1/projects` — create project (auto-adds creator as manager)
+- `POST   /api/v1/projects` — create project (auto-adds creator as admin)
 - `GET    /api/v1/projects` — list projects the current user belongs to
 - `GET    /api/v1/projects/{id}` — get project details
-- `PATCH  /api/v1/projects/{id}` — update name/description (owner or manager)
+- `PATCH  /api/v1/projects/{id}` — update name/description (owner )
 - `DELETE /api/v1/projects/{id}` — delete project (owner only)
 
 ### Project Members
-- `POST   /api/v1/projects/{id}/members` — add member (manager+)
+- `POST   /api/v1/projects/{id}/members` — add member (admin)
 - `GET    /api/v1/projects/{id}/members` — list members
-- `PATCH  /api/v1/projects/{id}/members/{uid}` — change member role (manager+)
-- `DELETE /api/v1/projects/{id}/members/{uid}` — remove member (manager+)
+- `PATCH  /api/v1/projects/{id}/members/{uid}` — change member role (admin)
+- `DELETE /api/v1/projects/{id}/members/{uid}` — remove member (admin)
 
 ### Tasks
 - `POST   /api/v1/projects/{id}/tasks` — create task (project members)
@@ -87,12 +101,8 @@ src/
 
 | Role | Scope | Capabilities |
 |---|---|---|
-| `admin` | Global | Everything, including listing all users |
-| `manager` | Project | Create/update/delete projects, manage members |
+| `admin` | Project | Create/update/delete projects, manage members |
 | `member` | Project | Read projects, create/update tasks & comments |
-
-Project-level roles (`ProjectMemberRole.MANAGER` / `MEMBER`) are separate from
-global user roles and are set per-project via the members API.
 
 ---
 
@@ -101,7 +111,6 @@ global user roles and are set per-project via the members API.
 Every response includes:
 - `X-Request-ID` — unique UUID4 per request (also bound in structlog context)
 - `X-Process-Time` — request duration in milliseconds
-- CORS headers (configurable via `CORS_ORIGINS` in `.env`)
 
 ---
 
@@ -137,8 +146,8 @@ uv run uvicorn src.main:app --reload
 | `DATABASE_URL_TEST` | — | Test database URL |
 | `JWT_SECRET_KEY` | — | JWT signing secret — **change in production** |
 | `JWT_ALGORITHM` | `HS256` | JWT algorithm |
-| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | Access token TTL |
-| `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | `5` | Refresh token TTL |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Access token TTL |
+| `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | `7` | Refresh token TTL |
 | `DEBUG` | `false` | Enables SQL echo + debug logging |
 | `SMTP_ENABLED` | `false` | Send real emails when `true` |
 | `SMTP_HOST` | `smtp.gmail.com` | SMTP server hostname |
@@ -160,9 +169,20 @@ uv run pytest tests/ --cov=src --cov-report=term-missing
 
 # Run a specific file
 uv run pytest tests/test_permissions.py -v
+
+# With HTML test report + coverage HTML
+uv run pytest tests/ -v \
+  --cov=src \
+  --cov-report=html:reports/coverage \
+  --html=reports/report.html \
+  --self-contained-html
+
+# Open reports
+open reports/report.html        # test results
+open reports/coverage/index.html # coverage details
 ```
 
-**Current coverage: 93.55%** (target: ≥80%)
+**Current coverage: 88.00%** (target: ≥80%)
 
 ### Test Files
 
