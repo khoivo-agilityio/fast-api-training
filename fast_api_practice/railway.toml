@@ -4,8 +4,9 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Start command — Railway injects $PORT; entrypoint runs migrations first
-startCommand = "./docker-entrypoint.sh uvicorn src.main:app --host 0.0.0.0 --port $PORT"
+# Start command — Railway injects $PORT; entrypoint runs migrations first.
+# Uses python -m uvicorn (not bare script) to avoid venv shebang issues.
+startCommand = "./docker-entrypoint.sh"
 healthcheckPath = "/health"
 healthcheckTimeout = 5
 restartPolicyType = "ON_FAILURE"

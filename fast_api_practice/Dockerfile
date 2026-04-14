@@ -70,4 +70,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# CMD is intentionally empty — the entrypoint script handles server startup
+# using bash's ${PORT:-8000} substitution so the venv PATH is inherited correctly.

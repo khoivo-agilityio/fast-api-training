@@ -1,0 +1,16 @@
+# Force LF line endings for shell scripts — prevents CRLF "bad interpreter" errors
+# in Docker containers (Linux) when scripts are edited on Windows.
+*.sh text eol=lf
+
+# Force LF for YAML (Docker Compose, GitHub Actions)
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Force LF for TOML (railway.toml, pyproject.toml)
+*.toml text eol=lf
+
+# Force LF for Python source
+*.py text eol=lf
+
+# Treat lock files as binary to avoid corruption
+uv.lock binary

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Collaborative Task Manager"
     DEBUG: bool = False
 
-    # Server — Railway injects PORT; fallback to 8000 for local dev
+    # Server — Railway injects PORT; entrypoint uses ${PORT:-8000} as fallback
     PORT: int = 8000
 
     # Email / SMTP

@@ -9,6 +9,7 @@ Create Date: 2026-03-27 18:13:26.824340
 from collections.abc import Sequence
 
 from alembic import op
+from sqlalchemy import text as sa_text
 
 # revision identifiers, used by Alembic.
 revision: str = "a2235df5580e"
@@ -22,8 +23,29 @@ def upgrade() -> None:
 
     - user_role_enum: admin/manager/member -> user (flat)
     - project_member_role_enum: manager/member -> admin/member
+
+    PostgreSQL limitation: ALTER TYPE ADD VALUE cannot be used in the same
+    transaction as DML that references the new value. Strategy: manually commit
+    each ADD VALUE in its own transaction before using the new label in UPDATE.
     """
-    # 1. Simplify user_role_enum to only "user"
+    bind = op.get_bind()
+
+    # ── Step 1: Add new enum values (each must be committed before use) ───────
+    # Add 'user' to user_role_enum
+    bind.execute(sa_text("COMMIT"))
+    bind.execute(sa_text("ALTER TYPE user_role_enum ADD VALUE IF NOT EXISTS 'user'"))
+    bind.execute(sa_text("COMMIT"))
+
+    # Add 'admin' to project_member_role_enum
+    bind.execute(
+        sa_text("ALTER TYPE project_member_role_enum ADD VALUE IF NOT EXISTS 'admin'")
+    )
+    bind.execute(sa_text("COMMIT"))
+
+    # Resume a transaction for the rest of the DDL
+    bind.execute(sa_text("BEGIN"))
+
+    # ── Step 2: Migrate user_role_enum → only 'user' ─────────────────────────
     op.execute("UPDATE users SET role = 'user' WHERE role != 'user'")
     op.execute("ALTER TYPE user_role_enum RENAME TO user_role_enum_old")
     op.execute("CREATE TYPE user_role_enum AS ENUM ('user')")
@@ -34,7 +56,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'")
     op.execute("DROP TYPE user_role_enum_old")
 
-    # 2. Change project_member_role_enum: manager -> admin
+    # ── Step 3: Migrate project_member_role_enum: manager → admin ────────────
     op.execute("UPDATE project_members SET role = 'admin' WHERE role = 'manager'")
     op.execute(
         "ALTER TYPE project_member_role_enum RENAME TO project_member_role_enum_old"
