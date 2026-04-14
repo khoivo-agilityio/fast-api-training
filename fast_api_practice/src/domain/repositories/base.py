@@ -6,5 +6,4 @@ class BaseRepository(ABC):
     """Generic repository interface."""
 
     @abstractmethod
-    async def get_by_id(self, id: int) -> Any | None:
-        ...
+    async def get_by_id(self, id: int) -> Any | None: ...

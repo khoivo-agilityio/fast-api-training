@@ -1,5 +1,4 @@
-import jwt
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,15 +32,12 @@ async def register(
     background_tasks: BackgroundTasks,
     service: AuthService = Depends(_get_auth_service),
 ):
-    try:
-        user = await service.register(
-            username=body.username,
-            email=body.email,
-            password=body.password,
-            full_name=body.full_name,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    user = await service.register(
+        username=body.username,
+        email=body.email,
+        password=body.password,
+        full_name=body.full_name,
+    )
     background_tasks.add_task(
         simulate_welcome_email,
         user_id=user.id,
@@ -56,15 +52,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     service: AuthService = Depends(_get_auth_service),
 ):
-    try:
-        tokens = await service.login(
-            username=form_data.username, password=form_data.password
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)
-        ) from e
-    return tokens
+    return await service.login(username=form_data.username, password=form_data.password)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -72,10 +60,4 @@ async def refresh(
     body: RefreshTokenRequest,
     service: AuthService = Depends(_get_auth_service),
 ):
-    try:
-        tokens = await service.refresh(refresh_token=body.refresh_token)
-    except (ValueError, jwt.PyJWTError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)
-        ) from e
-    return tokens
+    return await service.refresh(refresh_token=body.refresh_token)

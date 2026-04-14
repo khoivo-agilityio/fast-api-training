@@ -1,3 +1,5 @@
+import jwt
+
 from src.core.security import (
     create_access_token,
     create_refresh_token,
@@ -6,6 +8,7 @@ from src.core.security import (
     verify_password,
 )
 from src.domain.entities.user import UserEntity
+from src.domain.exceptions import AuthenticationError, ConflictError
 from src.domain.repositories.user_repository import UserRepository
 
 
@@ -21,9 +24,9 @@ class AuthService:
         full_name: str | None = None,
     ) -> UserEntity:
         if await self._user_repo.get_by_username(username):
-            raise ValueError("Username already taken")
+            raise ConflictError("Username already taken")
         if await self._user_repo.get_by_email(email):
-            raise ValueError("Email already registered")
+            raise ConflictError("Email already registered")
         hashed = hash_password(password)
         return await self._user_repo.create(
             username=username,
@@ -35,9 +38,9 @@ class AuthService:
     async def login(self, username: str, password: str) -> dict:
         user = await self._user_repo.get_by_username(username)
         if user is None or not verify_password(password, user.hashed_password):
-            raise ValueError("Invalid credentials")
+            raise AuthenticationError("Invalid credentials")
         if not user.is_active:
-            raise ValueError("Account is deactivated")
+            raise AuthenticationError("Account is deactivated")
         return {
             "access_token": create_access_token(user.id),
             "refresh_token": create_refresh_token(user.id),
@@ -45,13 +48,16 @@ class AuthService:
         }
 
     async def refresh(self, refresh_token: str) -> dict:
-        payload = decode_token(refresh_token)
+        try:
+            payload = decode_token(refresh_token)
+        except jwt.PyJWTError as e:
+            raise AuthenticationError(str(e)) from e
         if payload.get("type") != "refresh":
-            raise ValueError("Invalid token type")
+            raise AuthenticationError("Invalid token type")
         user_id = int(payload["sub"])
         user = await self._user_repo.get_by_id(user_id)
         if user is None or not user.is_active:
-            raise ValueError("User not found or deactivated")
+            raise AuthenticationError("User not found or deactivated")
         return {
             "access_token": create_access_token(user.id),
             "refresh_token": create_refresh_token(user.id),

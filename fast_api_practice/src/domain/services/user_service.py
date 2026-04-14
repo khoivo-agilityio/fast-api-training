@@ -1,5 +1,6 @@
 from src.core.security import hash_password
 from src.domain.entities.user import UserEntity
+from src.domain.exceptions import ConflictError, DomainValidationError, NotFoundError
 from src.domain.repositories.user_repository import UserRepository
 
 
@@ -31,13 +32,13 @@ class UserService:
         if email is not None:
             existing = await self._user_repo.get_by_email(email)
             if existing and existing.id != user_id:
-                raise ValueError("Email already in use")
+                raise ConflictError("Email already in use")
             fields["email"] = email
         if password is not None:
             fields["hashed_password"] = hash_password(password)
         if not fields:
-            raise ValueError("No fields to update")
+            raise DomainValidationError("No fields to update")
         user = await self._user_repo.update(user_id, **fields)
         if user is None:
-            raise ValueError("User not found")
+            raise NotFoundError("User not found")
         return user

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from src.api.dependencies import get_comment_service, get_current_user
 from src.domain.entities.user import UserEntity
@@ -20,16 +20,11 @@ async def create_comment(
     current_user: UserEntity = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ) -> CommentResponse:
-    try:
-        comment = await service.create_comment(
-            task_id=task_id,
-            author_id=current_user.id,
-            content=body.content,
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    comment = await service.create_comment(
+        task_id=task_id,
+        author_id=current_user.id,
+        content=body.content,
+    )
     return CommentResponse.model_validate(comment)
 
 
@@ -40,17 +35,12 @@ async def list_comments(
     current_user: UserEntity = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ) -> PaginatedResponse[CommentResponse]:
-    try:
-        items, total = await service.list_comments(
-            task_id=task_id,
-            requester_id=current_user.id,
-            limit=pagination.limit,
-            offset=pagination.offset,
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    items, total = await service.list_comments(
+        task_id=task_id,
+        requester_id=current_user.id,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
     return PaginatedResponse(
         items=[CommentResponse.model_validate(c) for c in items],
         total=total,
@@ -67,16 +57,11 @@ async def update_comment(
     current_user: UserEntity = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ) -> CommentResponse:
-    try:
-        comment = await service.update_comment(
-            comment_id=comment_id,
-            requester_id=current_user.id,
-            content=body.content,
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    comment = await service.update_comment(
+        comment_id=comment_id,
+        requester_id=current_user.id,
+        content=body.content,
+    )
     return CommentResponse.model_validate(comment)
 
 
@@ -87,11 +72,4 @@ async def delete_comment(
     current_user: UserEntity = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ) -> None:
-    try:
-        await service.delete_comment(
-            comment_id=comment_id, requester_id=current_user.id
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    await service.delete_comment(comment_id=comment_id, requester_id=current_user.id)

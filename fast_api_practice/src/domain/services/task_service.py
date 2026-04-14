@@ -2,6 +2,7 @@ from datetime import datetime
 
 from src.domain.entities.project_member import ProjectMemberRole
 from src.domain.entities.task import TaskEntity, TaskPriority, TaskStatus
+from src.domain.exceptions import AuthorizationError, NotFoundError
 from src.domain.repositories.project_repository import ProjectRepository
 from src.domain.repositories.task_repository import TaskRepository
 
@@ -49,9 +50,9 @@ class TaskService:
     ) -> TaskEntity:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         if project_id is not None and task.project_id != project_id:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         await self._require_project_member(task.project_id, requester_id)
         return task
 
@@ -96,9 +97,9 @@ class TaskService:
     ) -> TaskEntity:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         if project_id is not None and task.project_id != project_id:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         await self._require_task_mutator(task, requester_id)
 
         new_assignee_id = fields.get("assignee_id")
@@ -111,7 +112,7 @@ class TaskService:
 
         updated = await self._tasks.update(task_id, **fields)
         if updated is None:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         return updated
 
     async def delete_task(
@@ -119,9 +120,9 @@ class TaskService:
     ) -> None:
         task = await self._tasks.get_by_id(task_id)
         if task is None:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         if project_id is not None and task.project_id != project_id:
-            raise LookupError("Task not found")
+            raise NotFoundError("Task not found")
         await self._require_task_deleter(task, requester_id)
         await self._tasks.delete(task_id)
 
@@ -135,12 +136,12 @@ class TaskService:
     ) -> None:
         project = await self._projects.get_by_id(project_id)
         if project is None:
-            raise LookupError("Project not found")
+            raise NotFoundError("Project not found")
         if project.owner_id == user_id:
             return
         member = await self._projects.get_member(project_id, user_id)
         if member is None:
-            raise PermissionError(error_msg)
+            raise AuthorizationError(error_msg)
 
     async def _require_task_mutator(self, task: TaskEntity, user_id: int) -> None:
         """Creator, assignee, or project admin can update a task."""
@@ -154,7 +155,7 @@ class TaskService:
         member = await self._projects.get_member(task.project_id, user_id)
         if member is not None and member.role == ProjectMemberRole.ADMIN:
             return
-        raise PermissionError(
+        raise AuthorizationError(
             "Only the task creator, assignee, or a project admin can update this task"
         )
 
@@ -168,6 +169,6 @@ class TaskService:
         member = await self._projects.get_member(task.project_id, user_id)
         if member is not None and member.role == ProjectMemberRole.ADMIN:
             return
-        raise PermissionError(
+        raise AuthorizationError(
             "Only the task creator or a project admin can delete this task"
         )

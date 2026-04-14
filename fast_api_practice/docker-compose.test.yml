@@ -1,0 +1,37 @@
+# docker-compose.test.yml — Run tests inside Docker (environment parity)
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://taskmanager:taskmanager_dev@db:5432/fast_api_practice_test
+      - DATABASE_URL_TEST=postgresql+asyncpg://taskmanager:taskmanager_dev@db:5432/fast_api_practice_test
+      - JWT_SECRET_KEY=test-secret-key-at-least-32-characters-long
+      - DEBUG=true
+    depends_on:
+      db:
+        condition: service_healthy
+    # Override entrypoint to run tests instead of the app server
+    entrypoint: []
+    command: ["python", "-m", "pytest", "--tb=short", "-q"]
+    networks:
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: taskmanager
+      POSTGRES_PASSWORD: taskmanager_dev
+      POSTGRES_DB: fast_api_practice_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskmanager -d fast_api_practice_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

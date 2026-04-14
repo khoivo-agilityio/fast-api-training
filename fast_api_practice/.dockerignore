@@ -1,0 +1,48 @@
+# Version control
+.git
+.gitignore
+
+# Python artifacts
+__pycache__
+*.py[cod]
+*.egg-info
+.eggs
+dist
+build
+
+# Virtual environments
+.venv
+venv
+.tox
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (secrets — never bake into image)
+.env
+.env.*
+!.env.example
+
+# Test / coverage artifacts
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+reports
+
+# Tests (not needed at runtime)
+tests/
+
+# Documentation (not needed at runtime)
+docs
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker (avoid recursive context)
+docker-compose*.yml
+Dockerfile*

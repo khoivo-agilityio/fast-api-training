@@ -9,6 +9,13 @@ from fastapi.responses import JSONResponse
 from src.api.middleware import request_context_middleware, timing_middleware
 from src.api.v1 import auth, comments, projects, tasks, users
 from src.core.config import get_settings
+from src.domain.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    ConflictError,
+    DomainValidationError,
+    NotFoundError,
+)
 from src.infrastructure.logging.setup import configure_logging
 from src.schemas.common import ErrorResponse, HealthResponse
 from src.websockets.router import router as ws_router
@@ -83,6 +90,38 @@ def create_app() -> FastAPI:
     )
 
     # ── Exception handlers ────────────────────────────────────────────────────
+
+    @app.exception_handler(NotFoundError)
+    async def not_found_handler(_request: Request, exc: NotFoundError) -> JSONResponse:
+        body = ErrorResponse(detail=str(exc), error_code="NOT_FOUND").model_dump()
+        return JSONResponse(status_code=404, content=body)
+
+    @app.exception_handler(AuthorizationError)
+    async def authorization_handler(
+        _request: Request, exc: AuthorizationError
+    ) -> JSONResponse:
+        body = ErrorResponse(detail=str(exc), error_code="FORBIDDEN").model_dump()
+        return JSONResponse(status_code=403, content=body)
+
+    @app.exception_handler(ConflictError)
+    async def conflict_handler(_request: Request, exc: ConflictError) -> JSONResponse:
+        body = ErrorResponse(detail=str(exc), error_code="CONFLICT").model_dump()
+        return JSONResponse(status_code=409, content=body)
+
+    @app.exception_handler(DomainValidationError)
+    async def domain_validation_handler(
+        _request: Request, exc: DomainValidationError
+    ) -> JSONResponse:
+        body = ErrorResponse(detail=str(exc), error_code="BAD_REQUEST").model_dump()
+        return JSONResponse(status_code=400, content=body)
+
+    @app.exception_handler(AuthenticationError)
+    async def authentication_handler(
+        _request: Request, exc: AuthenticationError
+    ) -> JSONResponse:
+        body = ErrorResponse(detail=str(exc), error_code="UNAUTHORIZED").model_dump()
+        return JSONResponse(status_code=401, content=body)
+
     @app.exception_handler(HTTPException)
     async def http_exception_handler(
         _request: Request, exc: HTTPException
@@ -117,7 +156,20 @@ def create_app() -> FastAPI:
     # ── Routes ────────────────────────────────────────────────────────────────
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check() -> HealthResponse:
-        return HealthResponse(status="healthy", version="0.1.0")
+        from sqlalchemy import text
+
+        from src.infrastructure.database.connection import async_engine
+
+        db_status = "unknown"
+        try:
+            async with async_engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            db_status = "connected"
+        except Exception:  # pragma: no cover
+            db_status = "disconnected"
+
+        overall = "healthy" if db_status == "connected" else "degraded"
+        return HealthResponse(status=overall, version="0.1.0", database=db_status)
 
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(users.router, prefix="/api/v1")

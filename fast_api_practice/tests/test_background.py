@@ -67,9 +67,9 @@ async def test_create_project_triggers_email(
         headers=auth_headers,
     )
     assert resp.status_code == 201
-    assert _has_email(
-        log_capture, "project_created"
-    ), f"Expected 'project_created' email log. Captured: {log_capture.entries}"
+    assert _has_email(log_capture, "project_created"), (
+        f"Expected 'project_created' email log. Captured: {log_capture.entries}"
+    )
 
 
 async def test_create_task_with_assignee_triggers_email(
@@ -99,9 +99,9 @@ async def test_create_task_with_assignee_triggers_email(
         headers=auth_headers,
     )
     assert resp.status_code == 201
-    assert _has_email(
-        log_capture, "task_assigned"
-    ), f"Expected 'task_assigned' email log. Captured: {log_capture.entries}"
+    assert _has_email(log_capture, "task_assigned"), (
+        f"Expected 'task_assigned' email log. Captured: {log_capture.entries}"
+    )
 
 
 async def test_create_task_without_assignee_no_email(
@@ -124,9 +124,9 @@ async def test_create_task_without_assignee_no_email(
         headers=auth_headers,
     )
     assert resp.status_code == 201
-    assert not _has_email(
-        log_capture, "task_assigned"
-    ), f"Expected no 'task_assigned' email. Captured: {log_capture.entries}"
+    assert not _has_email(log_capture, "task_assigned"), (
+        f"Expected no 'task_assigned' email. Captured: {log_capture.entries}"
+    )
 
 
 async def test_update_task_assignee_triggers_email(
@@ -161,9 +161,9 @@ async def test_update_task_assignee_triggers_email(
         headers=auth_headers,
     )
     assert resp.status_code == 200
-    assert _has_email(
-        log_capture, "task_assigned"
-    ), f"Expected 'task_assigned' email. Captured: {log_capture.entries}"
+    assert _has_email(log_capture, "task_assigned"), (
+        f"Expected 'task_assigned' email. Captured: {log_capture.entries}"
+    )
 
 
 async def test_update_task_without_assignee_no_email(
@@ -193,9 +193,9 @@ async def test_update_task_without_assignee_no_email(
         headers=auth_headers,
     )
     assert resp.status_code == 200
-    assert not _has_email(
-        log_capture, "task_assigned"
-    ), f"Unexpected 'task_assigned' email. Captured: {log_capture.entries}"
+    assert not _has_email(log_capture, "task_assigned"), (
+        f"Unexpected 'task_assigned' email. Captured: {log_capture.entries}"
+    )
 
 
 # async def test_register_triggers_welcome_email(

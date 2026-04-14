@@ -25,5 +25,6 @@ class ErrorResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str
+    status: str  # "healthy" | "degraded" | "unhealthy"
     version: str
+    database: str = "unknown"  # "connected" | "disconnected" | "unknown"

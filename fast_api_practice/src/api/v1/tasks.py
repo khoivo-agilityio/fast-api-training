@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 
 from src.api.dependencies import get_current_user, get_task_service
 from src.domain.entities.task import TaskEntity, TaskPriority, TaskStatus
@@ -38,21 +38,16 @@ async def create_task(
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> TaskResponse:
-    try:
-        task = await service.create_task(
-            project_id=project_id,
-            creator_id=current_user.id,
-            title=body.title,
-            description=body.description,
-            status=body.status,
-            priority=body.priority,
-            assignee_id=body.assignee_id,
-            due_date=body.due_date,
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    task = await service.create_task(
+        project_id=project_id,
+        creator_id=current_user.id,
+        title=body.title,
+        description=body.description,
+        status=body.status,
+        priority=body.priority,
+        assignee_id=body.assignee_id,
+        due_date=body.due_date,
+    )
     if task.assignee_id is not None:
         background_tasks.add_task(
             simulate_task_assignment_email,
@@ -78,26 +73,17 @@ async def list_tasks(
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> PaginatedResponse[TaskResponse]:
-    try:
-        items, total = await service.list_tasks(
-            project_id=project_id,
-            requester_id=current_user.id,
-            task_status=task_status,
-            assignee_id=assignee_id,
-            priority=priority,
-            sort_by=sort_by,
-            sort_order=sort_order,
-            limit=pagination.limit,
-            offset=pagination.offset,
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from e
+    items, total = await service.list_tasks(
+        project_id=project_id,
+        requester_id=current_user.id,
+        task_status=task_status,
+        assignee_id=assignee_id,
+        priority=priority,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
     return PaginatedResponse(
         items=[_task_response(t) for t in items],
         total=total,
@@ -113,12 +99,7 @@ async def get_task(
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> TaskResponse:
-    try:
-        task = await service.get_task(task_id, current_user.id, project_id=project_id)
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    task = await service.get_task(task_id, current_user.id, project_id=project_id)
     return _task_response(task)
 
 
@@ -136,17 +117,12 @@ async def update_task(
         updates["status"] = updates["status"].value
     if "priority" in updates and updates["priority"] is not None:
         updates["priority"] = updates["priority"].value
-    try:
-        task = await service.update_task(
-            task_id=task_id,
-            requester_id=current_user.id,
-            project_id=project_id,
-            **updates,
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    task = await service.update_task(
+        task_id=task_id,
+        requester_id=current_user.id,
+        project_id=project_id,
+        **updates,
+    )
     if "assignee_id" in updates and task.assignee_id is not None:
         background_tasks.add_task(
             simulate_task_assignment_email,
@@ -179,11 +155,6 @@ async def delete_task(
     current_user: UserEntity = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ) -> None:
-    try:
-        await service.delete_task(
-            task_id=task_id, requester_id=current_user.id, project_id=project_id
-        )
-    except LookupError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    await service.delete_task(
+        task_id=task_id, requester_id=current_user.id, project_id=project_id
+    )

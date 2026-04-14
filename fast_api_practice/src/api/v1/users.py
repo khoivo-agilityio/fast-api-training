@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 
 from src.api.dependencies import get_current_user, get_user_service
 from src.domain.entities.user import UserEntity
@@ -19,15 +19,9 @@ async def update_me(
     current_user: UserEntity = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ):
-    try:
-        updated = await service.update_profile(
-            user_id=current_user.id,
-            full_name=body.full_name,
-            email=body.email,
-            password=body.password,
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from e
-    return updated
+    return await service.update_profile(
+        user_id=current_user.id,
+        full_name=body.full_name,
+        email=body.email,
+        password=body.password,
+    )

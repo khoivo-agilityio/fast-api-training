@@ -18,12 +18,10 @@ class TaskRepository(BaseRepository):
         priority: TaskPriority = TaskPriority.MEDIUM,
         assignee_id: int | None = None,
         due_date: object = None,
-    ) -> TaskEntity:
-        ...
+    ) -> TaskEntity: ...
 
     @abstractmethod
-    async def get_by_id(self, id: int) -> TaskEntity | None:
-        ...
+    async def get_by_id(self, id: int) -> TaskEntity | None: ...
 
     @abstractmethod
     async def list_for_project(
@@ -37,8 +35,7 @@ class TaskRepository(BaseRepository):
         sort_order: str = "desc",
         limit: int = 20,
         offset: int = 0,
-    ) -> list[TaskEntity]:
-        ...
+    ) -> list[TaskEntity]: ...
 
     @abstractmethod
     async def count_for_project(
@@ -48,13 +45,10 @@ class TaskRepository(BaseRepository):
         status: TaskStatus | None = None,
         assignee_id: int | None = None,
         priority: TaskPriority | None = None,
-    ) -> int:
-        ...
+    ) -> int: ...
 
     @abstractmethod
-    async def update(self, id: int, **fields: object) -> TaskEntity | None:
-        ...
+    async def update(self, id: int, **fields: object) -> TaskEntity | None: ...
 
     @abstractmethod
-    async def delete(self, id: int) -> bool:
-        ...
+    async def delete(self, id: int) -> bool: ...

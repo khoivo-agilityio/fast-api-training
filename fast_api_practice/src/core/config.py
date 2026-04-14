@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "Collaborative Task Manager"
     DEBUG: bool = False
 
+    # Server — Railway injects PORT; fallback to 8000 for local dev
+    PORT: int = 8000
+
     # Email / SMTP
     # Set SMTP_ENABLED=true and fill in the credentials to send real emails.
     # When false (default) the functions only log — useful for dev/test.
