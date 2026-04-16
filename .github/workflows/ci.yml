@@ -13,6 +13,10 @@ concurrency:
 env:
   PYTHON_VERSION: "3.14"
 
+defaults:
+  run:
+    working-directory: fast_api_practice
+
 jobs:
   # ── Job 1: Lint ─────────────────────────────────────────────────────────────
   lint:
@@ -91,7 +95,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage.xml
+          path: fast_api_practice/coverage.xml
 
   # ── Job 3: Docker Build ─────────────────────────────────────────────────────
   docker-build:
@@ -107,7 +111,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: fast_api_practice
           push: false
           tags: task-manager-api:ci-${{ github.sha }}
           cache-from: type=gha
