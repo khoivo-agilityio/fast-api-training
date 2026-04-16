@@ -114,4 +114,4 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Report image size
-        run: docker images task-manager-api:ci-${{ github.sha }} --format "Image size: {{.Size}}"
+        run: 'docker images task-manager-api:ci-${{ github.sha }} --format "Image size: {{.Size}}"'
