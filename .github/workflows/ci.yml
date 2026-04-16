@@ -13,15 +13,14 @@ concurrency:
 env:
   PYTHON_VERSION: "3.14"
 
-defaults:
-  run:
-    working-directory: fast_api_practice
-
 jobs:
   # ── Job 1: Lint ─────────────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fast_api_practice
     steps:
       - uses: actions/checkout@v4
 
@@ -49,6 +48,9 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: lint
+    defaults:
+      run:
+        working-directory: fast_api_practice
 
     services:
       postgres:
