@@ -1,8 +1,9 @@
 [build]
-# Use the Dockerfile (not Nixpacks/railpack auto-detection)
+# Use the Dockerfile (not Nixpacks/railpack auto-detection).
+# Railway always uses repo root as build context regardless of dockerContextPath,
+# so Dockerfile.railway has all COPY paths prefixed with fast_api_practice/.
 builder = "DOCKERFILE"
-dockerfilePath = "fast_api_practice/Dockerfile"
-dockerContextPath = "fast_api_practice"
+dockerfilePath = "Dockerfile.railway"
 
 [deploy]
 # startCommand intentionally omitted — ENTRYPOINT in Dockerfile runs migrations then uvicorn.
