@@ -57,9 +57,12 @@ COPY --from=builder --chown=appuser:appuser /build/src ./src
 COPY --from=builder --chown=appuser:appuser /build/alembic ./alembic
 COPY --from=builder --chown=appuser:appuser /build/alembic.ini ./
 
-# Copy entrypoint
-COPY --chown=appuser:appuser docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh
+# Write entrypoint inline — avoids build-context path issues when Railway
+# uses the repo root as context instead of fast_api_practice/.
+RUN printf '#!/bin/bash\nset -euo pipefail\n\necho "==> Running database migrations..."\npython -m alembic upgrade head\n\necho "==> Starting application..."\nexec python -m uvicorn src.main:app --host 0.0.0.0 --port "${PORT:-8000}"\n' \
+    > /app/docker-entrypoint.sh && \
+    chmod +x /app/docker-entrypoint.sh && \
+    chown appuser:appuser /app/docker-entrypoint.sh
 
 # Switch to non-root user
 USER appuser

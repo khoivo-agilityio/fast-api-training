@@ -4,6 +4,21 @@
 
 ---
 
+## Railway `startCommand` with relative path causes "not found" error
+
+**Problem:** Setting `startCommand = "./docker-entrypoint.sh"` in `railway.toml` runs the
+command relative to `/` (the root of the container filesystem), not `/app` (WORKDIR).
+This produces: `exec /docker-entrypoint.sh: no such file or directory`.
+
+**Fix:** Omit `startCommand` entirely and bake the entrypoint into the Dockerfile with an
+absolute path:
+```dockerfile
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+```
+Railway respects the Dockerfile `ENTRYPOINT` when `startCommand` is not set.
+
+---
+
 ## `uvicorn` venv script has broken shebang in multi-stage Docker build (same root cause as `alembic`)
 
 **Problem:** Even with `UV_PYTHON_PREFERENCE=only-system`, the `uvicorn` venv script
