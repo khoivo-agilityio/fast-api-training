@@ -24,13 +24,16 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv --directory fast_api_practice sync --frozen --dev
+        working-directory: fast_api_practice
+        run: uv sync --frozen --dev
 
       - name: Ruff lint
-        run: uv --directory fast_api_practice run ruff check src/ tests/
+        working-directory: fast_api_practice
+        run: uv run ruff check src/ tests/
 
       - name: Ruff format check
-        run: uv --directory fast_api_practice run ruff format --check src/ tests/
+        working-directory: fast_api_practice
+        run: uv run ruff format --check src/ tests/
 
   # ── Job 2: Test ─────────────────────────────────────────────────────────────
   test:
@@ -68,10 +71,12 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv --directory fast_api_practice sync --frozen --dev
+        working-directory: fast_api_practice
+        run: uv sync --frozen --dev
 
       - name: Run tests with coverage
-        run: uv --directory fast_api_practice run pytest --tb=short --cov=src --cov-report=xml --cov-report=term-missing -q
+        working-directory: fast_api_practice
+        run: uv run pytest --tb=short --cov=src --cov-report=xml --cov-report=term-missing -q
 
       - name: Upload coverage report
         if: always()
