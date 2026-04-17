@@ -1,7 +1,7 @@
 [build]
 # Use the Dockerfile (not Nixpacks/railpack auto-detection)
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "fast_api_practice/Dockerfile"
 
 [deploy]
 # Start command — Railway injects $PORT; entrypoint runs migrations first.
