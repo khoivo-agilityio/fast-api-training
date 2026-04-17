@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: fast_api_practice
-        run: uv sync --frozen --dev
+        run: uv sync
 
       - name: Ruff lint
         working-directory: fast_api_practice
@@ -59,8 +59,18 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://taskmanager:taskmanager_dev@localhost:5432/fast_api_practice_test
       DATABASE_URL_TEST: postgresql+asyncpg://taskmanager:taskmanager_dev@localhost:5432/fast_api_practice_test
-      JWT_SECRET_KEY: ci-test-secret-key-at-least-32-characters-long
-      DEBUG: "true"
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: "7"
+      APP_NAME: Collaborative Task Manager
+      DEBUG: "false"
+      SMTP_ENABLED: "false"
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: "465"
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM: ${{ secrets.SMTP_USERNAME }}
 
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +82,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: fast_api_practice
-        run: uv sync --frozen --dev
+        run: uv sync
 
       - name: Run tests with coverage
         working-directory: fast_api_practice
