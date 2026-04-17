@@ -9,9 +9,24 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Database — must be set via .env; validator below enforces non-empty
+    # Database — must be set via .env or Railway env vars.
+    # On Railway, use APP_DATABASE_URL (not DATABASE_URL) because the Postgres
+    # plugin auto-injects DATABASE_URL=postgresql://... which overrides any
+    # manual value and uses the wrong driver scheme (needs +asyncpg).
+    # APP_DATABASE_URL takes priority; falls back to DATABASE_URL with scheme fix.
+    APP_DATABASE_URL: str = ""
     DATABASE_URL: str = ""
     DATABASE_URL_TEST: str = ""
+
+    @property
+    def db_url(self) -> str:
+        """Return the asyncpg-compatible database URL, regardless of source."""
+        raw = self.APP_DATABASE_URL or self.DATABASE_URL
+        # Ensure asyncpg driver — Railway injects postgresql:// without driver
+        if raw.startswith("postgresql://") or raw.startswith("postgres://"):
+            raw = raw.replace("postgresql://", "postgresql+asyncpg://", 1)
+            raw = raw.replace("postgres://", "postgresql+asyncpg://", 1)
+        return raw
 
     # JWT — must be set via .env; validator below enforces non-empty
     JWT_SECRET_KEY: str = ""
