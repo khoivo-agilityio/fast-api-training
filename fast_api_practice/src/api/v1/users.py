@@ -12,6 +12,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.get("", response_model=PaginatedResponse[UserResponse])
 async def list_users(
     pagination: PaginationParams = Depends(),
+    current_user: UserEntity = Depends(get_current_user),  # noqa: ARG001
     service: UserService = Depends(get_user_service),
 ):
     items, total = await service.list_users(
