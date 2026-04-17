@@ -216,7 +216,6 @@ temp/
 
 # UV (Python package manager)
 .uv/
-uv.lock
 
 # Ruff
 .ruff_cache/
