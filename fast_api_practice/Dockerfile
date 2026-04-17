@@ -69,6 +69,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
-# CMD is intentionally empty — the entrypoint script handles server startup
-# using bash's ${PORT:-8000} substitution so the venv PATH is inherited correctly.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

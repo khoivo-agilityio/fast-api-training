@@ -5,9 +5,8 @@ dockerfilePath = "fast_api_practice/Dockerfile"
 dockerContextPath = "fast_api_practice"
 
 [deploy]
-# Start command — Railway injects $PORT; entrypoint runs migrations first.
-# Uses python -m uvicorn (not bare script) to avoid venv shebang issues.
-startCommand = "./docker-entrypoint.sh"
+# startCommand intentionally omitted — ENTRYPOINT in Dockerfile runs migrations then uvicorn.
+# Railway injects $PORT which the entrypoint script picks up via ${PORT:-8000}.
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
