@@ -59,7 +59,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://taskmanager:taskmanager_dev@localhost:5432/fast_api_practice_test
       DATABASE_URL_TEST: postgresql+asyncpg://taskmanager:taskmanager_dev@localhost:5432/fast_api_practice_test
-      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY || 'ci-insecure-key-only-for-testing-not-used-in-prod-1234' }}
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       JWT_REFRESH_TOKEN_EXPIRE_DAYS: "7"
@@ -68,9 +68,9 @@ jobs:
       SMTP_ENABLED: "false"
       SMTP_HOST: smtp.gmail.com
       SMTP_PORT: "465"
-      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      SMTP_FROM: ${{ secrets.SMTP_USERNAME }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME || 'ci@example.com' }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD || 'ci-placeholder' }}
+      SMTP_FROM: ${{ secrets.SMTP_USERNAME || 'ci@example.com' }}
 
     steps:
       - uses: actions/checkout@v4
