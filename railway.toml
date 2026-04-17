@@ -1,19 +1,13 @@
-[build][deploy]
-# Explicit startCommand prevents Railway from auto-detecting /app/.venv/bin/uvicorn,
-# which has a broken shebang from the multi-stage build.
-# python -m uvicorn uses the module directly, bypassing the broken venv script.
-startCommand = "python -m alembic upgrade head && python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT"
-healthcheckPath = "/health"
-healthcheckTimeout = 120e the Dockerfile (not Nixpacks/railpack auto-detection).
-# Railway always uses repo root as build context regardless of dockerContextPath,
+[build]
+# Use the Dockerfile — Railway always uses repo root as build context,
 # so Dockerfile.railway has all COPY paths prefixed with fast_api_practice/.
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile.railway"
 
 [deploy]
-# startCommand intentionally omitted — ENTRYPOINT in Dockerfile runs migrations then uvicorn.
-# Railway injects $PORT which the entrypoint script picks up via ${PORT:-8000}.
+# python -m uvicorn bypasses the broken venv script shebang from multi-stage build.
+startCommand = "python -m alembic upgrade head && python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/health"
-healthcheckTimeout = 60
+healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
