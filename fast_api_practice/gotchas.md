@@ -4,6 +4,39 @@
 
 ---
 
+## Railway `startCommand` runs WITHOUT a shell — inline env vars and `&&` break
+
+**Problem:** A `startCommand` like
+```toml
+startCommand = "PYTHONUNBUFFERED=1 python -m uvicorn src.main:app"
+```
+fails at container start with:
+```
+The executable `pythonunbuffered=1` could not be found.
+```
+Same applies to `&&`, `||`, pipes, `${VAR:-default}` substitution, etc.
+
+**Cause:** Railway tokenizes `startCommand` and execs the first token as the
+binary directly (no shell interpretation). The `KEY=VALUE` prefix syntax for
+inline env vars is a *shell* feature — without `/bin/sh`, the entire
+`PYTHONUNBUFFERED=1` string is treated as the program name.
+
+**Fix:**
+1. Move env vars to the Dockerfile `ENV` directive (preferred — set once at
+   image build time, no shell needed):
+   ```dockerfile
+   ENV PYTHONUNBUFFERED=1
+   ```
+2. If you genuinely need shell features (`&&`, `${VAR:-default}`), wrap the
+   whole command in `bash -c`:
+   ```toml
+   startCommand = "bash -c 'python -m alembic upgrade head && exec python -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}'"
+   ```
+   Note `exec` before uvicorn so it replaces the bash process (signals work,
+   PID 1 stays correct for graceful shutdown).
+
+---
+
 ## Railway `startCommand` with relative path causes "not found" error
 
 **Problem:** Setting `startCommand = "./docker-entrypoint.sh"` in `railway.toml` runs the
