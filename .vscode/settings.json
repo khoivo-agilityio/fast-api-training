@@ -2,7 +2,7 @@
   "python.REPL.sendToNativeREPL": true,
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python-envs.pythonProjects": [],
-  "python.languageServer": "Pylance",
+  "python.languageServer": "None",
   "python.analysis.diagnosticMode": "openFilesOnly",
   "python.analysis.extraPaths": [
     "${workspaceFolder}/fast_api_big_exercise"
