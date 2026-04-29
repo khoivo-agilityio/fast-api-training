@@ -1,15 +1,15 @@
 [build]
 # Use the Dockerfile — Railway always uses repo root as build context,
-# so Dockerfile.railway has all COPY paths prefixed with fast_api_practice/.
+# so Dockerfile.railway.learning_platform has all COPY paths prefixed with learning_platform/.
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile.railway"
+dockerfilePath = "Dockerfile.railway.learning_platform"
 
 [deploy]
 # Railway runs startCommand WITHOUT a shell — wrap in `bash -c` so &&,
 # ${PORT:-8000} fallback, and pipes are interpreted properly.
 # PYTHONUNBUFFERED is set via Dockerfile ENV (do NOT prefix it inline here:
 # Railway parses "PYTHONUNBUFFERED=1 python ..." as a literal executable name).
-startCommand = "bash -c 'python -m alembic upgrade head && exec python -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info'"
+startCommand = "bash -c 'python -m alembic upgrade head && exec python -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2 --log-level info'"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
