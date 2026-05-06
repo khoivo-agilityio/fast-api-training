@@ -121,3 +121,68 @@ async def create_test_user(
         "tokens": tokens,
         "auth_header": {"Authorization": f"Bearer {tokens['access_token']}"},
     }
+
+
+async def create_test_instructor(
+    session: AsyncSession,
+    email: str = "instructor@example.com",
+    display_name: str = "Test Instructor",
+) -> dict:
+    """Create a test user with instructor role and return user data + tokens."""
+    return await create_test_user(
+        session, email=email, display_name=display_name, role="instructor"
+    )
+
+
+async def create_test_admin(
+    session: AsyncSession,
+    email: str = "admin@example.com",
+    display_name: str = "Test Admin",
+) -> dict:
+    """Create a test user with admin role and return user data + tokens."""
+    return await create_test_user(
+        session, email=email, display_name=display_name, role="admin"
+    )
+
+
+async def create_test_course(
+    session: AsyncSession,
+    instructor_id,
+    title: str = "Test Course",
+    description: str | None = "A test course",
+):
+    """Create a test course directly in the database."""
+    from src.courses.models import Course
+
+    course = Course(title=title, instructor_id=instructor_id, description=description)
+    session.add(course)
+    await session.flush()
+    return course
+
+
+async def create_test_enrollment(session: AsyncSession, user_id, course_id):
+    """Create a test enrollment directly in the database."""
+    from src.courses.models import Enrollment
+
+    enrollment = Enrollment(user_id=user_id, course_id=course_id)
+    session.add(enrollment)
+    await session.flush()
+    return enrollment
+
+
+async def create_test_lesson(
+    session: AsyncSession,
+    course_id,
+    title: str = "Test Lesson",
+    content: str = "Lesson content here.",
+    order: int = 1,
+):
+    """Create a test lesson directly in the database."""
+    from src.lessons.models import Lesson
+
+    lesson = Lesson(
+        course_id=course_id, title=title, content=content, order=order
+    )
+    session.add(lesson)
+    await session.flush()
+    return lesson

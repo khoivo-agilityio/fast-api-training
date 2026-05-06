@@ -82,10 +82,14 @@ def create_app() -> FastAPI:
 
     # Mount routers
     from src.auth.router import router as auth_router
+    from src.courses.router import router as courses_router
+    from src.lessons.router import router as lessons_router
     from src.users.router import router as users_router
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(courses_router, prefix="/api/v1")
+    app.include_router(lessons_router, prefix="/api/v1")
 
     # Health check
     @app.get("/health", tags=["system"])

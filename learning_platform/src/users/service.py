@@ -61,6 +61,7 @@ class UserService:
         """Update user profile fields (partial update — only set fields are changed)."""
         user = await self.get_by_id(user_id)
         update_data = data.model_dump(exclude_unset=True)
+        update_data.pop("id", None)
 
         # If password is being updated, hash the new password
         if "password" in update_data:
