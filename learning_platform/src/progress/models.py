@@ -1,0 +1,54 @@
+"""Progress ORM Model — tracks lesson-level completion per user."""
+
+import uuid
+from datetime import datetime
+from enum import StrEnum
+
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.database import Base
+
+
+class ProgressStatus(StrEnum):
+    """Lesson progress states."""
+
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+class Progress(Base):
+    """Progress — tracks one user's progress on one lesson."""
+
+    __tablename__ = "progress"
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_progress_user_lesson"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    lesson_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=ProgressStatus.NOT_STARTED.value
+    )
+    accessed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    def __str__(self) -> str:
+        return f"Progress(user={self.user_id}, lesson={self.lesson_id}, status={self.status})"
+
+    # Relationships — used by SQLAdmin for FK dropdowns
+    user: Mapped["User"] = relationship("User", back_populates="progress_records", foreign_keys=[user_id])
+    lesson: Mapped["Lesson"] = relationship("Lesson", back_populates="progress_records", foreign_keys=[lesson_id])

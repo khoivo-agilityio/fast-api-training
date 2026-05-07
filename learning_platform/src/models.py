@@ -10,9 +10,7 @@ Add new model imports here whenever a new module's models.py is created.
 
 from src.courses.models import Course, Enrollment  # noqa: F401
 from src.lessons.models import Lesson  # noqa: F401
+from src.progress.models import Progress  # noqa: F401
+from src.quizzes.models import Question, Quiz  # noqa: F401
+from src.submissions.models import Answer, Submission  # noqa: F401
 from src.users.models import User  # noqa: F401
-
-# Future re-exports:
-# from src.quizzes.models import Quiz, Question  # noqa: F401
-# from src.submissions.models import Submission, Answer  # noqa: F401
-# from src.progress.models import Progress  # noqa: F401

@@ -8,11 +8,14 @@ Parse params → call service → return schema.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import get_current_user, require_roles
 from src.courses.dependencies import get_course_service
 from src.courses.exceptions import NotCourseOwner
 from src.courses.service import CourseService
+from src.database import get_db
 from src.lessons.dependencies import get_lesson_service
 from src.lessons.schemas import LessonCreateRequest, LessonResponse, LessonUpdateRequest
 from src.lessons.service import LessonService
@@ -57,9 +60,24 @@ async def get_lesson(
     lesson_id: UUID,
     current_user: User = Depends(get_current_user),
     lesson_service: LessonService = Depends(get_lesson_service),
+    db: AsyncSession = Depends(get_db),
 ) -> LessonResponse:
-    """Get a single lesson by ID."""
+    """Get a single lesson by ID. Tracks progress for students."""
     lesson = await lesson_service.get_by_id(lesson_id)
+
+    # Track progress for students
+    if current_user.role == "student":
+        from src.progress.service import ProgressService
+        from src.quizzes.models import Quiz
+
+        progress_service = ProgressService(db)
+        # Check if lesson has a quiz
+        result = await db.execute(
+            select(Quiz).where(Quiz.lesson_id == lesson_id).limit(1)
+        )
+        has_quiz = result.scalar_one_or_none() is not None
+        await progress_service.touch(current_user.id, lesson_id, has_quiz)
+
     return LessonResponse.model_validate(lesson)
 
 
@@ -93,3 +111,32 @@ async def delete_lesson(
     if current_user.role != "admin" and course.instructor_id != current_user.id:
         raise NotCourseOwner()
     await lesson_service.delete(lesson_id)
+
+
+# ---------------------------------------------------------------------------
+# UI helper — /api/v1/admin/ui/lessons (used by SQLAdmin quiz create cascade)
+# ---------------------------------------------------------------------------
+
+ui_router = APIRouter(prefix="/admin/ui", tags=["admin"])
+
+
+@ui_router.get("/lessons", include_in_schema=False)
+async def admin_ui_lessons(
+    course_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Return lessons for a course as {id, title} for the cascading dropdown.
+
+    No JWT auth — called via browser fetch from SQLAdmin which already enforces
+    session-based admin authentication.
+    """
+    from sqlalchemy import select
+
+    from src.lessons.models import Lesson
+
+    result = await db.execute(
+        select(Lesson.id, Lesson.title)
+        .where(Lesson.course_id == course_id)
+        .order_by(Lesson.order)
+    )
+    return [{"id": str(row.id), "title": row.title} for row in result.all()]

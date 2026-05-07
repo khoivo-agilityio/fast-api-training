@@ -72,3 +72,16 @@ class UserService:
 
         await self._db.flush()
         return user
+
+    async def list_all(self, limit: int = 20, offset: int = 0) -> list[User]:
+        """List all users with pagination (admin use)."""
+        result = await self._db.execute(
+            select(User).order_by(User.created_at.desc()).limit(limit).offset(offset)
+        )
+        return list(result.scalars().all())
+
+    async def delete(self, user_id: UUID) -> None:
+        """Delete a user by ID (admin use)."""
+        user = await self.get_by_id(user_id)
+        await self._db.delete(user)
+        await self._db.flush()

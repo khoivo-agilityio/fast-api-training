@@ -1,0 +1,132 @@
+{% extends "sqladmin/create.html" %}
+
+{% block create_form %}
+<form action="{{ url_for('admin:create', identity=model_view.identity) }}" method="POST"
+  enctype="multipart/form-data" id="quiz-create-form">
+  <div class="row">
+    {% if error %}
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <fieldset class="form-fieldset">
+
+    {# ── Course selector (UI-only, not submitted) ─────────────────────────── #}
+    <div class="mb-3">
+      <label class="form-label required" for="course-selector">Course</label>
+      <select id="course-selector" class="form-select">
+        <option value="">— select a course first —</option>
+      </select>
+      <small class="text-muted">Choose a course to filter the lesson dropdown below.</small>
+    </div>
+
+    {# ── Render all other form fields (lesson dropdown is among them) ─────── #}
+    {% from 'sqladmin/_macros.html' import render_form_fields %}
+    {{ render_form_fields(form, form_opts=form_opts, ajax_lookup_url=url_for('admin:ajax_lookup', identity=model_view.identity)) }}
+
+  </fieldset>
+
+  <div class="row">
+    <div class="col-md-2">
+      <a href="{{ url_for('admin:list', identity=model_view.identity) }}" class="btn">Cancel</a>
+    </div>
+    <div class="col-md-6">
+      <div class="btn-group flex-wrap" data-toggle="buttons">
+        <input type="submit" name="save" value="Save" class="btn">
+        {% if model_view.can_edit %}
+        <input type="submit" name="save" value="Save and continue editing" class="btn">
+        {% endif %}
+        <input type="submit" name="save" value="Save and add another" class="btn">
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  // SQLAdmin renders the lesson relationship field with a <select> whose id
+  // attribute is the field name (lowercased). For a relationship named "lesson"
+  // WTForms names it "lesson". Inspect the DOM to confirm; adjust if needed.
+  const LESSON_SELECT_ID = "lesson";
+
+  function getLessonSelect() {
+    // Try id first, then fall back to name attribute
+    return (
+      document.getElementById(LESSON_SELECT_ID) ||
+      document.querySelector(`select[name="${LESSON_SELECT_ID}"]`)
+    );
+  }
+
+  // ── Populate Course dropdown from API ────────────────────────────────────
+  const courseSelect = document.getElementById("course-selector");
+  const lessonSelect = getLessonSelect();
+
+  // Disable lesson select until a course is chosen
+  if (lessonSelect) {
+    lessonSelect.disabled = true;
+    lessonSelect.innerHTML = '<option value="">— choose a course first —</option>';
+  }
+
+  async function loadCourses() {
+    try {
+      const res = await fetch("/api/v1/admin/ui/courses", { credentials: "same-origin" });
+      if (!res.ok) return;
+      const courses = await res.json();
+      courses.forEach(function (c) {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.title;
+        courseSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.error("Failed to load courses:", e);
+    }
+  }
+
+  // ── Filter lessons when course changes ───────────────────────────────────
+  courseSelect.addEventListener("change", async function () {
+    const courseId = this.value;
+    if (!lessonSelect) return;
+
+    lessonSelect.disabled = true;
+    lessonSelect.innerHTML = '<option value="">Loading…</option>';
+
+    if (!courseId) {
+      lessonSelect.innerHTML = '<option value="">— choose a course first —</option>';
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/v1/admin/ui/lessons?course_id=${courseId}`,
+        { credentials: "same-origin" }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const lessons = await res.json();
+
+      lessonSelect.innerHTML = '<option value="">— select a lesson —</option>';
+      if (lessons.length === 0) {
+        lessonSelect.innerHTML = '<option value="">No lessons in this course</option>';
+      } else {
+        lessons.forEach(function (l) {
+          const opt = document.createElement("option");
+          opt.value = l.id;
+          opt.textContent = l.title;
+          lessonSelect.appendChild(opt);
+        });
+        lessonSelect.disabled = false;
+      }
+    } catch (e) {
+      console.error("Failed to load lessons:", e);
+      lessonSelect.innerHTML = '<option value="">Error loading lessons</option>';
+    }
+  });
+
+  // ── Boot ─────────────────────────────────────────────────────────────────
+  loadCourses();
+})();
+</script>
+{% endblock %}

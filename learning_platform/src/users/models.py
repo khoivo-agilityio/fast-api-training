@@ -12,7 +12,7 @@ from enum import StrEnum
 
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 
@@ -39,3 +39,12 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+    def __str__(self) -> str:
+        return f"{self.display_name} <{self.email}>"
+
+    # Relationships — used by SQLAdmin for FK dropdowns
+    courses: Mapped[list["Course"]] = relationship("Course", back_populates="instructor", foreign_keys="Course.instructor_id")
+    enrollments: Mapped[list["Enrollment"]] = relationship("Enrollment", back_populates="user", foreign_keys="Enrollment.user_id")
+    submissions: Mapped[list["Submission"]] = relationship("Submission", back_populates="user", foreign_keys="Submission.user_id")
+    progress_records: Mapped[list["Progress"]] = relationship("Progress", back_populates="user", foreign_keys="Progress.user_id")
