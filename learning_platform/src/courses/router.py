@@ -98,3 +98,77 @@ async def enroll_in_course(
     """Enroll the current student in a course."""
     enrollment = await service.enroll(current_user.id, course_id)
     return EnrollmentResponse.model_validate(enrollment)
+
+
+# ---------------------------------------------------------------------------
+# Admin-only endpoints — /api/v1/admin/courses/*
+# ---------------------------------------------------------------------------
+
+admin_router = APIRouter(prefix="/admin/courses", tags=["admin"])
+
+
+@admin_router.get("", response_model=list[CourseResponse])
+async def admin_list_courses(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    _: None = Depends(require_roles("admin")),
+    service: CourseService = Depends(get_course_service),
+) -> list[CourseResponse]:
+    """List all courses with pagination (admin only)."""
+    courses, _ = await service.list_courses(limit=limit, offset=offset)
+    return [CourseResponse.model_validate(c) for c in courses]
+
+
+@admin_router.get("/{course_id}", response_model=CourseResponse)
+async def admin_get_course(
+    course_id: UUID,
+    _: None = Depends(require_roles("admin")),
+    service: CourseService = Depends(get_course_service),
+) -> CourseResponse:
+    """Get any course by ID (admin only)."""
+    course = await service.get_by_id(course_id)
+    return CourseResponse.model_validate(course)
+
+
+@admin_router.patch("/{course_id}", response_model=CourseResponse)
+async def admin_update_course(
+    course_id: UUID,
+    data: CourseUpdateRequest,
+    _: None = Depends(require_roles("admin")),
+    service: CourseService = Depends(get_course_service),
+) -> CourseResponse:
+    """Update any course (admin only — skips ownership check)."""
+    from uuid import uuid4
+
+    course = await service.update(course_id, data, user_id=uuid4(), user_role="admin")
+    return CourseResponse.model_validate(course)
+
+
+@admin_router.delete("/{course_id}", status_code=204)
+async def admin_delete_course(
+    course_id: UUID,
+    _: None = Depends(require_roles("admin")),
+    service: CourseService = Depends(get_course_service),
+) -> None:
+    """Delete any course (admin only)."""
+    await service.delete(course_id)
+
+
+# ---------------------------------------------------------------------------
+# UI helper — /api/v1/admin/ui/courses (used by SQLAdmin quiz create cascade)
+# ---------------------------------------------------------------------------
+
+ui_router = APIRouter(prefix="/admin/ui", tags=["admin"])
+
+
+@ui_router.get("/courses", include_in_schema=False)
+async def admin_ui_courses(
+    service: CourseService = Depends(get_course_service),
+) -> list[dict]:
+    """Return all courses as {id, title} for the cascading dropdown in Quiz create.
+
+    No JWT auth — called via browser fetch from SQLAdmin which already enforces
+    session-based admin authentication.
+    """
+    courses, _ = await service.list_courses(limit=500, offset=0)
+    return [{"id": str(c.id), "title": c.title} for c in courses]

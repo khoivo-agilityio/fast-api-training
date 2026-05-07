@@ -11,7 +11,7 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 
@@ -36,6 +36,21 @@ class Course(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
+    def __str__(self) -> str:
+        return self.title
+
+    # Relationships — used by SQLAdmin for FK dropdowns
+    instructor: Mapped["User"] = relationship("User", back_populates="courses", foreign_keys=[instructor_id])
+    # cascade delete: removing a Course removes all its Lessons and Enrollments
+    lessons: Mapped[list["Lesson"]] = relationship(
+        "Lesson", back_populates="course", foreign_keys="Lesson.course_id",
+        cascade="all, delete-orphan",
+    )
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+        "Enrollment", back_populates="course", foreign_keys="Enrollment.course_id",
+        cascade="all, delete-orphan",
+    )
+
 
 class Enrollment(Base):
     """Enrollment — many-to-many join between students and courses."""
@@ -57,3 +72,10 @@ class Enrollment(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+    def __str__(self) -> str:
+        return f"Enrollment({self.user_id} → {self.course_id})"
+
+    # Relationships — used by SQLAdmin for FK dropdowns
+    user: Mapped["User"] = relationship("User", back_populates="enrollments", foreign_keys=[user_id])
+    course: Mapped["Course"] = relationship("Course", back_populates="enrollments", foreign_keys=[course_id])

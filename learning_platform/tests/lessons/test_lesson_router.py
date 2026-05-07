@@ -107,6 +107,40 @@ class TestGetLessonEndpoint:
         )
         assert response.status_code == 404
 
+    async def test_get_lesson_tracks_progress_student(self, client, async_session):
+        """GET /lessons/{id} by a student creates a progress record (no-quiz → completed)."""
+        from sqlalchemy import select
+
+        from src.progress.models import Progress, ProgressStatus
+
+        instructor = await create_test_instructor(async_session, email="tr_i@test.com")
+        course = await create_test_course(
+            async_session, instructor["user"].id, title="Track Course"
+        )
+        lesson = await create_test_lesson(
+            async_session, course.id, title="Track Lesson"
+        )
+        student = await create_test_user(async_session, email="tr_s@test.com")
+
+        response = await client.get(
+            f"/api/v1/lessons/{lesson.id}",
+            headers=student["auth_header"],
+        )
+
+        assert response.status_code == 200
+
+        # Verify a progress record was created
+        result = await async_session.execute(
+            select(Progress).where(
+                Progress.user_id == student["user"].id,
+                Progress.lesson_id == lesson.id,
+            )
+        )
+        progress = result.scalar_one_or_none()
+        assert progress is not None
+        # No quiz in DB → auto-completed
+        assert progress.status == ProgressStatus.COMPLETED
+
 
 class TestUpdateLessonEndpoint:
     """Tests for PATCH /api/v1/lessons/{id}."""

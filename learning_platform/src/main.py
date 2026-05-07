@@ -82,19 +82,74 @@ def create_app() -> FastAPI:
 
     # Mount routers
     from src.auth.router import router as auth_router
+    from src.courses.router import admin_router as courses_admin_router
     from src.courses.router import router as courses_router
+    from src.courses.router import ui_router as courses_ui_router
     from src.lessons.router import router as lessons_router
+    from src.lessons.router import ui_router as lessons_ui_router
+    from src.progress.router import admin_router as progress_admin_router
+    from src.progress.router import router as progress_router
+    from src.quizzes.router import router as quizzes_router
+    from src.submissions.router import admin_router as submissions_admin_router
+    from src.submissions.router import router as submissions_router
+    from src.users.router import admin_router as users_admin_router
     from src.users.router import router as users_router
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(users_admin_router, prefix="/api/v1")
     app.include_router(courses_router, prefix="/api/v1")
+    app.include_router(courses_admin_router, prefix="/api/v1")
+    app.include_router(courses_ui_router, prefix="/api/v1")
     app.include_router(lessons_router, prefix="/api/v1")
+    app.include_router(lessons_ui_router, prefix="/api/v1")
+    app.include_router(quizzes_router, prefix="/api/v1")
+    app.include_router(submissions_router, prefix="/api/v1")
+    app.include_router(submissions_admin_router, prefix="/api/v1")
+    app.include_router(progress_router, prefix="/api/v1")
+    app.include_router(progress_admin_router, prefix="/api/v1")
 
     # Health check
     @app.get("/health", tags=["system"])
     async def health_check() -> dict[str, str]:
         return {"status": "healthy"}
+
+    # SQLAdmin UI — mounted at /admin
+    # SessionMiddleware must be added AFTER routes to avoid double-wrapping CORS
+    from sqladmin import Admin
+    from starlette.middleware.sessions import SessionMiddleware
+
+    from src.admin_view import (
+        AdminAuthBackend,
+        AnswerAdmin,
+        CourseAdmin,
+        EnrollmentAdmin,
+        LessonAdmin,
+        ProgressAdmin,
+        QuestionAdmin,
+        QuizAdmin,
+        SubmissionAdmin,
+        UserAdmin,
+    )
+    from src.database import engine
+
+    app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
+
+    admin = Admin(
+        app,
+        engine,
+        authentication_backend=AdminAuthBackend(secret_key=settings.JWT_SECRET),
+        templates_dir="templates",
+    )
+    admin.add_view(UserAdmin)
+    admin.add_view(CourseAdmin)
+    admin.add_view(EnrollmentAdmin)
+    admin.add_view(LessonAdmin)
+    admin.add_view(QuizAdmin)
+    admin.add_view(QuestionAdmin)
+    admin.add_view(SubmissionAdmin)
+    admin.add_view(AnswerAdmin)
+    admin.add_view(ProgressAdmin)
 
     return app
 

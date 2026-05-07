@@ -4,88 +4,285 @@ Backend REST API for an AI-Enhanced Learning Platform built with FastAPI.
 
 ## Tech Stack
 
-- **Runtime**: Python 3.11+, FastAPI, Uvicorn
-- **Database**: PostgreSQL 16, SQLAlchemy 2.0 (async)
-- **Auth**: PyJWT + bcrypt (access + refresh tokens)
-- **Cache**: Redis (async) — token blacklist, session store
-- **Migrations**: Alembic
-- **Testing**: pytest + pytest-asyncio + httpx + aiosqlite
-- **Admin UI**: SQLAdmin
-- **Linting**: Ruff
-- **Package Manager**: uv
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Python 3.11+, FastAPI, Uvicorn |
+| Database | PostgreSQL 16, SQLAlchemy 2.0 (async) |
+| Auth | PyJWT + bcrypt (access + refresh tokens) |
+| Cache | Redis 7 (async) — token blacklist, session store |
+| Migrations | Alembic |
+| Testing | pytest + pytest-asyncio + httpx + aiosqlite |
+| Admin UI | SQLAdmin (web panel at `/admin`) |
+| Linting | Ruff |
+| Package Manager | uv |
 
-## Setup
+---
+
+## Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for PostgreSQL + Redis)
+- [uv](https://docs.astral.sh/uv/) — `brew install uv` or `pip install uv`
+- Python 3.11+ (managed by uv automatically)
+
+---
+
+## Quick Start
+
+### 1. Install dependencies
 
 ```bash
-# Install dependencies
 uv sync
+```
 
-# Copy environment config
+### 2. Configure environment
+
+```bash
 cp .env.example .env
-# Edit .env with your values
+# The defaults in .env.example work out of the box with Docker
+```
 
-# Start PostgreSQL + Redis
+> **Important**: Never leave `.env` empty. Copy from `.env.example` first.
+
+### 3. Start PostgreSQL + Redis via Docker
+
+```bash
 docker compose up -d db redis
+```
 
-# Run migrations
+Verify containers are healthy:
+
+```bash
+docker compose ps
+# Both db and redis should show status "healthy"
+```
+
+### 4. Run database migrations
+
+```bash
 uv run python -m alembic upgrade head
+```
 
-# Start development server
+### 5. Start the development server
+
+```bash
 uv run python -m uvicorn src.main:app --reload --port 8001
 ```
 
+The API is now live at **http://localhost:8001**
+
+---
+
 ## API Documentation
 
-- Swagger UI: http://localhost:8001/docs
-- ReDoc: http://localhost:8001/redoc
-- Health check: http://localhost:8001/health
+| Interface | URL |
+|-----------|-----|
+| Swagger UI (interactive) | http://localhost:8001/docs |
+| ReDoc | http://localhost:8001/redoc |
+| Health check | http://localhost:8001/health |
+| **SQLAdmin Web UI** | **http://localhost:8001/admin** |
+
+---
+
+## Admin Web UI (SQLAdmin)
+
+The SQLAdmin panel is available at **http://localhost:8001/admin** and provides a browser-based interface to view and manage all database records.
+
+### Admin Login Credentials
+
+The admin account must be created via the API first (see [Test Users](#test-users-for-manual-testing) below).
+
+| Field | Value |
+|-------|-------|
+| Username | `admin@example.com` |
+| Password | `Admin1234!` |
+
+### What you can manage in SQLAdmin
+
+- **Users** — view all users, roles, email
+- **Courses** — browse all courses and instructors
+- **Enrollments** — see who enrolled in what
+- **Lessons** — view lesson content and ordering
+- **Quizzes & Questions** — inspect quiz structure
+- **Submissions & Answers** — see student attempts and scores
+- **Progress Records** — track lesson completion per user
+
+---
+
+## Test Users for Manual Testing
+
+Use the API (Swagger UI or Postman) to register accounts. Below are the recommended test credentials that match the Postman collection.
+
+### Register via API — `POST /api/v1/auth/register`
+
+#### Admin user
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "Admin1234!",
+  "display_name": "Admin User",
+  "role": "admin"
+}
+```
+
+#### Instructor
+
+```json
+{
+  "email": "instructor@example.com",
+  "password": "Instructor1234!",
+  "display_name": "Jane Instructor",
+  "role": "instructor"
+}
+```
+
+#### Student
+
+```json
+{
+  "email": "student@example.com",
+  "password": "Student1234!",
+  "display_name": "John Student",
+  "role": "student"
+}
+```
+
+> **Note**: The `role` field defaults to `"student"` if omitted. Roles: `student`, `instructor`, `admin`.
+
+---
+
+## Connecting TablePlus (or any DB client)
+
+The database runs in Docker and is exposed on **localhost:5432**.
+
+| Setting | Value |
+|---------|-------|
+| Host | `localhost` |
+| Port | `5432` |
+| User | `postgres` |
+| Password | `postgres` |
+| Database | `learning_platform` |
+
+> **Troubleshooting `Connection refused`**: This means the Docker containers are not running.
+> Run `docker compose up -d db redis` to start them, then retry the connection.
+
+---
 
 ## Testing
 
+### Run the pytest suite (uses SQLite in-memory — no Docker needed)
+
 ```bash
-# Run tests
+# Quick run
 uv run pytest tests/ --tb=short -q
 
-# Run tests with coverage
+# With coverage report
 uv run pytest tests/ -v --cov=src --cov-report=term-missing
+```
 
-# Lint
+### Run Postman / Newman end-to-end tests (requires running server + Docker)
+
+```bash
+# Install Newman globally
+npm install -g newman
+
+# Run the full Postman collection
+newman run docs/postman_collection_all.json \
+  --environment docs/postman_environment_all.json \
+  --bail
+
+# Run only Phase 4 + 5 tests
+newman run docs/postman_collection_phase45.json \
+  --environment docs/postman_environment_phase45.json \
+  --bail
+```
+
+The Postman collections automate the full E2E flow:
+1. Register admin / instructor / student
+2. Login and capture tokens
+3. Create courses, lessons, quizzes
+4. Enroll student, complete lessons, take quizzes
+5. Admin CRUD operations
+
+### Linting & Formatting
+
+```bash
+# Check for issues
 uv run ruff check src/ tests/
 
-# Format
+# Auto-fix
+uv run ruff check src/ tests/ --fix
+
+# Format code
 uv run ruff format src/ tests/
 ```
+
+---
 
 ## Project Structure
 
 ```
-src/
-├── auth/           # Authentication & token management
-├── users/          # User profile management
-├── courses/        # Course management + enrollment
-├── lessons/        # Lesson management + viewing
-├── quizzes/        # Quiz & question management
-├── submissions/    # Quiz taking & auto-grading
-├── progress/       # Progress tracking
-├── admin/          # Admin REST + SQLAdmin UI
-├── config.py       # Settings (pydantic-settings)
-├── database.py     # Async SQLAlchemy engine
-├── redis.py        # Async Redis client
-├── exceptions.py   # Domain error hierarchy
-├── pagination.py   # Shared pagination utilities
-├── models.py       # ORM model re-exports (for Alembic)
-└── main.py         # App factory
+learning_platform/
+├── src/
+│   ├── auth/           # Registration, login, JWT, refresh tokens
+│   ├── users/          # User profile management
+│   ├── courses/        # Course CRUD + enrollment
+│   ├── lessons/        # Lesson management + viewing
+│   ├── quizzes/        # Quiz & question management
+│   ├── submissions/    # Quiz taking & auto-grading
+│   ├── progress/       # Lesson progress tracking
+│   ├── admin/          # Admin REST API + SQLAdmin UI
+│   ├── config.py       # Settings (pydantic-settings)
+│   ├── database.py     # Async SQLAlchemy engine
+│   ├── redis.py        # Async Redis client
+│   ├── exceptions.py   # Domain error hierarchy
+│   ├── pagination.py   # Shared pagination utilities
+│   ├── models.py       # ORM model re-exports (for Alembic)
+│   └── main.py         # App factory
+├── tests/              # pytest test suite (SQLite)
+├── alembic/            # Database migrations
+├── docs/               # Postman collections + API specs
+├── docker-compose.yml  # PostgreSQL + Redis services
+├── Dockerfile          # Production container
+├── pyproject.toml      # Project config + dependencies
+├── .env.example        # Environment template
+└── gotchas.md          # Known issues and solutions
 ```
+
+---
 
 ## Docker
 
 ```bash
-# Full stack
+# Start only infrastructure (db + redis) — recommended for local dev
+docker compose up -d db redis
+
+# Full stack (app + db + redis) — mirrors production
 docker compose up -d --build
 
-# Logs
+# View app logs
 docker compose logs app --tail=50
 
-# Shut down
+# Follow logs live
+docker compose logs -f
+
+# Stop everything (preserves volumes)
 docker compose down
+
+# Stop and wipe database
+docker compose down -v
 ```
+
+---
+
+## Common Issues
+
+| Symptom | Fix |
+|---------|-----|
+| `Connection refused` on port 5432 | Run `docker compose up -d db redis` |
+| `Connection refused` on port 6379 | Same — Redis not started |
+| TablePlus can't connect | Docker containers must be running first |
+| `alembic upgrade head` fails | Start Docker first, then run migrations |
+| SQLAdmin login rejected | Register the admin user via API first |
+| Empty `.env` file | Copy from `.env.example`: `cp .env.example .env` |
+

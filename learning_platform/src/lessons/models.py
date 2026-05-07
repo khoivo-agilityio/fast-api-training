@@ -11,7 +11,7 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 
@@ -36,4 +36,19 @@ class Lesson(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    def __str__(self) -> str:
+        return self.title
+
+    # Relationships — used by SQLAdmin for FK dropdowns
+    course: Mapped["Course"] = relationship("Course", back_populates="lessons", foreign_keys=[course_id])
+    # cascade delete: removing a Lesson removes its Quiz and Progress records
+    quiz: Mapped["Quiz"] = relationship(
+        "Quiz", back_populates="lesson", foreign_keys="Quiz.lesson_id",
+        uselist=False, cascade="all, delete-orphan",
+    )
+    progress_records: Mapped[list["Progress"]] = relationship(
+        "Progress", back_populates="lesson", foreign_keys="Progress.lesson_id",
+        cascade="all, delete-orphan",
     )

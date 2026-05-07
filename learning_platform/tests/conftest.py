@@ -186,3 +186,65 @@ async def create_test_lesson(
     session.add(lesson)
     await session.flush()
     return lesson
+
+
+async def create_test_progress(
+    session: AsyncSession,
+    user_id,
+    lesson_id,
+    status: str = "in_progress",
+):
+    """Create a test progress record directly in the database."""
+    from src.progress.models import Progress
+
+    progress = Progress(user_id=user_id, lesson_id=lesson_id, status=status)
+    session.add(progress)
+    await session.flush()
+    return progress
+
+
+async def create_test_quiz(
+    session: AsyncSession,
+    lesson_id,
+    title: str = "Test Quiz",
+    description: str | None = None,
+    time_limit_minutes: int | None = None,
+):
+    """Create a test quiz directly in the database."""
+    from src.quizzes.models import Quiz
+
+    quiz = Quiz(
+        lesson_id=lesson_id,
+        title=title,
+        description=description,
+        time_limit_minutes=time_limit_minutes,
+    )
+    session.add(quiz)
+    await session.flush()
+    return quiz
+
+
+async def create_test_question(
+    session: AsyncSession,
+    quiz_id,
+    text: str = "What is 2+2?",
+    q_type: str = "mcq",
+    options: list[str] | None = None,
+    correct_answer: str = "4",
+):
+    """Create a test question directly in the database."""
+    from src.quizzes.models import Question
+
+    if options is None:
+        options = ["1", "2", "3", "4"]
+    question = Question(
+        quiz_id=quiz_id,
+        text=text,
+        type=q_type,
+        options=options,
+        correct_answer=correct_answer,
+    )
+    session.add(question)
+    await session.flush()
+    return question
+
