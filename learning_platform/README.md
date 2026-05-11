@@ -110,44 +110,34 @@ The admin account must be created via the API first (see [Test Users](#test-user
 
 ## Test Users for Manual Testing
 
-Use the API (Swagger UI or Postman) to register accounts. Below are the recommended test credentials that match the Postman collection.
+> **⚠️ Role restriction:** The `POST /api/v1/auth/register` endpoint only allows registering accounts with the `student` role. To create `admin` or `instructor` accounts, use the **SQLAdmin panel** (`/admin`).
 
-### Register via API — `POST /api/v1/auth/register`
-
-#### Admin user
-
-```json
-{
-  "email": "admin@example.com",
-  "password": "Admin1234!",
-  "display_name": "Admin User",
-  "role": "admin"
-}
-```
-
-#### Instructor
-
-```json
-{
-  "email": "instructor@example.com",
-  "password": "Instructor1234!",
-  "display_name": "Jane Instructor",
-  "role": "instructor"
-}
-```
-
-#### Student
+### Register a Student via API — `POST /api/v1/auth/register`
 
 ```json
 {
   "email": "student@example.com",
   "password": "Student1234!",
-  "display_name": "John Student",
-  "role": "student"
+  "display_name": "John Student"
 }
 ```
 
-> **Note**: The `role` field defaults to `"student"` if omitted. Roles: `student`, `instructor`, `admin`.
+> The `role` field defaults to `"student"` and cannot be overridden via the public API.
+
+### Create Admin / Instructor via SQLAdmin
+
+1. Open **`/admin`** and log in with a superuser account
+2. Navigate to **Users → Create**
+3. Set `role` to `admin` or `instructor` manually
+
+Recommended test credentials:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@example.com` | `Admin1234!` |
+| Instructor | `instructor@example.com` | `Instructor1234!` |
+| Student | `student@example.com` | `Student1234!` |
+
 
 ---
 

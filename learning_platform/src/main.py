@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.config import settings
 from src.exceptions import (
@@ -133,7 +134,10 @@ def create_app() -> FastAPI:
     )
     from src.database import engine
 
-    app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
+    # Trust X-Forwarded-Proto/For headers from Railway's reverse proxy
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+    # https_only=False because TLS is terminated at the Railway proxy, not the app
+    app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET, https_only=False)
 
     admin = Admin(
         app,
