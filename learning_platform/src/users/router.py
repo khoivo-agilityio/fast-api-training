@@ -10,6 +10,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from src.auth.dependencies import get_current_user, require_roles
+from src.storage.dependencies import get_storage_service
+from src.storage.schemas import AvatarConfirmRequest, PresignedUrlRequest, PresignedUrlResponse
+from src.storage.service import StorageService
 from src.users.dependencies import get_user_service
 from src.users.models import User
 from src.users.schemas import UserResponse, UserUpdateRequest
@@ -34,6 +37,51 @@ async def update_current_user_profile(
 ) -> UserResponse:
     """Update the authenticated user's profile (partial update)."""
     updated = await service.update_profile(current_user.id, data)
+    return UserResponse.model_validate(updated)
+
+
+@router.post(
+    "/me/avatar/presigned",
+    response_model=PresignedUrlResponse,
+    status_code=201,
+    summary="Request a presigned S3 PUT URL for avatar upload",
+)
+async def request_avatar_presigned_url(
+    data: PresignedUrlRequest,
+    current_user: User = Depends(get_current_user),
+    storage: StorageService = Depends(get_storage_service),
+) -> PresignedUrlResponse:
+    """Generate a short-lived presigned PUT URL.
+
+    **Upload flow:**
+    1. Call this endpoint with `content_type` (e.g. `image/jpeg`).
+    2. PUT the file bytes directly to `upload_url` (from the client — no server proxy).
+    3. Call `PATCH /users/me/avatar` with the returned `object_key` to confirm.
+
+    The URL expires in `expires_in` seconds (default 5 minutes).
+    """
+    return await storage.generate_presigned_put(data.content_type)
+
+
+@router.patch(
+    "/me/avatar",
+    response_model=UserResponse,
+    summary="Confirm avatar upload and activate CDN URL",
+)
+async def confirm_avatar_upload(
+    data: AvatarConfirmRequest,
+    current_user: User = Depends(get_current_user),
+    storage: StorageService = Depends(get_storage_service),
+    service: UserService = Depends(get_user_service),
+) -> UserResponse:
+    """Confirm a completed S3 upload, validate magic bytes, and store the CDN URL.
+
+    The server fetches only the first 16 bytes from S3 to validate the image
+    format.  If validation fails the uploaded object is deleted automatically
+    and a **422** error is returned.
+    """
+    avatar_url = await storage.validate_and_get_avatar_url(data.object_key)
+    updated = await service.update_avatar(current_user.id, avatar_url)
     return UserResponse.model_validate(updated)
 
 
