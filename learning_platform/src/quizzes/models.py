@@ -26,9 +26,7 @@ class Quiz(Base):
 
     __tablename__ = "quizzes"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lesson_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False, unique=True
     )
@@ -41,10 +39,14 @@ class Quiz(Base):
         return self.title
 
     # Relationships — used by SQLAdmin for FK dropdowns
-    lesson: Mapped["Lesson"] = relationship("Lesson", back_populates="quiz", foreign_keys=[lesson_id])
+    lesson: Mapped["Lesson"] = relationship(  # noqa: F821
+        "Lesson", back_populates="quiz", foreign_keys=[lesson_id]
+    )
     # cascade delete: removing a Quiz removes its Questions (avoids NOT NULL violation on quiz_id)
     questions: Mapped[list["Question"]] = relationship(
-        "Question", back_populates="quiz", foreign_keys="Question.quiz_id",
+        "Question",
+        back_populates="quiz",
+        foreign_keys="Question.quiz_id",
         cascade="all, delete-orphan",
     )
 
@@ -54,16 +56,12 @@ class Question(Base):
 
     __tablename__ = "questions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     quiz_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("quizzes.id"), nullable=False
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    type: Mapped[str] = mapped_column(
-        String(10), nullable=False, default=QuestionType.MCQ.value
-    )
+    type: Mapped[str] = mapped_column(String(10), nullable=False, default=QuestionType.MCQ.value)
     options: Mapped[list | None] = mapped_column(JSON, nullable=True)
     correct_answer: Mapped[str] = mapped_column(String, nullable=False)
 

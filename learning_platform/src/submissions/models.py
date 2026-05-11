@@ -20,9 +20,7 @@ class Submission(Base):
 
     __tablename__ = "submissions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
@@ -38,11 +36,16 @@ class Submission(Base):
         return f"Submission(quiz={self.quiz_id}, score={self.score})"
 
     # Relationships — used by SQLAdmin for FK dropdowns
-    user: Mapped["User"] = relationship("User", back_populates="submissions", foreign_keys=[user_id])
-    quiz: Mapped["Quiz"] = relationship("Quiz", foreign_keys=[quiz_id])
-    # cascade delete: removing a Submission removes its Answers (avoids NOT NULL violation on submission_id)
+    user: Mapped["User"] = relationship(  # noqa: F821
+        "User", back_populates="submissions", foreign_keys=[user_id]
+    )
+    quiz: Mapped["Quiz"] = relationship("Quiz", foreign_keys=[quiz_id])  # noqa: F821
+    # cascade delete: removing a Submission removes its Answers
+    # (avoids NOT NULL violation on submission_id)
     answers: Mapped[list["Answer"]] = relationship(
-        "Answer", back_populates="submission", foreign_keys="Answer.submission_id",
+        "Answer",
+        back_populates="submission",
+        foreign_keys="Answer.submission_id",
         cascade="all, delete-orphan",
     )
 
@@ -52,9 +55,7 @@ class Answer(Base):
 
     __tablename__ = "answers"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     submission_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("submissions.id"), nullable=False
     )
@@ -68,5 +69,9 @@ class Answer(Base):
         return self.text[:60] + ("..." if len(self.text) > 60 else "")
 
     # Relationships — used by SQLAdmin for FK dropdowns
-    submission: Mapped["Submission"] = relationship("Submission", back_populates="answers", foreign_keys=[submission_id])
-    question: Mapped["Question"] = relationship("Question", foreign_keys=[question_id])
+    submission: Mapped["Submission"] = relationship(  # noqa: F821
+        "Submission", back_populates="answers", foreign_keys=[submission_id]
+    )
+    question: Mapped["Question"] = relationship(  # noqa: F821
+        "Question", foreign_keys=[question_id]
+    )

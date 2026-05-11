@@ -26,9 +26,7 @@ class TestLessonServiceCreate:
 
     async def test_create_lesson(self, setup):
         service, course = setup
-        data = LessonCreateRequest(
-            title="Intro", content="Welcome to the course", order=1
-        )
+        data = LessonCreateRequest(title="Intro", content="Welcome to the course", order=1)
         lesson = await service.create(course.id, data)
         assert lesson.title == "Intro"
         assert lesson.content == "Welcome to the course"

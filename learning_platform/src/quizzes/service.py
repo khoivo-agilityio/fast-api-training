@@ -32,9 +32,7 @@ class QuizService:
 
     async def create_quiz(self, lesson_id: UUID, data: QuizCreateRequest) -> Quiz:
         """Create a quiz for a lesson. Raises QuizAlreadyExists if one exists."""
-        result = await self._db.execute(
-            select(Quiz).where(Quiz.lesson_id == lesson_id)
-        )
+        result = await self._db.execute(select(Quiz).where(Quiz.lesson_id == lesson_id))
         if result.scalar_one_or_none():
             raise QuizAlreadyExists()
 
@@ -50,9 +48,7 @@ class QuizService:
 
     async def get_quiz_by_lesson(self, lesson_id: UUID) -> Quiz:
         """Get quiz by lesson ID or raise QuizNotFound."""
-        result = await self._db.execute(
-            select(Quiz).where(Quiz.lesson_id == lesson_id)
-        )
+        result = await self._db.execute(select(Quiz).where(Quiz.lesson_id == lesson_id))
         quiz = result.scalar_one_or_none()
         if not quiz:
             raise QuizNotFound(f"lesson_id={lesson_id}")
@@ -66,14 +62,10 @@ class QuizService:
             raise QuizNotFound(quiz_id)
         return quiz
 
-    async def get_quiz_with_questions(
-        self, quiz_id: UUID
-    ) -> tuple[Quiz, list[Question]]:
+    async def get_quiz_with_questions(self, quiz_id: UUID) -> tuple[Quiz, list[Question]]:
         """Load quiz + all its questions. Used by submissions service."""
         quiz = await self.get_quiz_by_id(quiz_id)
-        result = await self._db.execute(
-            select(Question).where(Question.quiz_id == quiz_id)
-        )
+        result = await self._db.execute(select(Question).where(Question.quiz_id == quiz_id))
         questions = list(result.scalars().all())
         return quiz, questions
 
@@ -94,9 +86,7 @@ class QuizService:
 
     # ── Question CRUD ───────────────────────────────────────────
 
-    async def add_question(
-        self, quiz_id: UUID, data: QuestionCreateRequest
-    ) -> Question:
+    async def add_question(self, quiz_id: UUID, data: QuestionCreateRequest) -> Question:
         """Add a question to a quiz."""
         await self.get_quiz_by_id(quiz_id)  # Ensure quiz exists
         question = Question(
@@ -112,17 +102,13 @@ class QuizService:
 
     async def get_question_by_id(self, question_id: UUID) -> Question:
         """Get question by ID or raise QuestionNotFound."""
-        result = await self._db.execute(
-            select(Question).where(Question.id == question_id)
-        )
+        result = await self._db.execute(select(Question).where(Question.id == question_id))
         question = result.scalar_one_or_none()
         if not question:
             raise QuestionNotFound(question_id)
         return question
 
-    async def update_question(
-        self, question_id: UUID, data: QuestionUpdateRequest
-    ) -> Question:
+    async def update_question(self, question_id: UUID, data: QuestionUpdateRequest) -> Question:
         """Update a question."""
         question = await self.get_question_by_id(question_id)
         update_data = data.model_dump(exclude_unset=True)
@@ -140,8 +126,6 @@ class QuizService:
     async def count_questions(self, quiz_id: UUID) -> int:
         """Count questions in a quiz."""
         result = await self._db.execute(
-            select(func.count()).select_from(Question).where(
-                Question.quiz_id == quiz_id
-            )
+            select(func.count()).select_from(Question).where(Question.quiz_id == quiz_id)
         )
         return result.scalar_one()

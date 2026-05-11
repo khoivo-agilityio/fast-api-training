@@ -44,7 +44,15 @@ class User(Base):
         return f"{self.display_name} <{self.email}>"
 
     # Relationships — used by SQLAdmin for FK dropdowns
-    courses: Mapped[list["Course"]] = relationship("Course", back_populates="instructor", foreign_keys="Course.instructor_id")
-    enrollments: Mapped[list["Enrollment"]] = relationship("Enrollment", back_populates="user", foreign_keys="Enrollment.user_id")
-    submissions: Mapped[list["Submission"]] = relationship("Submission", back_populates="user", foreign_keys="Submission.user_id")
-    progress_records: Mapped[list["Progress"]] = relationship("Progress", back_populates="user", foreign_keys="Progress.user_id")
+    courses: Mapped[list["Course"]] = relationship(  # noqa: F821
+        "Course", back_populates="instructor", foreign_keys="Course.instructor_id"
+    )
+    enrollments: Mapped[list["Enrollment"]] = relationship(  # noqa: F821
+        "Enrollment", back_populates="user", foreign_keys="Enrollment.user_id"
+    )
+    submissions: Mapped[list["Submission"]] = relationship(  # noqa: F821
+        "Submission", back_populates="user", foreign_keys="Submission.user_id"
+    )
+    progress_records: Mapped[list["Progress"]] = relationship(  # noqa: F821
+        "Progress", back_populates="user", foreign_keys="Progress.user_id"
+    )

@@ -106,16 +106,12 @@ class TestCourseServiceUpdate:
     async def test_update_by_owner(self, setup):
         service, course, instructor = setup
         data = CourseUpdateRequest(title="Updated Title")
-        updated = await service.update(
-            course.id, data, instructor["user"].id, "instructor"
-        )
+        updated = await service.update(course.id, data, instructor["user"].id, "instructor")
         assert updated.title == "Updated Title"
 
     async def test_update_by_non_owner(self, setup, async_session):
         service, course, _ = setup
-        other = await create_test_instructor(
-            async_session, email="other@example.com"
-        )
+        other = await create_test_instructor(async_session, email="other@example.com")
         data = CourseUpdateRequest(title="Hacked")
         with pytest.raises(NotCourseOwner):
             await service.update(course.id, data, other["user"].id, "instructor")

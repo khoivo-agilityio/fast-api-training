@@ -22,9 +22,7 @@ class TestGetCourseProgressEndpoint:
     async def test_get_course_progress_200(self, client, async_session):
         """Student with 1/2 lessons completed gets correct percentages."""
         instructor = await create_test_instructor(async_session, email="pi1@test.com")
-        course = await create_test_course(
-            async_session, instructor["user"].id, title="P Course 1"
-        )
+        course = await create_test_course(async_session, instructor["user"].id, title="P Course 1")
         lesson1 = await create_test_lesson(async_session, course.id, title="PL1a", order=1)
         lesson2 = await create_test_lesson(async_session, course.id, title="PL1b", order=2)
         student = await create_test_user(async_session, email="ps1@test.com")
@@ -78,9 +76,7 @@ class TestGetCourseProgressEndpoint:
     async def test_get_course_progress_401_no_auth(self, client, async_session):
         """Unauthenticated request returns 401."""
         instructor = await create_test_instructor(async_session, email="pi3@test.com")
-        course = await create_test_course(
-            async_session, instructor["user"].id, title="P Course 3"
-        )
+        course = await create_test_course(async_session, instructor["user"].id, title="P Course 3")
 
         response = await client.get(f"/api/v1/courses/{course.id}/progress")
 
