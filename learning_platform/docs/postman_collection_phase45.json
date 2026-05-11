@@ -1,0 +1,736 @@
+{
+  "info": {
+    "name": "Learning Platform — Phase 4-5",
+    "description": "Test flows for Phase 4 (Progress Tracking) and Phase 5 (Admin REST + SQLAdmin).\n\nPrerequisites:\n1. Run Phase 0-2 collection first to seed users, course, and lessons.\n2. Ensure student is enrolled in the course.\n3. lesson_id and course_id must be set in collection variables.\n\nBase URL: http://localhost:8001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8001/api/v1" },
+    { "key": "admin_access_token", "value": "" },
+    { "key": "instructor_access_token", "value": "" },
+    { "key": "student_access_token", "value": "" },
+    { "key": "student_refresh_token", "value": "" },
+    { "key": "course_id", "value": "" },
+    { "key": "lesson_id", "value": "" },
+    { "key": "lesson2_id", "value": "" },
+    { "key": "target_user_id", "value": "" },
+    { "key": "target_course_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0 — Setup (Login all roles)",
+      "item": [
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"admin@example.com\",\"password\":\"AdminPass1!\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('admin_access_token', json.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Instructor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"instructor@example.com\",\"password\":\"InstrPass1!\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('instructor_access_token', json.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"student@example.com\",\"password\":\"StudPass1!\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('student_access_token', json.access_token);",
+                  "pm.collectionVariables.set('student_refresh_token', json.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Course (instructor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{instructor_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/courses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Phase 4-5 Test Course\",\"description\":\"Course for progress and admin tests.\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('course_id', json.id);",
+                  "pm.test('Has id', () => pm.expect(json).to.have.property('id'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Lesson 1 (no-quiz, auto-completes)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{instructor_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/courses/{{course_id}}/lessons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Lesson 1: Intro\",\"content\":\"Welcome to the course.\",\"order\":1}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('lesson_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Lesson 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{instructor_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/courses/{{course_id}}/lessons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Lesson 2: Deep Dive\",\"content\":\"Advanced content here.\",\"order\":2}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('lesson2_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enroll Student in Course",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/enroll"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const status = pm.response.code;",
+                  "pm.test('Enrolled or already enrolled', () => pm.expect([201, 409]).to.include(status));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 — Progress Tracking (Phase 4)",
+      "item": [
+        {
+          "name": "4.1 GET /lessons/{id} — Student views lesson (triggers touch)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/lessons/{{lesson_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has lesson id', () => pm.expect(pm.response.json()).to.have.property('id'));",
+                  "pm.test('Lesson id matches', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('lesson_id')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 GET /lessons/{id} — View again (idempotent progress)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/lessons/{{lesson_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 (idempotent)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 GET /lessons/{id} — Instructor view (no progress tracking)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{instructor_access_token}}" }],
+            "url": "{{base_url}}/lessons/{{lesson_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.4 GET /courses/{id}/progress — Student: 1/2 completed (50%)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has course_id', () => pm.expect(json).to.have.property('course_id'));",
+                  "pm.test('Has completed_lessons', () => pm.expect(json).to.have.property('completed_lessons'));",
+                  "pm.test('Has total_lessons', () => pm.expect(json).to.have.property('total_lessons'));",
+                  "pm.test('Has percent_complete', () => pm.expect(json).to.have.property('percent_complete'));",
+                  "pm.test('Has is_complete', () => pm.expect(json).to.have.property('is_complete'));",
+                  "pm.test('total_lessons is 2', () => pm.expect(json.total_lessons).to.eql(2));",
+                  "pm.test('completed_lessons is 1', () => pm.expect(json.completed_lessons).to.eql(1));",
+                  "pm.test('percent_complete is 50', () => pm.expect(json.percent_complete).to.eql(50));",
+                  "pm.test('is_complete is false', () => pm.expect(json.is_complete).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.5 GET /lessons/{id} — Student views lesson 2 (completes it)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/lessons/{{lesson2_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.6 GET /courses/{id}/progress — Student: 2/2 completed (100%)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('completed_lessons is 2', () => pm.expect(json.completed_lessons).to.eql(2));",
+                  "pm.test('percent_complete is 100', () => pm.expect(json.percent_complete).to.eql(100));",
+                  "pm.test('is_complete is true', () => pm.expect(json.is_complete).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.7 GET /progress — Student: all enrolled courses progress",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Is array', () => pm.expect(json).to.be.an('array'));",
+                  "pm.test('Has at least 1 entry', () => pm.expect(json.length).to.be.above(0));",
+                  "pm.test('Each entry has course_id', () => json.forEach(e => pm.expect(e).to.have.property('course_id')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.8 GET /courses/{id}/progress — No auth (expect 401)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/courses/{{course_id}}/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.9 GET /courses/{id}/progress — Not enrolled student (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+            "url": "{{base_url}}/courses/00000000-0000-0000-0000-000000000099/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404 (course not found)', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.10 GET /courses/{id}/progress — Admin bypasses enrollment check",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has total_lessons', () => pm.expect(pm.response.json()).to.have.property('total_lessons'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 — Admin REST API (Phase 5)",
+      "item": [
+        {
+          "name": "5.1 Users",
+          "item": [
+            {
+              "name": "GET /admin/users — List all users",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/users?limit=20&offset=0",
+                  "query": [
+                    { "key": "limit", "value": "20" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const json = pm.response.json();",
+                      "pm.test('Is array', () => pm.expect(json).to.be.an('array'));",
+                      "pm.test('Has users', () => pm.expect(json.length).to.be.above(0));",
+                      "if (json.length > 0) { pm.collectionVariables.set('target_user_id', json[0].id); }",
+                      "pm.test('User has email', () => pm.expect(json[0]).to.have.property('email'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/users — Student forbidden (expect 401)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{student_access_token}}" }],
+                "url": "{{base_url}}/admin/users"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/users — Instructor forbidden (expect 401)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{instructor_access_token}}" }],
+                "url": "{{base_url}}/admin/users"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/users — No auth (expect 401)",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/admin/users"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/users/{id} — Get user by ID",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": "{{base_url}}/admin/users/{{target_user_id}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const json = pm.response.json();",
+                      "pm.test('Has id', () => pm.expect(json).to.have.property('id'));",
+                      "pm.test('Has role', () => pm.expect(json).to.have.property('role'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/users/{id} — Not found (expect 404)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": "{{base_url}}/admin/users/00000000-0000-0000-0000-000000000000"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PATCH /admin/users/{id} — Admin updates any user",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": "{{base_url}}/admin/users/{{target_user_id}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"display_name\":\"Admin Updated Name\"}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Name updated', () => pm.expect(pm.response.json().display_name).to.eql('Admin Updated Name'));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "5.2 Courses",
+          "item": [
+            {
+              "name": "GET /admin/courses — List all courses",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/courses?limit=20&offset=0",
+                  "query": [
+                    { "key": "limit", "value": "20" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const json = pm.response.json();",
+                      "pm.test('Is array', () => pm.expect(json).to.be.an('array'));",
+                      "if (json.length > 0) { pm.collectionVariables.set('target_course_id', json[0].id); }"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/courses/{id} — Get course by ID",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": "{{base_url}}/admin/courses/{{course_id}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Has title', () => pm.expect(pm.response.json()).to.have.property('title'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "PATCH /admin/courses/{id} — Admin updates any course",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": "{{base_url}}/admin/courses/{{course_id}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"description\":\"Updated by admin via REST.\"}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Description updated', () => pm.expect(pm.response.json().description).to.eql('Updated by admin via REST.'));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "5.3 Submissions & Progress (admin list)",
+          "item": [
+            {
+              "name": "GET /admin/submissions — List all submissions",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/submissions?limit=20&offset=0",
+                  "query": [
+                    { "key": "limit", "value": "20" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /admin/progress — List all progress records",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/progress?limit=20&offset=0",
+                  "query": [
+                    { "key": "limit", "value": "20" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const json = pm.response.json();",
+                      "pm.test('Is array', () => pm.expect(json).to.be.an('array'));",
+                      "pm.test('Has progress records', () => pm.expect(json.length).to.be.above(0));",
+                      "pm.test('Record has status', () => pm.expect(json[0]).to.have.property('status'));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "5.4 Cleanup — Admin deletes course",
+          "item": [
+            {
+              "name": "DELETE /admin/courses/{id} — Admin deletes course",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": "{{base_url}}/admin/courses/{{course_id}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET /courses/{id} — After delete (expect 404)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }],
+                "url": "{{base_url}}/courses/{{course_id}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

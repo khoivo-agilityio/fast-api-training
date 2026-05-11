@@ -13,7 +13,19 @@ from sqlalchemy.orm import DeclarativeBase
 
 from src.config import settings
 
-engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+
+def _normalize_db_url(url: str) -> str:
+    """Ensure the DATABASE_URL uses the asyncpg driver.
+
+    Railway (and many PaaS providers) supply a plain ``postgresql://…`` URL.
+    SQLAlchemy requires ``postgresql+asyncpg://…`` for async connections.
+    """
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
+engine = create_async_engine(_normalize_db_url(settings.DATABASE_URL), echo=settings.DEBUG)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
