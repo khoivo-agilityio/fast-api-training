@@ -75,6 +75,7 @@ class TestSubmissionRouter:
 
     async def test_get_submission_404(self, client, async_session):
         import uuid
+
         student = await create_test_user(async_session, email="sr_404@test.com")
         fake_id = uuid.uuid4()
         resp = await client.get(

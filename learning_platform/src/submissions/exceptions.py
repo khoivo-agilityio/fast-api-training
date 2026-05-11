@@ -13,9 +13,5 @@ class AlreadySubmitted(ConflictError):
 
 class SubmissionNotFound(NotFoundError):
     def __init__(self, identifier: object = None):
-        detail = (
-            f"Submission not found: {identifier}"
-            if identifier
-            else "Submission not found"
-        )
+        detail = f"Submission not found: {identifier}" if identifier else "Submission not found"
         super().__init__(detail=detail, error_code="SUBMISSION_NOT_FOUND")

@@ -93,6 +93,30 @@ async def client(async_session, mock_redis) -> AsyncGenerator[AsyncClient, None]
     app.dependency_overrides.clear()
 
 
+@pytest_asyncio.fixture
+async def registered_user(client: AsyncClient) -> dict:
+    """Register a test user via the API and return the token response dict.
+
+    Used by test_auth.py / test_users.py tests that need a pre-existing user.
+    """
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "StrongPass123!",
+            "display_name": "Test User",
+        },
+    )
+    assert resp.status_code == 201, f"registered_user fixture failed: {resp.text}"
+    return resp.json()
+
+
+@pytest_asyncio.fixture
+async def auth_headers(registered_user: dict) -> dict:
+    """Return Authorization header dict for the registered test user."""
+    return {"Authorization": f"Bearer {registered_user['access_token']}"}
+
+
 async def create_test_user(
     session: AsyncSession,
     email: str = "test@example.com",
@@ -140,9 +164,7 @@ async def create_test_admin(
     display_name: str = "Test Admin",
 ) -> dict:
     """Create a test user with admin role and return user data + tokens."""
-    return await create_test_user(
-        session, email=email, display_name=display_name, role="admin"
-    )
+    return await create_test_user(session, email=email, display_name=display_name, role="admin")
 
 
 async def create_test_course(
@@ -180,9 +202,7 @@ async def create_test_lesson(
     """Create a test lesson directly in the database."""
     from src.lessons.models import Lesson
 
-    lesson = Lesson(
-        course_id=course_id, title=title, content=content, order=order
-    )
+    lesson = Lesson(course_id=course_id, title=title, content=content, order=order)
     session.add(lesson)
     await session.flush()
     return lesson
@@ -247,4 +267,3 @@ async def create_test_question(
     session.add(question)
     await session.flush()
     return question
-

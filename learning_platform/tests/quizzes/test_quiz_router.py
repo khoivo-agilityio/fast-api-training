@@ -115,9 +115,7 @@ class TestQuizRouter:
         """Instructor creating quiz for another instructor's lesson → 403."""
         owner = await create_test_instructor(async_session, email="qr_own@test.com")
         other = await create_test_instructor(async_session, email="qr_other@test.com")
-        course = await create_test_course(
-            async_session, owner["user"].id, title="QR Own Course"
-        )
+        course = await create_test_course(async_session, owner["user"].id, title="QR Own Course")
         lesson = await create_test_lesson(async_session, course.id, title="QR Own Lesson")
 
         resp = await client.post(
