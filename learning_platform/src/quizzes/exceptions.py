@@ -11,9 +11,7 @@ class QuizNotFound(NotFoundError):
 
 class QuestionNotFound(NotFoundError):
     def __init__(self, identifier: object = None):
-        detail = (
-            f"Question not found: {identifier}" if identifier else "Question not found"
-        )
+        detail = f"Question not found: {identifier}" if identifier else "Question not found"
         super().__init__(detail=detail, error_code="QUESTION_NOT_FOUND")
 
 

@@ -24,9 +24,7 @@ from src.users.models import User
 router = APIRouter(tags=["lessons"])
 
 
-@router.post(
-    "/courses/{course_id}/lessons", response_model=LessonResponse, status_code=201
-)
+@router.post("/courses/{course_id}/lessons", response_model=LessonResponse, status_code=201)
 async def create_lesson(
     course_id: UUID,
     data: LessonCreateRequest,
@@ -72,9 +70,7 @@ async def get_lesson(
 
         progress_service = ProgressService(db)
         # Check if lesson has a quiz
-        result = await db.execute(
-            select(Quiz).where(Quiz.lesson_id == lesson_id).limit(1)
-        )
+        result = await db.execute(select(Quiz).where(Quiz.lesson_id == lesson_id).limit(1))
         has_quiz = result.scalar_one_or_none() is not None
         await progress_service.touch(current_user.id, lesson_id, has_quiz)
 
@@ -135,8 +131,6 @@ async def admin_ui_lessons(
     from src.lessons.models import Lesson
 
     result = await db.execute(
-        select(Lesson.id, Lesson.title)
-        .where(Lesson.course_id == course_id)
-        .order_by(Lesson.order)
+        select(Lesson.id, Lesson.title).where(Lesson.course_id == course_id).order_by(Lesson.order)
     )
     return [{"id": str(row.id), "title": row.title} for row in result.all()]

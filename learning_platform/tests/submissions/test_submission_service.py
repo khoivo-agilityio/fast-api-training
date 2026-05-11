@@ -30,10 +30,12 @@ class TestSubmissionService:
         q2 = await create_test_question(async_session, quiz.id, text="Q2?", correct_answer="B")
 
         service = SubmissionService(async_session)
-        data = SubmitQuizRequest(answers=[
-            AnswerSubmission(question_id=q1.id, text="A"),
-            AnswerSubmission(question_id=q2.id, text="B"),
-        ])
+        data = SubmitQuizRequest(
+            answers=[
+                AnswerSubmission(question_id=q1.id, text="A"),
+                AnswerSubmission(question_id=q2.id, text="B"),
+            ]
+        )
         result = await service.submit(quiz.id, student["user"].id, data)
         assert result.score == 100.0
         assert all(a.is_correct for a in result.answers)
@@ -51,10 +53,12 @@ class TestSubmissionService:
         )
 
         service = SubmissionService(async_session)
-        data = SubmitQuizRequest(answers=[
-            AnswerSubmission(question_id=q1.id, text="Right"),
-            AnswerSubmission(question_id=q2.id, text="Wrong"),
-        ])
+        data = SubmitQuizRequest(
+            answers=[
+                AnswerSubmission(question_id=q1.id, text="Right"),
+                AnswerSubmission(question_id=q2.id, text="Wrong"),
+            ]
+        )
         result = await service.submit(quiz.id, student["user"].id, data)
         assert result.score == 50.0
 
@@ -75,6 +79,7 @@ class TestSubmissionService:
 
     async def test_submit_not_enrolled(self, async_session):
         from src.courses.exceptions import NotEnrolled
+
         instructor = await create_test_instructor(async_session, email="ss_ne@test.com")
         student = await create_test_user(async_session, email="ss_nes@test.com")
         course = await create_test_course(async_session, instructor["user"].id, title="SS NE")
@@ -103,6 +108,7 @@ class TestSubmissionService:
 
         from src.progress.models import ProgressStatus
         from src.progress.service import ProgressService
+
         ps = ProgressService(async_session)
         progress = await ps.get_lesson_progress(student["user"].id, lesson.id)
         assert progress is not None

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.pool import NullPool
 
 from src.config import settings
-from src.database import Base
+from src.database import Base, _normalize_db_url
 
 # Import all models so autogenerate sees them
 import src.models  # noqa: F401
@@ -16,8 +16,8 @@ import src.models  # noqa: F401
 # this is the Alembic Config object
 config = context.config
 
-# Override sqlalchemy.url from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Override sqlalchemy.url from settings (normalize for asyncpg)
+config.set_main_option("sqlalchemy.url", _normalize_db_url(settings.DATABASE_URL))
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:

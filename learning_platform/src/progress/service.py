@@ -127,9 +127,7 @@ class ProgressService:
     # Read methods
     # ------------------------------------------------------------------
 
-    async def get_lesson_progress(
-        self, user_id: UUID, lesson_id: UUID
-    ) -> Progress | None:
+    async def get_lesson_progress(self, user_id: UUID, lesson_id: UUID) -> Progress | None:
         """Return the progress record for (user, lesson) or None if it doesn't exist."""
         result = await self._db.execute(
             select(Progress).where(
@@ -139,9 +137,7 @@ class ProgressService:
         )
         return result.scalar_one_or_none()
 
-    async def get_course_progress(
-        self, user_id: UUID, course_id: UUID
-    ) -> CourseProgressResponse:
+    async def get_course_progress(self, user_id: UUID, course_id: UUID) -> CourseProgressResponse:
         """Derive course-level progress from lesson-level records.
 
         Counts total lessons in the course and completed ones by the user.
@@ -163,9 +159,7 @@ class ProgressService:
             .where(
                 Progress.user_id == user_id,
                 Progress.status == ProgressStatus.COMPLETED,
-                Progress.lesson_id.in_(
-                    select(Lesson.id).where(Lesson.course_id == course_id)
-                ),
+                Progress.lesson_id.in_(select(Lesson.id).where(Lesson.course_id == course_id)),
             )
         )
         completed = completed_result.scalar_one()
@@ -187,10 +181,7 @@ class ProgressService:
             select(Enrollment.course_id).where(Enrollment.user_id == user_id)
         )
         course_ids = list(result.scalars().all())
-        return [
-            await self.get_course_progress(user_id, course_id)
-            for course_id in course_ids
-        ]
+        return [await self.get_course_progress(user_id, course_id) for course_id in course_ids]
 
     async def list_all(self, limit: int = 20, offset: int = 0) -> list[Progress]:
         """List all progress records with pagination (admin use)."""

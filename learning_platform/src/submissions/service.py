@@ -65,9 +65,7 @@ class SubmissionService:
 
         # 2. Check no prior submission
         result = await self._db.execute(
-            select(Submission).where(
-                Submission.user_id == user_id, Submission.quiz_id == quiz_id
-            )
+            select(Submission).where(Submission.user_id == user_id, Submission.quiz_id == quiz_id)
         )
         if result.scalar_one_or_none():
             raise AlreadySubmitted()
@@ -142,14 +140,10 @@ class SubmissionService:
             answers=answer_responses,
         )
 
-    async def get_user_submission(
-        self, quiz_id: UUID, user_id: UUID
-    ) -> Submission:
+    async def get_user_submission(self, quiz_id: UUID, user_id: UUID) -> Submission:
         """Get a user's submission for a quiz, or raise SubmissionNotFound."""
         result = await self._db.execute(
-            select(Submission).where(
-                Submission.user_id == user_id, Submission.quiz_id == quiz_id
-            )
+            select(Submission).where(Submission.user_id == user_id, Submission.quiz_id == quiz_id)
         )
         submission = result.scalar_one_or_none()
         if not submission:
@@ -191,18 +185,13 @@ class SubmissionService:
     async def list_all(self, limit: int = 20, offset: int = 0) -> list[Submission]:
         """List all submissions with pagination (admin use)."""
         result = await self._db.execute(
-            select(Submission)
-            .order_by(Submission.submitted_at.desc())
-            .limit(limit)
-            .offset(offset)
+            select(Submission).order_by(Submission.submitted_at.desc()).limit(limit).offset(offset)
         )
         return list(result.scalars().all())
 
     async def get_by_id(self, submission_id: UUID) -> Submission | None:
         """Get a submission by ID (returns None if not found)."""
-        result = await self._db.execute(
-            select(Submission).where(Submission.id == submission_id)
-        )
+        result = await self._db.execute(select(Submission).where(Submission.id == submission_id))
         return result.scalar_one_or_none()
 
     async def delete(self, submission_id: UUID) -> None:

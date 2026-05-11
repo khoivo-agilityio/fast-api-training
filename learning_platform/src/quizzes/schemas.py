@@ -12,6 +12,16 @@ class QuizCreateRequest(BaseModel):
     description: str | None = None
     time_limit_minutes: int | None = Field(None, gt=0)
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "title": "Python Basics Quiz",
+                "description": "Test your knowledge of Python fundamentals.",
+                "time_limit_minutes": 30,
+            }
+        }
+    }
+
 
 class QuizUpdateRequest(BaseModel):
     """Partial update quiz."""
@@ -28,6 +38,22 @@ class QuestionCreateRequest(BaseModel):
     type: str = Field(pattern="^(mcq|text)$")
     options: list[str] | None = None
     correct_answer: str = Field(min_length=1)
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "text": "What is the output of type([])?",
+                "type": "mcq",
+                "options": [
+                    "<class 'list'>",
+                    "<class 'tuple'>",
+                    "<class 'dict'>",
+                    "<class 'set'>",
+                ],
+                "correct_answer": "<class 'list'>",
+            }
+        }
+    }
 
 
 class QuestionUpdateRequest(BaseModel):

@@ -16,6 +16,17 @@ class CourseCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "title": "Introduction to Python",
+                "description": (
+                    "A beginner-friendly Python course covering syntax, data structures, and OOP."
+                ),
+            }
+        }
+    }
+
 
 class CourseUpdateRequest(BaseModel):
     """Partial update — PATCH /courses/{id}."""

@@ -1,4 +1,4 @@
-"""Structured logging configuration using structlog."""
+"""Structured logging configuration using structlog."""  # noqa: A005
 
 import logging
 import sys

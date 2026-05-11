@@ -32,9 +32,7 @@ class TestCreateLessonEndpoint:
     async def test_create_lesson_403_wrong_instructor(self, client, async_session):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
-        other = await create_test_instructor(
-            async_session, email="other@example.com"
-        )
+        other = await create_test_instructor(async_session, email="other@example.com")
         response = await client.post(
             f"/api/v1/courses/{course.id}/lessons",
             headers=other["auth_header"],
@@ -45,9 +43,7 @@ class TestCreateLessonEndpoint:
     async def test_create_lesson_401_student(self, client, async_session):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
-        student = await create_test_user(
-            async_session, email="student@x.com", role="student"
-        )
+        student = await create_test_user(async_session, email="student@x.com", role="student")
         response = await client.post(
             f"/api/v1/courses/{course.id}/lessons",
             headers=student["auth_header"],
@@ -117,9 +113,7 @@ class TestGetLessonEndpoint:
         course = await create_test_course(
             async_session, instructor["user"].id, title="Track Course"
         )
-        lesson = await create_test_lesson(
-            async_session, course.id, title="Track Lesson"
-        )
+        lesson = await create_test_lesson(async_session, course.id, title="Track Lesson")
         student = await create_test_user(async_session, email="tr_s@test.com")
 
         response = await client.get(

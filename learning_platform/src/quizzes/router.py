@@ -22,7 +22,6 @@ from src.quizzes.schemas import (
     QuestionStudentResponse,
     QuestionUpdateRequest,
     QuizCreateRequest,
-    QuizDetailResponse,
     QuizResponse,
     QuizUpdateRequest,
 )
@@ -71,13 +70,11 @@ async def get_quiz(
     # Build response — students don't see correct_answer
     if current_user.role == "student":
         question_responses = [
-            QuestionStudentResponse.model_validate(q).model_dump()
-            for q in questions
+            QuestionStudentResponse.model_validate(q).model_dump() for q in questions
         ]
     else:
         question_responses = [
-            QuestionAdminResponse.model_validate(q).model_dump()
-            for q in questions
+            QuestionAdminResponse.model_validate(q).model_dump() for q in questions
         ]
 
     return {
