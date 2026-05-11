@@ -22,9 +22,7 @@ class TestQuizService:
     async def test_create_quiz(self, async_session):
         """Instructor creates quiz for a lesson."""
         instructor = await create_test_instructor(async_session, email="qs_i@test.com")
-        course = await create_test_course(
-            async_session, instructor["user"].id, title="QS Course"
-        )
+        course = await create_test_course(async_session, instructor["user"].id, title="QS Course")
         lesson = await create_test_lesson(async_session, course.id, title="QS Lesson")
 
         service = QuizService(async_session)

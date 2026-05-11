@@ -20,7 +20,6 @@ from src.quizzes.models import Question, Quiz
 from src.submissions.models import Answer, Submission
 from src.users.models import User
 
-
 # ---------------------------------------------------------------------------
 # Authentication Backend
 # ---------------------------------------------------------------------------
@@ -129,7 +128,13 @@ class QuizAdmin(ModelView, model=Quiz):
 class QuestionAdmin(ModelView, model=Question):
     column_list = [Question.id, Question.quiz_id, Question.text, Question.type]
     # Use relationship 'quiz' for Quiz dropdown
-    form_columns = [Question.quiz, Question.text, Question.type, Question.options, Question.correct_answer]
+    form_columns = [
+        Question.quiz,
+        Question.text,
+        Question.type,
+        Question.options,
+        Question.correct_answer,
+    ]
 
     # Placeholders shown inside each input
     form_widget_args = {
@@ -141,7 +146,10 @@ class QuestionAdmin(ModelView, model=Question):
             "placeholder": "mcq  or  text",
         },
         "options": {
-            "placeholder": '["<class \'list\'>", "<class \'tuple\'>", "<class \'dict\'>", "<class \'set\'>"]',
+            "placeholder": (
+                "[\"<class 'list'>\", \"<class 'tuple'>\","
+                " \"<class 'dict'>\", \"<class 'set'>\"]);"
+            ),
             "rows": 4,
         },
         "correct_answer": {
@@ -157,7 +165,7 @@ class QuestionAdmin(ModelView, model=Question):
         ),
         "options": (
             "JSON array of answer strings. Example: "
-            '["<class \'list\'>", "<class \'tuple\'>", "<class \'dict\'>", "<class \'set\'>"]  '
+            "[\"<class 'list'>\", \"<class 'tuple'>\", \"<class 'dict'>\", \"<class 'set'>\"]  "
             "— leave empty for text-type questions."
         ),
         "correct_answer": (

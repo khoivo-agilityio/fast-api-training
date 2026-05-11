@@ -21,9 +21,7 @@ class Lesson(Base):
 
     __tablename__ = "lessons"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     course_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False
     )
@@ -42,13 +40,20 @@ class Lesson(Base):
         return self.title
 
     # Relationships — used by SQLAdmin for FK dropdowns
-    course: Mapped["Course"] = relationship("Course", back_populates="lessons", foreign_keys=[course_id])
-    # cascade delete: removing a Lesson removes its Quiz and Progress records
-    quiz: Mapped["Quiz"] = relationship(
-        "Quiz", back_populates="lesson", foreign_keys="Quiz.lesson_id",
-        uselist=False, cascade="all, delete-orphan",
+    course: Mapped["Course"] = relationship(  # noqa: F821
+        "Course", back_populates="lessons", foreign_keys=[course_id]
     )
-    progress_records: Mapped[list["Progress"]] = relationship(
-        "Progress", back_populates="lesson", foreign_keys="Progress.lesson_id",
+    # cascade delete: removing a Lesson removes its Quiz and Progress records
+    quiz: Mapped["Quiz"] = relationship(  # noqa: F821
+        "Quiz",
+        back_populates="lesson",
+        foreign_keys="Quiz.lesson_id",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    progress_records: Mapped[list["Progress"]] = relationship(  # noqa: F821
+        "Progress",
+        back_populates="lesson",
+        foreign_keys="Progress.lesson_id",
         cascade="all, delete-orphan",
     )

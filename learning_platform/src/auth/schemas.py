@@ -14,12 +14,31 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     display_name: str | None = None
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "alice@example.com",
+                "password": "SecurePass123!",
+                "display_name": "Alice Smith",
+            }
+        }
+    }
+
 
 class LoginRequest(BaseModel):
     """Login request — POST /auth/login."""
 
     email: EmailStr
     password: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "alice@example.com",
+                "password": "SecurePass123!",
+            }
+        }
+    }
 
 
 class TokenResponse(BaseModel):

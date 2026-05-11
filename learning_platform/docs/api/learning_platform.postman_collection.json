@@ -1,0 +1,687 @@
+{
+  "info": {
+    "name": "AI-Enhanced Learning Platform",
+    "description": "Complete API collection for the Learning Platform. \n\n## Setup\n1. Import this collection\n2. Create an environment with `base_url = http://localhost:8001`\n3. Run **Register** or **Login** — tokens are saved automatically via test scripts\n4. All authenticated requests use `{{access_token}}` automatically",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8001", "type": "string"},
+    {"key": "access_token", "value": "", "type": "string"},
+    {"key": "refresh_token", "value": "", "type": "string"},
+    {"key": "course_id", "value": "", "type": "string"},
+    {"key": "lesson_id", "value": "", "type": "string"},
+    {"key": "quiz_id", "value": "", "type": "string"},
+    {"key": "question_id", "value": "", "type": "string"},
+    {"key": "submission_id", "value": "", "type": "string"}
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{"key": "token", "value": "{{access_token}}", "type": "string"}]
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health",
+            "description": "Check if the app, DB, and Redis are healthy."
+          },
+          "response": [
+            {
+              "name": "200 Healthy",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"status\": \"healthy\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "  console.log('Tokens saved. Role: student');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"display_name\": \"Alice Smith\"\n}"
+            },
+            "description": "Register a new student account. Tokens are automatically saved to collection variables."
+          }
+        },
+        {
+          "name": "Register (Instructor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"instructor@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"display_name\": \"Bob Instructor\"\n}"
+            },
+            "description": "NOTE: Role defaults to 'student'. Promote to instructor via Admin > Update User."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "  console.log('Login successful. Tokens saved.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "description": "Login and get access + refresh tokens. Tokens auto-saved to variables."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "description": "Exchange refresh token for a new token pair."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/auth/logout",
+            "description": "Blacklist the current access token. Returns 200."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/users/me",
+            "description": "Get the authenticated user's profile."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/users/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Alice Updated\",\n  \"avatar\": \"https://example.com/avatar.png\"\n}"
+            },
+            "description": "Partial update: only include fields you want to change."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/users/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NewPassword456!\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "List Courses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/courses?limit=20&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "courses"],
+              "query": [
+                {"key": "limit", "value": "20"},
+                {"key": "offset", "value": "0"},
+                {"key": "search", "value": "python", "disabled": true},
+                {"key": "instructor", "value": "<uuid>", "disabled": true}
+              ]
+            },
+            "description": "List all courses. Optional: ?search=python, ?instructor=<uuid>"
+          }
+        },
+        {
+          "name": "Create Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('course_id', pm.response.json().id);",
+                  "  console.log('course_id saved:', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/courses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Introduction to Python\",\n  \"description\": \"A beginner-friendly Python course covering syntax, data structures, and OOP.\"\n}"
+            },
+            "description": "Requires Instructor or Admin role. course_id auto-saved."
+          }
+        },
+        {
+          "name": "Get Course",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}"
+          }
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Introduction to Python (Updated)\",\n  \"description\": \"Updated description.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Enroll in Course",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}/enroll",
+            "description": "Student enrolls in a course. Requires Student role."
+          }
+        },
+        {
+          "name": "Delete Course (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}",
+            "description": "Admin only. Returns 204 No Content."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lessons",
+      "item": [
+        {
+          "name": "Create Lesson",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('lesson_id', pm.response.json().id);",
+                  "  console.log('lesson_id saved:', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}/lessons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Variables and Data Types\",\n  \"content\": \"In Python, variables are dynamically typed. You can assign any value to a variable without declaring its type.\\n\\nExample:\\n```python\\nx = 42\\nname = 'Alice'\\npi = 3.14\\n```\",\n  \"order\": 1\n}"
+            },
+            "description": "Instructor (own course) or Admin. lesson_id auto-saved."
+          }
+        },
+        {
+          "name": "List Lessons in Course",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}/lessons"
+          }
+        },
+        {
+          "name": "Get Lesson (triggers completion if no quiz)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}",
+            "description": "For students: if the lesson has no quiz, viewing it marks it complete."
+          }
+        },
+        {
+          "name": "Update Lesson",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Variables and Data Types (Updated)\",\n  \"order\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Lesson",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}",
+            "description": "Cascades to quiz and progress records. Returns 204."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quizzes",
+      "item": [
+        {
+          "name": "Create Quiz for Lesson",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('quiz_id', pm.response.json().id);",
+                  "  console.log('quiz_id saved:', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}/quiz",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Python Basics Quiz\",\n  \"description\": \"Test your knowledge of Python fundamentals.\",\n  \"time_limit_minutes\": 30\n}"
+            },
+            "description": "One quiz per lesson. quiz_id auto-saved."
+          }
+        },
+        {
+          "name": "Get Quiz (with questions)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}/quiz",
+            "description": "Students see questions WITHOUT correct_answer. Instructors/admins see full details."
+          }
+        },
+        {
+          "name": "Update Quiz",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}/quiz",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Python Basics Quiz (Revised)\",\n  \"time_limit_minutes\": 45\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Question (MCQ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('question_id', pm.response.json().id);",
+                  "  console.log('question_id saved:', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/questions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"What is the output of type([])?\",\n  \"type\": \"mcq\",\n  \"options\": [\"<class 'list'>\", \"<class 'tuple'>\", \"<class 'dict'>\", \"<class 'set'>\"],\n  \"correct_answer\": \"<class 'list'>\"\n}"
+            },
+            "description": "question_id auto-saved for use in update/delete."
+          }
+        },
+        {
+          "name": "Add Question (Text)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/questions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"What keyword is used to define a function in Python?\",\n  \"type\": \"text\",\n  \"correct_answer\": \"def\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/questions/{{question_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"What is the output of type([]) in Python 3?\",\n  \"correct_answer\": \"<class 'list'>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/questions/{{question_id}}",
+            "description": "Returns 204 No Content."
+          }
+        },
+        {
+          "name": "Delete Quiz",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/v1/lessons/{{lesson_id}}/quiz",
+            "description": "Cascades to questions. Returns 204."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submissions",
+      "item": [
+        {
+          "name": "Submit Quiz Answers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('submission_id', pm.response.json().id);",
+                  "  console.log('Score:', pm.response.json().score, '| Passed:', pm.response.json().passed);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/submit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"question_id\": \"{{question_id}}\",\n      \"text\": \"<class 'list'>\"\n    }\n  ]\n}"
+            },
+            "description": "One attempt per quiz. Score is auto-computed. If passed, lesson is marked complete."
+          }
+        },
+        {
+          "name": "Get My Submission",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/submission",
+            "description": "Get own submission with per-answer correctness."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Progress",
+      "item": [
+        {
+          "name": "Get All My Progress",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/progress",
+            "description": "Get progress across all enrolled courses."
+          }
+        },
+        {
+          "name": "Get Course Progress",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/courses/{{course_id}}/progress",
+            "description": "Get detailed progress for a specific enrolled course."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "List All Users",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/admin/users?limit=20&offset=0",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "admin", "users"],
+                  "query": [
+                    {"key": "limit", "value": "20"},
+                    {"key": "offset", "value": "0"}
+                  ]
+                },
+                "description": "Admin only."
+              }
+            },
+            {
+              "name": "Get User by ID",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/admin/users/<user_id>",
+                "description": "Replace <user_id> with actual UUID."
+              }
+            },
+            {
+              "name": "Promote User to Instructor",
+              "request": {
+                "method": "PATCH",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": "{{base_url}}/api/v1/admin/users/<user_id>",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"display_name\": \"Bob Instructor\"\n}"
+                },
+                "description": "NOTE: Role change is not supported via PATCH /users/me. Use SQLAdmin UI at /admin to change roles."
+              }
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/api/v1/admin/users/<user_id>",
+                "description": "Returns 204."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Courses",
+          "item": [
+            {
+              "name": "List All Courses (Admin)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/admin/courses?limit=20&offset=0",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "admin", "courses"],
+                  "query": [
+                    {"key": "limit", "value": "20"},
+                    {"key": "offset", "value": "0"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Course (Admin)",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/api/v1/admin/courses/{{course_id}}"
+              }
+            },
+            {
+              "name": "Update Course (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": "{{base_url}}/api/v1/admin/courses/{{course_id}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Admin-Updated Course Title\"\n}"
+                },
+                "description": "Skips ownership check."
+              }
+            },
+            {
+              "name": "Delete Course (Admin)",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/api/v1/admin/courses/{{course_id}}",
+                "description": "Returns 204."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submissions",
+          "item": [
+            {
+              "name": "List All Submissions",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/admin/submissions?limit=20&offset=0",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "admin", "submissions"],
+                  "query": [
+                    {"key": "limit", "value": "20"},
+                    {"key": "offset", "value": "0"}
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Delete Submission",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/api/v1/admin/submissions/{{submission_id}}",
+                "description": "Returns 204."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Progress",
+          "item": [
+            {
+              "name": "List All Progress Records",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/v1/admin/progress?limit=20&offset=0",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "admin", "progress"],
+                  "query": [
+                    {"key": "limit", "value": "20"},
+                    {"key": "offset", "value": "0"}
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

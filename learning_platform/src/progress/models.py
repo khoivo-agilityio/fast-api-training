@@ -23,13 +23,9 @@ class Progress(Base):
     """Progress — tracks one user's progress on one lesson."""
 
     __tablename__ = "progress"
-    __table_args__ = (
-        UniqueConstraint("user_id", "lesson_id", name="uq_progress_user_lesson"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "lesson_id", name="uq_progress_user_lesson"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
@@ -42,13 +38,15 @@ class Progress(Base):
     accessed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def __str__(self) -> str:
         return f"Progress(user={self.user_id}, lesson={self.lesson_id}, status={self.status})"
 
     # Relationships — used by SQLAdmin for FK dropdowns
-    user: Mapped["User"] = relationship("User", back_populates="progress_records", foreign_keys=[user_id])
-    lesson: Mapped["Lesson"] = relationship("Lesson", back_populates="progress_records", foreign_keys=[lesson_id])
+    user: Mapped["User"] = relationship(  # noqa: F821
+        "User", back_populates="progress_records", foreign_keys=[user_id]
+    )
+    lesson: Mapped["Lesson"] = relationship(  # noqa: F821
+        "Lesson", back_populates="progress_records", foreign_keys=[lesson_id]
+    )

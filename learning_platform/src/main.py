@@ -60,7 +60,71 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
         title=settings.APP_NAME,
-        version="0.1.0",
+        version="1.0.0",
+        description=(
+            "Backend REST API for an **AI-Enhanced Learning Platform**.\n\n"
+            "### Features\n"
+            "- JWT authentication with refresh-token rotation\n"
+            "- Role-based access control (Admin / Instructor / Student)\n"
+            "- Course & Lesson management (CRUD)\n"
+            "- Quiz auto-grading (single / multiple choice)\n"
+            "- Course progress tracking\n"
+            "- Redis-backed token blacklist for logout\n"
+            "- SQLAdmin UI at `/admin`\n\n"
+            "### Auth\n"
+            "Use `POST /api/v1/auth/login` to obtain tokens. "
+            "Pass the `access_token` as `Bearer <token>` in the `Authorization` header."
+        ),
+        openapi_tags=[
+            {
+                "name": "auth",
+                "description": "Register, login, refresh tokens, and logout.",
+            },
+            {
+                "name": "users",
+                "description": "View and update your own profile.",
+            },
+            {
+                "name": "courses",
+                "description": (
+                    "Create, list, update, publish, and delete courses. "
+                    "Students can enroll in published courses."
+                ),
+            },
+            {
+                "name": "lessons",
+                "description": (
+                    "Manage lessons within a course. "
+                    "Viewing a lesson (with no quiz) automatically marks it complete."
+                ),
+            },
+            {
+                "name": "quizzes",
+                "description": (
+                    "Create and manage quizzes and their questions. "
+                    "Students see questions without correct answers."
+                ),
+            },
+            {
+                "name": "submissions",
+                "description": (
+                    "Submit quiz answers (one attempt per quiz). "
+                    "Scores are computed automatically."
+                ),
+            },
+            {
+                "name": "progress",
+                "description": "View course-level and lesson-level progress for enrolled courses.",
+            },
+            {
+                "name": "admin",
+                "description": "Admin-only REST endpoints. Mirrors the SQLAdmin UI at `/admin`.",
+            },
+            {
+                "name": "system",
+                "description": "Health check and operational endpoints.",
+            },
+        ],
         lifespan=lifespan,
     )
 

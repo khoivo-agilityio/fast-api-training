@@ -5,8 +5,6 @@ All configuration is loaded from environment variables (or .env file).
 Never hardcode secrets.
 """
 
-from typing import Optional
-
 from pydantic_settings import BaseSettings
 
 
@@ -17,7 +15,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # Redis — optional, set via REDIS_URL env var or Railway Redis add-on
-    REDIS_URL: Optional[str] = None
+    REDIS_URL: str | None = None
 
     # JWT — secret required, algorithm/expiry have safe defaults
     JWT_SECRET: str
