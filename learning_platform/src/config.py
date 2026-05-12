@@ -47,10 +47,6 @@ class Settings(BaseSettings):
     # for local dev.  Leave empty for AWS S3 (uses the global endpoint).
     S3_PUBLIC_ENDPOINT_URL: str | None = None
 
-    # CDN base URL for serving stored objects (e.g. https://d1234.cloudfront.net).
-    # If unset, falls back to the MinIO public URL (local dev only).
-    CLOUDFRONT_BASE_URL: str | None = None
-
     # Max avatar upload size enforced in the presigned URL policy (bytes).
     AVATAR_MAX_BYTES: int = 5 * 1024 * 1024  # 5 MB
 

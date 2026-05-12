@@ -5,6 +5,8 @@ Mock strategy:
   - Patch get_s3_session() to return a mock session
   - The session.client() is an async context manager returning a mock s3 client
   - All s3.method() calls are AsyncMock
+
+Magic-bytes tests are also included here since the logic now lives in service.py.
 """
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -12,11 +14,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.storage.exceptions import StorageObjectNotFound, UnsupportedFileType
-from src.storage.service import StorageService
+from src.storage.service import ALLOWED_EXTENSIONS, StorageService, _detect_content_type
 
 # Magic byte fixtures
-JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 12
+JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 12   # JFIF JPEG
 PNG_HEADER = b"\x89PNG\r\n\x1a\n" + b"\x00" * 4
+GIF87_HEADER = b"GIF87a" + b"\x00" * 6
+GIF89_HEADER = b"GIF89a" + b"\x00" * 6
+WEBP_HEADER = b"RIFF" + b"\x00\x00\x00\x00" + b"WEBP"  # 12 bytes exactly
 GARBAGE_BYTES = b"notanimage!!"
 
 
@@ -52,6 +57,66 @@ def _make_s3_mock(
     mock_session.client.return_value = mock_cm
 
     return mock_s3, mock_session
+
+
+# ---------------------------------------------------------------------------
+# _detect_content_type (magic bytes)
+# ---------------------------------------------------------------------------
+
+
+class TestDetectContentType:
+    """Happy-path: correct magic bytes return the right MIME type."""
+
+    def test_jpeg_detected(self):
+        assert _detect_content_type(JPEG_HEADER) == "image/jpeg"
+
+    def test_png_detected(self):
+        assert _detect_content_type(PNG_HEADER) == "image/png"
+
+    def test_gif87_detected(self):
+        assert _detect_content_type(GIF87_HEADER) == "image/gif"
+
+    def test_gif89_detected(self):
+        assert _detect_content_type(GIF89_HEADER) == "image/gif"
+
+    def test_webp_detected(self):
+        assert _detect_content_type(WEBP_HEADER) == "image/webp"
+
+
+class TestDetectContentTypeRejects:
+    """Unsupported or spoofed bytes raise UnsupportedFileType."""
+
+    def test_pdf_bytes_rejected(self):
+        with pytest.raises(UnsupportedFileType):
+            _detect_content_type(b"%PDF-1.4" + b"\x00" * 4)
+
+    def test_zip_bytes_rejected(self):
+        with pytest.raises(UnsupportedFileType):
+            _detect_content_type(b"PK\x03\x04" + b"\x00" * 8)
+
+    def test_plain_text_rejected(self):
+        with pytest.raises(UnsupportedFileType):
+            _detect_content_type(b"Hello, world!" + b"\x00" * 3)
+
+    def test_empty_bytes_rejected(self):
+        with pytest.raises(UnsupportedFileType):
+            _detect_content_type(b"")
+
+    def test_riff_non_webp_rejected(self):
+        """RIFF container that is NOT WebP (e.g. AVI) must be rejected."""
+        bad = b"RIFF" + b"\x00\x00\x00\x00" + b"AVI "
+        with pytest.raises(UnsupportedFileType):
+            _detect_content_type(bad)
+
+    def test_fake_jpeg_prefix_rejected(self):
+        """Only first 3 bytes match JPEG — still valid (JPEG only needs FF D8 FF)."""
+        # This is actually valid JPEG — confirms we don't over-reject
+        assert _detect_content_type(b"\xff\xd8\xff" + b"\x00" * 9) == "image/jpeg"
+
+    def test_html_disguised_as_image_rejected(self):
+        """Content-Type spoofing attempt — HTML bytes not accepted."""
+        with pytest.raises(UnsupportedFileType):
+            _detect_content_type(b"<html><head>" + b"\x00" * 3)
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +193,6 @@ class TestGeneratePresignedPut:
 class TestValidateAndGetAvatarUrl:
     async def test_valid_jpeg_returns_url(self, monkeypatch):
         mock_s3, mock_session = _make_s3_mock(body_bytes=JPEG_HEADER)
-        monkeypatch.setattr("src.storage.service.settings.CLOUDFRONT_BASE_URL", None)
         monkeypatch.setattr(
             "src.storage.service.settings.S3_PUBLIC_ENDPOINT_URL", "http://localhost:9000"
         )
@@ -142,18 +206,6 @@ class TestValidateAndGetAvatarUrl:
 
         assert url == "http://localhost:9000/learning-platform/avatars/abc.jpg"
         mock_s3.delete_object.assert_not_called()
-
-    async def test_cloudfront_url_returned_when_configured(self, monkeypatch):
-        mock_s3, mock_session = _make_s3_mock(body_bytes=PNG_HEADER)
-        monkeypatch.setattr(
-            "src.storage.service.settings.CLOUDFRONT_BASE_URL", "https://d1.cloudfront.net"
-        )
-
-        with patch("src.storage.service.get_s3_session", return_value=mock_session):
-            svc = StorageService()
-            url = await svc.validate_and_get_avatar_url("avatars/abc.png")
-
-        assert url == "https://d1.cloudfront.net/avatars/abc.png"
 
     async def test_invalid_bytes_raises_and_deletes_object(self):
         mock_s3, mock_session = _make_s3_mock(body_bytes=GARBAGE_BYTES)
