@@ -89,8 +89,11 @@ class StorageService:
         Uses S3_PUBLIC_ENDPOINT_URL (local MinIO dev) or falls back to
         the S3 global endpoint for AWS production.
         """
-        endpoint = (settings.S3_PUBLIC_ENDPOINT_URL or "").rstrip("/")
-        return f"{endpoint}/{settings.S3_BUCKET_NAME}/{object_key}"
+        if settings.S3_PUBLIC_ENDPOINT_URL:
+            endpoint = settings.S3_PUBLIC_ENDPOINT_URL.rstrip("/")
+            return f"{endpoint}/{settings.S3_BUCKET_NAME}/{object_key}"
+
+        return f"https://{settings.S3_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{object_key}"
 
     # ------------------------------------------------------------------
     # Public API

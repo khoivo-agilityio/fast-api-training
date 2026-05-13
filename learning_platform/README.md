@@ -20,7 +20,7 @@ Backend REST API for an AI-Enhanced Learning Platform built with FastAPI.
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for PostgreSQL + Redis)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for PostgreSQL, Redis, and MinIO)
 - [uv](https://docs.astral.sh/uv/) — `brew install uv` or `pip install uv`
 - Python 3.11+ (managed by uv automatically)
 
@@ -43,18 +43,21 @@ cp .env.example .env
 
 > **Important**: Never leave `.env` empty. Copy from `.env.example` first.
 
-### 3. Start PostgreSQL + Redis via Docker
+### 3. Start infrastructure via Docker
 
 ```bash
-docker compose up -d db redis
+docker compose up -d db redis minio
 ```
 
 Verify containers are healthy:
 
 ```bash
 docker compose ps
-# Both db and redis should show status "healthy"
+# db, redis, and minio should all show status "healthy"
 ```
+
+> **MinIO console** (S3-compatible local storage) is available at **http://localhost:9001**
+> Login: `minioadmin` / `minioadmin`
 
 ### 4. Run database migrations
 
@@ -64,9 +67,25 @@ uv run python -m alembic upgrade head
 
 ### 5. Start the development server
 
+There are **two ways** to run the server. Choose one:
+
+#### Option A — Direct (recommended for day-to-day dev)
+
+Runs uvicorn on your Mac. The `.env` file uses `localhost` for all service URLs.
+
 ```bash
 uv run python -m uvicorn src.main:app --reload --port 8001
 ```
+
+#### Option B — Full Docker stack
+
+Runs everything inside Docker Compose. Service URLs are automatically overridden to Docker-internal hostnames (`db`, `redis`, `minio`).
+
+```bash
+docker compose up -d --build
+```
+
+> ⚠️ **Do not mix the two modes.** If you run uvicorn directly (Option A) but your `.env` has Docker-internal hostnames like `db` or `redis`, you will get `nodename nor servname provided` errors.
 
 The API is now live at **http://localhost:8001**
 
@@ -244,10 +263,10 @@ learning_platform/
 ## Docker
 
 ```bash
-# Start only infrastructure (db + redis) — recommended for local dev
-docker compose up -d db redis
+# Start only infrastructure (db + redis + minio) — for Option A dev workflow
+docker compose up -d db redis minio
 
-# Full stack (app + db + redis) — mirrors production
+# Full stack (app + db + redis + minio) — Option B, mirrors production
 docker compose up -d --build
 
 # View app logs
@@ -259,7 +278,7 @@ docker compose logs -f
 # Stop everything (preserves volumes)
 docker compose down
 
-# Stop and wipe database
+# Stop and wipe all data including MinIO objects
 docker compose down -v
 ```
 
@@ -269,10 +288,13 @@ docker compose down -v
 
 | Symptom | Fix |
 |---------|-----|
-| `Connection refused` on port 5432 | Run `docker compose up -d db redis` |
+| `Connection refused` on port 5432 | Run `docker compose up -d db redis minio` |
 | `Connection refused` on port 6379 | Same — Redis not started |
+| `Connection refused` on port 9000 | MinIO not started — run `docker compose up -d minio` |
+| `nodename nor servname provided` (`db` or `redis`) | You have Docker-internal hostnames in `.env` but are running uvicorn directly. Use `localhost` in `.env` for Option A. |
+| `ECONNREFUSED 127.0.0.1:9000` (from client upload) | `S3_ENDPOINT_URL` in `.env` should be `http://localhost:9000` for Option A; Docker Compose overrides it automatically for Option B. |
 | TablePlus can't connect | Docker containers must be running first |
-| `alembic upgrade head` fails | Start Docker first, then run migrations |
+| `alembic upgrade head` fails | Start Docker first (`docker compose up -d db`), then run migrations |
 | SQLAdmin login rejected | Register the admin user via API first |
 | Empty `.env` file | Copy from `.env.example`: `cp .env.example .env` |
 

@@ -7,6 +7,12 @@ services:
       - "8001:8001"
     env_file:
       - .env
+    environment:
+      # Override localhost URLs from .env with Docker-internal service names.
+      # These are only applied when running inside Docker Compose.
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/learning_platform
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT_URL: http://minio:9000
     depends_on:
       db:
         condition: service_healthy
@@ -14,9 +20,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    volumes:
-      - .:/app
-    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
+    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8001
 
   db:
     image: postgres:16-alpine
