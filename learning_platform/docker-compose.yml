@@ -11,12 +11,9 @@ services:
       # Override localhost URLs from .env with Docker-internal service names.
       # These are only applied when running inside Docker Compose.
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/learning_platform
-      REDIS_URL: redis://redis:6379/0
       S3_ENDPOINT_URL: http://minio:9000
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -34,16 +31,6 @@ services:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5

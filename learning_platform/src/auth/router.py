@@ -48,6 +48,6 @@ async def logout(
     _current_user: User = Depends(get_current_user),
     service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """Logout — blacklists the current access token in Redis."""
+    """Logout — client should discard the token. Server-side blacklisting is disabled."""
     await service.logout(token)
     return {"detail": "Successfully logged out"}

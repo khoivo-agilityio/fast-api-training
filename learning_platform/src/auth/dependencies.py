@@ -19,11 +19,9 @@ from src.auth.exceptions import (
     InsufficientPermissions,
     TokenExpired,
     TokenInvalid,
-    TokenRevoked,
 )
 from src.auth.service import AuthService
 from src.database import get_db
-from src.redis import is_token_blacklisted
 from src.users.models import User
 from src.users.service import UserService
 
@@ -41,7 +39,6 @@ async def get_current_user(
     Raises:
         TokenExpired: If token has expired.
         TokenInvalid: If token is malformed or not an access token.
-        TokenRevoked: If token JTI is in the Redis blacklist.
     """
     try:
         payload = jwt.decode_token(token)
@@ -52,10 +49,6 @@ async def get_current_user(
 
     if payload.get("type") != "access":
         raise TokenInvalid()
-
-    jti = payload.get("jti")
-    if jti and await is_token_blacklisted(jti):
-        raise TokenRevoked()
 
     user_id = payload.get("sub")
     if not user_id:

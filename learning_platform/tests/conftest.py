@@ -54,29 +54,10 @@ async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
         await session.rollback()
 
 
-@pytest_asyncio.fixture
-async def mock_redis():
-    """Mock Redis client — never connect to real Redis in tests."""
-    mock = AsyncMock()
-    mock.setex = AsyncMock()
-    mock.exists = AsyncMock(return_value=0)
-    mock.aclose = AsyncMock()
-
-    with (
-        patch("src.redis.redis_client", mock),
-        patch("src.redis.blacklist_token", AsyncMock()) as mock_blacklist,
-        patch("src.redis.is_token_blacklisted", AsyncMock(return_value=False)) as mock_bl,
-    ):
-        yield {
-            "client": mock,
-            "blacklist_token": mock_blacklist,
-            "is_token_blacklisted": mock_bl,
-        }
-
 
 @pytest_asyncio.fixture
-async def client(async_session, mock_redis) -> AsyncGenerator[AsyncClient, None]:
-    """httpx.AsyncClient wrapping the FastAPI app with test DB and mocked Redis."""
+async def client(async_session) -> AsyncGenerator[AsyncClient, None]:
+    """httpx.AsyncClient wrapping the FastAPI app with test DB."""
     from src.main import app
 
     async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:

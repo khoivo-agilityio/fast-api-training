@@ -50,10 +50,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     # Startup
     yield
-    # Shutdown — close Redis connection
-    from src.redis import redis_client
-
-    await redis_client.aclose()
+    # Shutdown
 
 
 def create_app() -> FastAPI:
@@ -69,7 +66,6 @@ def create_app() -> FastAPI:
             "- Course & Lesson management (CRUD)\n"
             "- Quiz auto-grading (single / multiple choice)\n"
             "- Course progress tracking\n"
-            "- Redis-backed token blacklist for logout\n"
             "- SQLAdmin UI at `/admin`\n\n"
             "### Auth\n"
             "Use `POST /api/v1/auth/login` to obtain tokens. "

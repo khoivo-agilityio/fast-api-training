@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.storage.exceptions import StorageObjectNotFound, UnsupportedFileType
-from src.storage.service import ALLOWED_EXTENSIONS, StorageService, _detect_content_type
+from src.storage.service import StorageService, _detect_content_type
 
 # Magic byte fixtures
 JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 12   # JFIF JPEG
