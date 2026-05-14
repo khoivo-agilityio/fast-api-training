@@ -12,10 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import get_current_user, require_roles
+from src.core.database import get_db
 from src.courses.dependencies import get_course_service
 from src.courses.exceptions import NotCourseOwner
 from src.courses.service import CourseService
-from src.database import get_db
 from src.lessons.dependencies import get_lesson_service
 from src.lessons.schemas import LessonCreateRequest, LessonResponse, LessonUpdateRequest
 from src.lessons.service import LessonService

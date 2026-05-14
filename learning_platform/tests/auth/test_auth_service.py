@@ -19,7 +19,7 @@ class TestAuthServiceRegister:
     """Tests for AuthService.register()."""
 
     @pytest_asyncio.fixture
-    async def service(self, async_session: AsyncSession, mock_redis) -> AuthService:
+    async def service(self, async_session: AsyncSession) -> AuthService:
         return AuthService(async_session)
 
     async def test_register_success(self, service: AuthService, async_session):
@@ -50,7 +50,7 @@ class TestAuthServiceLogin:
     """Tests for AuthService.login()."""
 
     @pytest_asyncio.fixture
-    async def service_with_user(self, async_session: AsyncSession, mock_redis):
+    async def service_with_user(self, async_session: AsyncSession):
         """Create an AuthService with a pre-existing test user."""
         service = AuthService(async_session)
         test_data = await create_test_user(

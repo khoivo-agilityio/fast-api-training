@@ -1,6 +1,6 @@
 """Course module exceptions."""
 
-from src.exceptions import AuthorizationError, ConflictError, NotFoundError
+from src.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 
 
 class CourseNotFound(NotFoundError):

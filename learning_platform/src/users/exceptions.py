@@ -1,6 +1,6 @@
 """User module exceptions."""
 
-from src.exceptions import NotFoundError
+from src.core.exceptions import NotFoundError
 
 
 class UserNotFound(NotFoundError):

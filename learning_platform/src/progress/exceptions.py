@@ -1,6 +1,6 @@
 """Progress module exceptions."""
 
-from src.exceptions import NotFoundError
+from src.core.exceptions import NotFoundError
 
 
 class ProgressNotFound(NotFoundError):
