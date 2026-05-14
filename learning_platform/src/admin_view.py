@@ -34,7 +34,7 @@ class AdminAuthBackend(AuthenticationBackend):
         password = form.get("password", "")
 
         from src.auth.service import AuthService
-        from src.database import async_session_factory
+        from src.core.database import async_session_factory
 
         async with async_session_factory() as session:
             service = AuthService(session)

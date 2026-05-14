@@ -18,7 +18,7 @@ class TestCourseServiceCreate:
     """Tests for CourseService.create()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         service = CourseService(async_session)
         return service, instructor
@@ -43,7 +43,7 @@ class TestCourseServiceGetById:
     """Tests for CourseService.get_by_id()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         service = CourseService(async_session)
@@ -67,7 +67,7 @@ class TestCourseServiceList:
     """Tests for CourseService.list_courses()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         await create_test_course(async_session, instructor["user"].id, title="Course A")
         await create_test_course(async_session, instructor["user"].id, title="Course B")
@@ -97,7 +97,7 @@ class TestCourseServiceUpdate:
     """Tests for CourseService.update()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         service = CourseService(async_session)
@@ -128,7 +128,7 @@ class TestCourseServiceEnroll:
     """Tests for CourseService.enroll()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         student = await create_test_user(

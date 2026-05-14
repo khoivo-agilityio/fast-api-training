@@ -85,3 +85,15 @@ class UserService:
         user = await self.get_by_id(user_id)
         await self._db.delete(user)
         await self._db.flush()
+
+    async def update_avatar(self, user_id: UUID, avatar_url: str) -> User:
+        """Store a new avatar URL on the user record.
+
+        Args:
+            user_id: Target user.
+            avatar_url: Fully-qualified CDN or MinIO URL for the uploaded image.
+        """
+        user = await self.get_by_id(user_id)
+        user.avatar = avatar_url
+        await self._db.flush()
+        return user

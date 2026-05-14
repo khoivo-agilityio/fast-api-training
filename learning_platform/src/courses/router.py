@@ -10,6 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from src.auth.dependencies import get_current_user, require_roles
+from src.core.pagination import PaginationParams
 from src.courses.dependencies import get_course_service
 from src.courses.schemas import (
     CourseCreateRequest,
@@ -19,7 +20,6 @@ from src.courses.schemas import (
     EnrollmentResponse,
 )
 from src.courses.service import CourseService
-from src.pagination import PaginationParams
 from src.users.models import User
 
 router = APIRouter(prefix="/courses", tags=["courses"])

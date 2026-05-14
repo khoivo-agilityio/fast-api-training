@@ -2,7 +2,7 @@
 Database — Async SQLAlchemy engine, session factory, and Base.
 
 Usage:
-    from src.database import get_db
+    from src.core.database import get_db
     # In FastAPI dependencies: db: AsyncSession = Depends(get_db)
 """
 
@@ -25,7 +25,7 @@ def _normalize_db_url(url: str) -> str:
     return url
 
 
-engine = create_async_engine(_normalize_db_url(settings.DATABASE_URL), echo=settings.DEBUG)
+engine = create_async_engine(_normalize_db_url(settings.DATABASE_URL), echo=settings.ENABLE_DEBUG)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 

@@ -13,7 +13,7 @@ from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, fun
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database import Base
+from src.core.database import Base
 
 
 class Course(Base):

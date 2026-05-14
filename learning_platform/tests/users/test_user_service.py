@@ -19,10 +19,10 @@ class TestUserServiceGetById:
     """Tests for UserService.get_by_id()."""
 
     @pytest_asyncio.fixture
-    async def service(self, async_session: AsyncSession, mock_redis) -> UserService:
+    async def service(self, async_session: AsyncSession) -> UserService:
         return UserService(async_session)
 
-    async def test_get_by_id_found(self, service, async_session, mock_redis):
+    async def test_get_by_id_found(self, service, async_session):
         """Existing user ID returns the User object."""
         test_data = await create_test_user(async_session)
         user = test_data["user"]
@@ -42,10 +42,10 @@ class TestUserServiceGetByEmail:
     """Tests for UserService.get_by_email()."""
 
     @pytest_asyncio.fixture
-    async def service(self, async_session: AsyncSession, mock_redis) -> UserService:
+    async def service(self, async_session: AsyncSession) -> UserService:
         return UserService(async_session)
 
-    async def test_get_by_email_found(self, service, async_session, mock_redis):
+    async def test_get_by_email_found(self, service, async_session):
         """Existing email returns the User object."""
         await create_test_user(async_session, email="findme@example.com")
         result = await service.get_by_email("findme@example.com")
@@ -62,10 +62,10 @@ class TestUserServiceUpdateProfile:
     """Tests for UserService.update_profile()."""
 
     @pytest_asyncio.fixture
-    async def service(self, async_session: AsyncSession, mock_redis) -> UserService:
+    async def service(self, async_session: AsyncSession) -> UserService:
         return UserService(async_session)
 
-    async def test_update_display_name_only(self, service, async_session, mock_redis):
+    async def test_update_display_name_only(self, service, async_session):
         """Partial update — only display_name changes, email unchanged."""
         test_data = await create_test_user(
             async_session, email="update@example.com", display_name="Old Name"
