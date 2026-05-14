@@ -18,7 +18,7 @@ class TestLessonServiceCreate:
     """Tests for LessonService.create()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         service = LessonService(async_session)
@@ -38,7 +38,7 @@ class TestLessonServiceGetById:
     """Tests for LessonService.get_by_id()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         lesson = await create_test_lesson(async_session, course.id)
@@ -62,7 +62,7 @@ class TestLessonServiceListByCourse:
     """Tests for LessonService.list_by_course()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         await create_test_lesson(async_session, course.id, title="L1", order=2)
@@ -82,7 +82,7 @@ class TestLessonServiceUpdate:
     """Tests for LessonService.update()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         lesson = await create_test_lesson(async_session, course.id)
@@ -101,7 +101,7 @@ class TestLessonServiceDelete:
     """Tests for LessonService.delete()."""
 
     @pytest_asyncio.fixture
-    async def setup(self, async_session: AsyncSession, mock_redis):
+    async def setup(self, async_session: AsyncSession):
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         lesson = await create_test_lesson(async_session, course.id)

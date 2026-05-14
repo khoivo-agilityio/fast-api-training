@@ -1,6 +1,6 @@
 """Submission module exceptions."""
 
-from src.exceptions import ConflictError, NotFoundError
+from src.core.exceptions import ConflictError, NotFoundError
 
 
 class AlreadySubmitted(ConflictError):

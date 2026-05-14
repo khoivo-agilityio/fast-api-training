@@ -1,6 +1,6 @@
 """Auth module exceptions — specific authentication/authorization errors."""
 
-from src.exceptions import AuthenticationError, ConflictError
+from src.core.exceptions import AuthenticationError, ConflictError
 
 
 class InvalidCredentials(AuthenticationError):

@@ -7,14 +7,19 @@ services:
       - "8001:8001"
     env_file:
       - .env
+    environment:
+      # Override localhost URLs from .env with Docker-internal service names.
+      # These are only applied when running inside Docker Compose.
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/learning_platform
+      # Override the internal MinIO endpoint so the app container reaches MinIO
+      # by Docker service name instead of localhost.
+      MINIO_ENDPOINT_URL: http://minio:9000
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      minio:
         condition: service_healthy
-    volumes:
-      - .:/app
-    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
+    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8001
 
   db:
     image: postgres:16-alpine
@@ -32,15 +37,40 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
+  # ---------------------------------------------------------------------------
+  # MinIO — S3-compatible object storage for local development
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
     ports:
-      - "6379:6379"
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console  →  http://localhost:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/learning-platform &&
+        mc anonymous set download local/learning-platform &&
+        echo 'MinIO bucket ready.'
+      "
 
 volumes:
   pg_data:
+  minio_data:
+

@@ -15,7 +15,6 @@ It delegates password operations to auth.security (async bcrypt)
 and user CRUD to users.service.UserService.
 """
 
-from datetime import UTC, datetime
 from uuid import UUID
 
 import jwt as pyjwt
@@ -27,10 +26,8 @@ from src.auth.exceptions import (
     InvalidCredentials,
     TokenExpired,
     TokenInvalid,
-    TokenRevoked,
 )
 from src.auth.schemas import RegisterRequest, TokenResponse
-from src.redis import blacklist_token, is_token_blacklisted
 from src.users.service import UserService
 
 
@@ -82,7 +79,6 @@ class AuthService:
         Raises:
             TokenExpired: If the refresh token has expired.
             TokenInvalid: If the refresh token is malformed.
-            TokenRevoked: If the refresh token has been blacklisted.
         """
         try:
             payload = jwt.decode_token(refresh_token)
@@ -98,14 +94,6 @@ class AuthService:
         if not jti:
             raise TokenInvalid()
 
-        if await is_token_blacklisted(jti):
-            raise TokenRevoked()
-
-        # Blacklist the old refresh token
-        exp = payload.get("exp", 0)
-        ttl = max(int(exp - datetime.now(UTC).timestamp()), 0)
-        await blacklist_token(jti, ttl)
-
         # Issue new token pair
         user_id = payload["sub"]
         user = await self._user_service.get_by_id(UUID(user_id))
@@ -113,21 +101,17 @@ class AuthService:
         return TokenResponse(**tokens)
 
     async def logout(self, access_token: str) -> None:
-        """Add the access token's JTI to the Redis blacklist.
+        """Logout endpoint logic.
+
+        Since Redis was removed, this is a no-op on the server.
+        The client is responsible for discarding the token to complete logout.
 
         Raises:
             TokenInvalid: If the token cannot be decoded.
         """
         try:
-            payload = jwt.decode_token(access_token)
+            jwt.decode_token(access_token)
         except pyjwt.ExpiredSignatureError:
-            # Already expired — no need to blacklist
             return
         except pyjwt.InvalidTokenError:
             raise TokenInvalid() from None
-
-        jti = payload.get("jti")
-        if jti:
-            exp = payload.get("exp", 0)
-            ttl = max(int(exp - datetime.now(UTC).timestamp()), 0)
-            await blacklist_token(jti, ttl)

@@ -7,7 +7,7 @@ Provides dependency injection for LessonService into route handlers.
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database import get_db
+from src.core.database import get_db
 from src.lessons.service import LessonService
 
 
