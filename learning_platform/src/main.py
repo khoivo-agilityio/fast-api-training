@@ -10,6 +10,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.config import settings
@@ -49,6 +52,9 @@ def _resolve_status(exc: DomainError) -> int:
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     # Startup
+    from src.core.logging import configure_logging
+
+    configure_logging(settings.ENABLE_DEBUG)
     yield
     # Shutdown
 
@@ -127,7 +133,7 @@ def create_app() -> FastAPI:
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -140,6 +146,11 @@ def create_app() -> FastAPI:
             status_code=_resolve_status(exc),
             content={"detail": exc.detail, "error_code": exc.error_code},
         )
+
+    # Rate limiter — slowapi
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # Mount routers
     from src.auth.router import router as auth_router

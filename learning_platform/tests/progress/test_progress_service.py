@@ -8,6 +8,7 @@ or directly via helpers to set up preconditions.
 
 import pytest
 
+from src.courses.service import CourseService
 from src.progress.models import ProgressStatus
 from src.progress.service import ProgressService
 from tests.conftest import (
@@ -121,7 +122,11 @@ class TestMarkLessonCompleted:
 
 
 class TestGetCourseProgress:
-    """Tests for ProgressService.get_course_progress()."""
+    """Tests for ProgressService.get_course_progress().
+
+    Note: After the supporter review refactor, get_course_progress now accepts
+    a course_service parameter instead of creating one internally (C9 fix).
+    """
 
     async def test_get_course_progress_partial(self, async_session):
         """2 of 3 lessons completed → 66.67% progress."""
@@ -143,7 +148,8 @@ class TestGetCourseProgress:
         )
 
         service = ProgressService(async_session)
-        result = await service.get_course_progress(student["user"].id, course.id)
+        course_service = CourseService(async_session)
+        result = await service.get_course_progress(student["user"].id, course.id, course_service)
 
         assert result.completed_lessons == 2
         assert result.total_lessons == 3
@@ -166,7 +172,8 @@ class TestGetCourseProgress:
         )
 
         service = ProgressService(async_session)
-        result = await service.get_course_progress(student["user"].id, course.id)
+        course_service = CourseService(async_session)
+        result = await service.get_course_progress(student["user"].id, course.id, course_service)
 
         assert result.completed_lessons == 2
         assert result.total_lessons == 2
@@ -174,18 +181,19 @@ class TestGetCourseProgress:
         assert result.is_complete is True
 
     async def test_get_course_progress_empty(self, async_session):
-        """Course with 0 lessons → 0%, is_complete=True (vacuous truth)."""
+        """Course with 0 lessons → 0%, is_complete=False (C13 fix: zero lessons ≠ complete)."""
         instructor = await create_test_instructor(async_session, email="i9@test.com")
         course = await create_test_course(async_session, instructor["user"].id, title="Course 9")
         student = await create_test_user(async_session, email="s9@test.com")
 
         service = ProgressService(async_session)
-        result = await service.get_course_progress(student["user"].id, course.id)
+        course_service = CourseService(async_session)
+        result = await service.get_course_progress(student["user"].id, course.id, course_service)
 
         assert result.total_lessons == 0
         assert result.completed_lessons == 0
         assert result.percent_complete == 0.0
-        assert result.is_complete is True
+        assert result.is_complete is False
 
     async def test_get_all_courses_progress(self, async_session):
         """get_all_courses_progress returns one entry per enrolled course."""
@@ -202,7 +210,8 @@ class TestGetCourseProgress:
         await create_test_enrollment(async_session, student["user"].id, course_b.id)
 
         service = ProgressService(async_session)
-        results = await service.get_all_courses_progress(student["user"].id)
+        course_service = CourseService(async_session)
+        results = await service.get_all_courses_progress(student["user"].id, course_service)
 
         assert len(results) == 2
         course_ids = {str(r.course_id) for r in results}

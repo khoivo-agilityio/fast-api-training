@@ -158,8 +158,8 @@ class TestAdminCourses:
 class TestAdminAccessControl:
     """Tests ensuring non-admin roles cannot access admin endpoints."""
 
-    async def test_admin_endpoints_401_student(self, client, async_session):
-        """Student gets 401 on all admin endpoints."""
+    async def test_admin_endpoints_403_student(self, client, async_session):
+        """Student gets 403 on all admin endpoints."""
         student = await create_test_user(async_session, email="s_deny@admintest.com")
 
         response = await client.get(
@@ -167,10 +167,10 @@ class TestAdminAccessControl:
             headers=student["auth_header"],
         )
 
-        assert response.status_code == 401
+        assert response.status_code == 403
 
-    async def test_admin_endpoints_401_instructor(self, client, async_session):
-        """Instructor gets 401 on all admin endpoints."""
+    async def test_admin_endpoints_403_instructor(self, client, async_session):
+        """Instructor gets 403 on all admin endpoints."""
         instructor = await create_test_instructor(async_session, email="i_deny@admintest.com")
 
         response = await client.get(
@@ -178,7 +178,7 @@ class TestAdminAccessControl:
             headers=instructor["auth_header"],
         )
 
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     async def test_admin_endpoints_401_no_auth(self, client, async_session):
         """Unauthenticated request gets 401."""

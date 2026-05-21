@@ -12,6 +12,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
+from src.core.exceptions import ValidationError
 from src.submissions.exceptions import AlreadySubmitted, SubmissionNotFound
 from src.submissions.models import Answer, Submission
 from src.submissions.schemas import SubmissionDetailResponse, SubmitQuizRequest
@@ -38,7 +40,15 @@ class SubmissionService:
         return round(100.0 * correct_count / total_count, 2)
 
     async def submit(
-        self, quiz_id: UUID, user_id: UUID, data: SubmitQuizRequest
+        self,
+        quiz_id: UUID,
+        user_id: UUID,
+        data: SubmitQuizRequest,
+        *,
+        quiz_service,
+        lesson_service,
+        course_service,
+        progress_service,
     ) -> SubmissionDetailResponse:
         """Submit answers for a quiz. Auto-grades and returns results.
 
@@ -46,18 +56,11 @@ class SubmissionService:
         1. Load quiz → lesson → check enrollment
         2. Check no prior submission (raise AlreadySubmitted)
         3. Load all questions
-        4. Grade each answer
-        5. Compute score, create Submission + Answer records
-        6. Trigger progress completion if score >= threshold
+        4. Validate all questions are answered (no missing, no extra, no duplicates)
+        5. Grade each answer
+        6. Compute score, create Submission + Answer records
+        7. Trigger progress completion if score >= threshold
         """
-        from src.courses.service import CourseService
-        from src.lessons.service import LessonService
-        from src.quizzes.service import QuizService
-
-        quiz_service = QuizService(self._db)
-        lesson_service = LessonService(self._db)
-        course_service = CourseService(self._db)
-
         # 1. Load quiz, lesson, check enrollment
         quiz = await quiz_service.get_quiz_by_id(quiz_id)
         lesson = await lesson_service.get_by_id(quiz.lesson_id)
@@ -76,14 +79,40 @@ class SubmissionService:
         # Build question lookup
         question_map = {q.id: q for q in questions}
 
-        # 4. Grade each answer
+        # 4. Validate answers — no missing, no extra, no duplicates
+        submitted_ids = [a.question_id for a in data.answers]
+        submitted_id_set = set(submitted_ids)
+        all_question_ids = set(question_map.keys())
+
+        # Check for duplicate question IDs in submission
+        if len(submitted_ids) != len(submitted_id_set):
+            raise ValidationError(
+                detail="Duplicate answers detected — each question must be answered exactly once",
+                error_code="DUPLICATE_ANSWERS",
+            )
+
+        # Check for answers referencing questions not in this quiz
+        unknown_ids = submitted_id_set - all_question_ids
+        if unknown_ids:
+            raise ValidationError(
+                detail=f"Answers reference {len(unknown_ids)} question(s) not in this quiz",
+                error_code="UNKNOWN_QUESTIONS",
+            )
+
+        # Check for unanswered questions
+        unanswered = all_question_ids - submitted_id_set
+        if unanswered:
+            raise ValidationError(
+                detail=f"Missing answers for {len(unanswered)} question(s)",
+                error_code="MISSING_ANSWERS",
+            )
+
+        # 5. Grade each answer
         answer_objects: list[Answer] = []
         correct_count = 0
 
         for answer_data in data.answers:
-            question = question_map.get(answer_data.question_id)
-            if question is None:
-                continue  # skip answers for unknown questions
+            question = question_map[answer_data.question_id]
 
             is_correct = self._grade_answer(question.correct_answer, answer_data.text)
             if is_correct:
@@ -96,7 +125,7 @@ class SubmissionService:
             )
             answer_objects.append(answer_obj)
 
-        # 5. Compute score and create submission
+        # 6. Compute score and create submission
         score = self._compute_score(correct_count, len(questions))
         submission = Submission(
             user_id=user_id,
@@ -112,12 +141,8 @@ class SubmissionService:
             self._db.add(answer_obj)
         await self._db.flush()
 
-        # 6. Trigger progress completion if score >= threshold
-        from src.config import settings
-        from src.progress.service import ProgressService
-
+        # 7. Trigger progress completion if score >= threshold
         if score >= settings.QUIZ_PASS_THRESHOLD:
-            progress_service = ProgressService(self._db)
             await progress_service.mark_lesson_completed(user_id, quiz.lesson_id)
 
         # Build response

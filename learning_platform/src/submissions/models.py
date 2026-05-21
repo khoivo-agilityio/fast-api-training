@@ -22,10 +22,10 @@ class Submission(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
     quiz_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("quizzes.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("quizzes.id"), nullable=False, index=True
     )
     score: Mapped[float] = mapped_column(Float, nullable=False)
     submitted_at: Mapped[datetime] = mapped_column(
@@ -57,7 +57,7 @@ class Answer(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     submission_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("submissions.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("submissions.id"), nullable=False, index=True
     )
     question_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("questions.id"), nullable=False

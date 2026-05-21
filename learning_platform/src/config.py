@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI-Enhanced Learning Platform"
     ENABLE_DEBUG: bool = False
 
+    # CORS — comma-separated list of allowed frontend origins
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+
     # SQLAdmin
     SQLADMIN_SECRET_KEY: str = "change-me-sqladmin-secret"
 

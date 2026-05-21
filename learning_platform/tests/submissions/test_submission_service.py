@@ -1,9 +1,16 @@
 """
 Tests for Submission Service — quiz submission and auto-grading.
+
+After the supporter review refactor (C10), SubmissionService.submit() accepts
+collaborator services as keyword arguments instead of constructing them internally.
 """
 
 import pytest
 
+from src.courses.service import CourseService
+from src.lessons.service import LessonService
+from src.progress.service import ProgressService
+from src.quizzes.service import QuizService
 from src.submissions.exceptions import AlreadySubmitted
 from src.submissions.schemas import AnswerSubmission, SubmitQuizRequest
 from src.submissions.service import SubmissionService
@@ -16,6 +23,16 @@ from tests.conftest import (
     create_test_quiz,
     create_test_user,
 )
+
+
+def _make_services(session):
+    """Create all service instances needed for SubmissionService.submit()."""
+    return {
+        "quiz_service": QuizService(session),
+        "lesson_service": LessonService(session),
+        "course_service": CourseService(session),
+        "progress_service": ProgressService(session),
+    }
 
 
 class TestSubmissionService:
@@ -36,7 +53,9 @@ class TestSubmissionService:
                 AnswerSubmission(question_id=q2.id, text="B"),
             ]
         )
-        result = await service.submit(quiz.id, student["user"].id, data)
+        result = await service.submit(
+            quiz.id, student["user"].id, data, **_make_services(async_session)
+        )
         assert result.score == 100.0
         assert all(a.is_correct for a in result.answers)
 
@@ -59,7 +78,9 @@ class TestSubmissionService:
                 AnswerSubmission(question_id=q2.id, text="Wrong"),
             ]
         )
-        result = await service.submit(quiz.id, student["user"].id, data)
+        result = await service.submit(
+            quiz.id, student["user"].id, data, **_make_services(async_session)
+        )
         assert result.score == 50.0
 
     async def test_submit_duplicate(self, async_session):
@@ -72,10 +93,11 @@ class TestSubmissionService:
         q1 = await create_test_question(async_session, quiz.id, text="Q1?", correct_answer="A")
 
         service = SubmissionService(async_session)
+        services = _make_services(async_session)
         data = SubmitQuizRequest(answers=[AnswerSubmission(question_id=q1.id, text="A")])
-        await service.submit(quiz.id, student["user"].id, data)
+        await service.submit(quiz.id, student["user"].id, data, **services)
         with pytest.raises(AlreadySubmitted):
-            await service.submit(quiz.id, student["user"].id, data)
+            await service.submit(quiz.id, student["user"].id, data, **services)
 
     async def test_submit_not_enrolled(self, async_session):
         from src.courses.exceptions import NotEnrolled
@@ -90,7 +112,9 @@ class TestSubmissionService:
         service = SubmissionService(async_session)
         data = SubmitQuizRequest(answers=[AnswerSubmission(question_id=q1.id, text="A")])
         with pytest.raises(NotEnrolled):
-            await service.submit(quiz.id, student["user"].id, data)
+            await service.submit(
+                quiz.id, student["user"].id, data, **_make_services(async_session)
+            )
 
     async def test_submit_passing_marks_completed(self, async_session):
         instructor = await create_test_instructor(async_session, email="ss_mc@test.com")
@@ -103,7 +127,9 @@ class TestSubmissionService:
 
         service = SubmissionService(async_session)
         data = SubmitQuizRequest(answers=[AnswerSubmission(question_id=q1.id, text="A")])
-        result = await service.submit(quiz.id, student["user"].id, data)
+        result = await service.submit(
+            quiz.id, student["user"].id, data, **_make_services(async_session)
+        )
         assert result.score == 100.0
 
         from src.progress.models import ProgressStatus

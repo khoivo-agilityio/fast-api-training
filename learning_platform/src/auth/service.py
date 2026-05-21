@@ -15,9 +15,11 @@ It delegates password operations to auth.security (async bcrypt)
 and user CRUD to users.service.UserService.
 """
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 import jwt as pyjwt
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth import jwt, security
@@ -26,7 +28,9 @@ from src.auth.exceptions import (
     InvalidCredentials,
     TokenExpired,
     TokenInvalid,
+    TokenRevoked,
 )
+from src.auth.models import BlacklistedToken
 from src.auth.schemas import RegisterRequest, TokenResponse
 from src.users.service import UserService
 
@@ -37,6 +41,19 @@ class AuthService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
         self._user_service = UserService(db)
+
+    async def _is_token_blacklisted(self, jti: str) -> bool:
+        """Check if a token's JTI is in the blacklist."""
+        result = await self._db.execute(
+            select(BlacklistedToken).where(BlacklistedToken.jti == jti)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def _blacklist_token(self, jti: str, expires_at: datetime) -> None:
+        """Add a token's JTI to the blacklist."""
+        token_record = BlacklistedToken(jti=jti, expires_at=expires_at)
+        self._db.add(token_record)
+        await self._db.flush()
 
     async def register(self, data: RegisterRequest) -> TokenResponse:
         """Register a new user and return access + refresh tokens.
@@ -79,6 +96,7 @@ class AuthService:
         Raises:
             TokenExpired: If the refresh token has expired.
             TokenInvalid: If the refresh token is malformed.
+            TokenRevoked: If the refresh token has been blacklisted.
         """
         try:
             payload = jwt.decode_token(refresh_token)
@@ -94,6 +112,15 @@ class AuthService:
         if not jti:
             raise TokenInvalid()
 
+        # Check if this refresh token has been revoked
+        if await self._is_token_blacklisted(jti):
+            raise TokenRevoked()
+
+        # Blacklist the old refresh token (rotation)
+        exp_timestamp = payload.get("exp", 0)
+        expires_at = datetime.fromtimestamp(exp_timestamp, tz=UTC)
+        await self._blacklist_token(jti, expires_at)
+
         # Issue new token pair
         user_id = payload["sub"]
         user = await self._user_service.get_by_id(UUID(user_id))
@@ -101,17 +128,21 @@ class AuthService:
         return TokenResponse(**tokens)
 
     async def logout(self, access_token: str) -> None:
-        """Logout endpoint logic.
-
-        Since Redis was removed, this is a no-op on the server.
-        The client is responsible for discarding the token to complete logout.
+        """Logout — blacklist the access token so it cannot be reused.
 
         Raises:
             TokenInvalid: If the token cannot be decoded.
         """
         try:
-            jwt.decode_token(access_token)
+            payload = jwt.decode_token(access_token)
         except pyjwt.ExpiredSignatureError:
+            # Already expired — no need to blacklist
             return
         except pyjwt.InvalidTokenError:
             raise TokenInvalid() from None
+
+        jti = payload.get("jti")
+        if jti:
+            exp_timestamp = payload.get("exp", 0)
+            expires_at = datetime.fromtimestamp(exp_timestamp, tz=UTC)
+            await self._blacklist_token(jti, expires_at)
