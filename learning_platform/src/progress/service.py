@@ -8,7 +8,7 @@ Class-based service pattern:
 - Cross-module access goes through service public methods only
 
 Key behaviours:
-- touch()              : Called by lessons router on GET /lessons/{id} for students
+- touch()              : Called by LessonService.get_and_track() for students
 - mark_lesson_completed: Called by submissions service when quiz score >= threshold
 - get_course_progress  : Derives progress from the progress table (no stored aggregate)
 """
@@ -20,7 +20,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.courses.models import Enrollment
-from src.courses.service import CourseService
 from src.lessons.models import Lesson
 from src.progress.models import Progress, ProgressStatus
 from src.progress.schemas import CourseProgressResponse
@@ -137,13 +136,15 @@ class ProgressService:
         )
         return result.scalar_one_or_none()
 
-    async def get_course_progress(self, user_id: UUID, course_id: UUID) -> CourseProgressResponse:
+    async def get_course_progress(
+        self, user_id: UUID, course_id: UUID, course_service
+    ) -> CourseProgressResponse:
         """Derive course-level progress from lesson-level records.
 
         Counts total lessons in the course and completed ones by the user.
+        CourseService is injected as a parameter to avoid internal service creation.
         """
         # Raises CourseNotFound if the course doesn't exist
-        course_service = CourseService(self._db)
         course = await course_service.get_by_id(course_id)
 
         # Total lessons in course
@@ -172,16 +173,21 @@ class ProgressService:
             completed_lessons=completed,
             total_lessons=total,
             percent_complete=percent,
-            is_complete=(completed >= total),
+            is_complete=(total > 0 and completed >= total),
         )
 
-    async def get_all_courses_progress(self, user_id: UUID) -> list[CourseProgressResponse]:
+    async def get_all_courses_progress(
+        self, user_id: UUID, course_service
+    ) -> list[CourseProgressResponse]:
         """Return progress for all courses the user is enrolled in."""
         result = await self._db.execute(
             select(Enrollment.course_id).where(Enrollment.user_id == user_id)
         )
         course_ids = list(result.scalars().all())
-        return [await self.get_course_progress(user_id, course_id) for course_id in course_ids]
+        return [
+            await self.get_course_progress(user_id, course_id, course_service)
+            for course_id in course_ids
+        ]
 
     async def list_all(self, limit: int = 20, offset: int = 0) -> list[Progress]:
         """List all progress records with pagination (admin use)."""

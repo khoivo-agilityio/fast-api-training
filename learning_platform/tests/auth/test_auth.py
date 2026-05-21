@@ -97,10 +97,9 @@ class TestRefresh:
         assert resp.status_code == 401
 
     async def test_refresh_after_token_rotation(self, client: AsyncClient, registered_user):
-        """After refreshing, a new token pair is returned; each refresh is independent in test env.
+        """After refreshing, the old refresh token is blacklisted (DB-backed, C2 fix).
 
-        NOTE: Token rotation (blacklisting old refresh tokens) requires real Redis.
-        This test verifies that a second refresh call also succeeds, returning fresh tokens.
+        A second refresh must use the new refresh token from the first response.
         """
         resp1 = await client.post(
             "/api/v1/auth/refresh",
@@ -110,6 +109,13 @@ class TestRefresh:
         new_tokens = resp1.json()
         # A new access token is issued
         assert new_tokens["access_token"] != registered_user["access_token"]
+
+        # Second refresh uses the NEW refresh token (old one is blacklisted)
+        resp2 = await client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": new_tokens["refresh_token"]},
+        )
+        assert resp2.status_code == 200
 
 
 class TestLogout:
@@ -121,13 +127,16 @@ class TestLogout:
         assert "detail" in resp.json()
 
     async def test_access_after_logout(self, client: AsyncClient, auth_headers):
-        """After logout, the access token is blacklisted in Redis.
+        """After logout, the access token is blacklisted in the database (C2 fix).
 
-        NOTE: In the test environment Redis is mocked and is_token_blacklisted always
-        returns False, so we only verify the logout call itself succeeds.
+        The old token should be rejected with 401.
         """
         resp = await client.post("/api/v1/auth/logout", headers=auth_headers)
         assert resp.status_code == 200
+
+        # Old token should now be rejected
+        resp2 = await client.get("/api/v1/users/me", headers=auth_headers)
+        assert resp2.status_code == 401
 
     async def test_logout_without_token(self, client: AsyncClient):
         resp = await client.post("/api/v1/auth/logout")

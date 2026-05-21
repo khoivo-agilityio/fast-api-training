@@ -14,6 +14,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from src.auth.dependencies import get_current_user, require_roles
+from src.courses.dependencies import get_course_service
 from src.courses.service import CourseService
 from src.progress.dependencies import get_progress_service
 from src.progress.schemas import CourseProgressResponse
@@ -28,6 +29,7 @@ async def get_course_progress(
     course_id: UUID,
     current_user: User = Depends(get_current_user),
     progress_service: ProgressService = Depends(get_progress_service),
+    course_service: CourseService = Depends(get_course_service),
 ) -> CourseProgressResponse:
     """Get the current user's progress for a single course.
 
@@ -36,22 +38,22 @@ async def get_course_progress(
     """
     # For students, enforce enrollment — check course existence first for correct 404/403 order
     if current_user.role == "student":
-        course_service = CourseService(progress_service._db)
         # Raises CourseNotFound (→ 404) if the course doesn't exist
         await course_service.get_by_id(course_id)
         # Raises NotEnrolled (→ 403) if the student isn't enrolled
         await course_service.check_enrollment(current_user.id, course_id)
 
-    return await progress_service.get_course_progress(current_user.id, course_id)
+    return await progress_service.get_course_progress(current_user.id, course_id, course_service)
 
 
 @router.get("/progress", response_model=list[CourseProgressResponse])
 async def get_all_progress(
     current_user: User = Depends(get_current_user),
     progress_service: ProgressService = Depends(get_progress_service),
+    course_service: CourseService = Depends(get_course_service),
 ) -> list[CourseProgressResponse]:
     """Get the current user's progress across all enrolled courses."""
-    return await progress_service.get_all_courses_progress(current_user.id)
+    return await progress_service.get_all_courses_progress(current_user.id, course_service)
 
 
 # ---------------------------------------------------------------------------

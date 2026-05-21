@@ -12,6 +12,7 @@ from uuid import UUID
 import jwt as pyjwt
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth import jwt
@@ -19,7 +20,9 @@ from src.auth.exceptions import (
     InsufficientPermissions,
     TokenExpired,
     TokenInvalid,
+    TokenRevoked,
 )
+from src.auth.models import BlacklistedToken
 from src.auth.service import AuthService
 from src.core.database import get_db
 from src.users.models import User
@@ -39,6 +42,7 @@ async def get_current_user(
     Raises:
         TokenExpired: If token has expired.
         TokenInvalid: If token is malformed or not an access token.
+        TokenRevoked: If token has been blacklisted (logged out).
     """
     try:
         payload = jwt.decode_token(token)
@@ -53,6 +57,15 @@ async def get_current_user(
     user_id = payload.get("sub")
     if not user_id:
         raise TokenInvalid()
+
+    # Check token blacklist
+    jti = payload.get("jti")
+    if jti:
+        result = await db.execute(
+            select(BlacklistedToken).where(BlacklistedToken.jti == jti)
+        )
+        if result.scalar_one_or_none() is not None:
+            raise TokenRevoked()
 
     user_service = UserService(db)
     user = await user_service.get_by_id(UUID(user_id))

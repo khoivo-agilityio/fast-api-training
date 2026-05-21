@@ -88,6 +88,13 @@ class UserAdmin(ModelView, model=User):
     name = "User"
     name_plural = "Users"
 
+    async def on_model_change(self, data: dict, model: User, is_created: bool, request: Request) -> None:
+        """Hash the password before saving to the database."""
+        if "password" in data and data["password"]:
+            from src.auth.security import hash_password
+
+            data["password"] = await hash_password(data["password"])
+
 
 class CourseAdmin(ModelView, model=Course):
     column_list = [Course.id, Course.title, Course.instructor_id, Course.created_at]

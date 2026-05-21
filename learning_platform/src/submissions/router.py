@@ -10,7 +10,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from src.auth.dependencies import get_current_user, require_roles
-from src.submissions.dependencies import get_submission_service
+from src.courses.service import CourseService
+from src.lessons.service import LessonService
+from src.progress.service import ProgressService
+from src.quizzes.service import QuizService
+from src.submissions.dependencies import (
+    get_course_service_for_submissions,
+    get_lesson_service_for_submissions,
+    get_progress_service_for_submissions,
+    get_quiz_service,
+    get_submission_service,
+)
 from src.submissions.schemas import SubmissionDetailResponse, SubmitQuizRequest
 from src.submissions.service import SubmissionService
 from src.users.models import User
@@ -28,9 +38,21 @@ async def submit_quiz(
     data: SubmitQuizRequest,
     current_user: User = Depends(require_roles("student")),
     service: SubmissionService = Depends(get_submission_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
+    lesson_service: LessonService = Depends(get_lesson_service_for_submissions),
+    course_service: CourseService = Depends(get_course_service_for_submissions),
+    progress_service: ProgressService = Depends(get_progress_service_for_submissions),
 ) -> SubmissionDetailResponse:
     """Submit quiz answers. Auto-grades and returns results (Student only, enrolled)."""
-    return await service.submit(quiz_id, current_user.id, data)
+    return await service.submit(
+        quiz_id,
+        current_user.id,
+        data,
+        quiz_service=quiz_service,
+        lesson_service=lesson_service,
+        course_service=course_service,
+        progress_service=progress_service,
+    )
 
 
 @router.get(

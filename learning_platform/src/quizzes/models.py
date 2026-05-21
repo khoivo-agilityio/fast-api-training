@@ -8,6 +8,7 @@ import uuid
 from enum import StrEnum
 
 from sqlalchemy import JSON, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -58,10 +59,14 @@ class Question(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     quiz_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("quizzes.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("quizzes.id"), nullable=False, index=True
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    type: Mapped[str] = mapped_column(String(10), nullable=False, default=QuestionType.MCQ.value)
+    type: Mapped[str] = mapped_column(
+        SAEnum(QuestionType, name="questiontype", native_enum=True, create_constraint=True),
+        nullable=False,
+        default=QuestionType.MCQ,
+    )
     options: Mapped[list | None] = mapped_column(JSON, nullable=True)
     correct_answer: Mapped[str] = mapped_column(String, nullable=False)
 

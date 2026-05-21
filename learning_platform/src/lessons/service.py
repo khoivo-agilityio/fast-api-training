@@ -8,6 +8,7 @@ Class-based service pattern:
 """
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import select
@@ -16,6 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.lessons.exceptions import LessonNotFound
 from src.lessons.models import Lesson
 from src.lessons.schemas import LessonCreateRequest, LessonUpdateRequest
+
+if TYPE_CHECKING:
+    from src.users.models import User
 
 
 class LessonService:
@@ -43,6 +47,29 @@ class LessonService:
         lesson = result.scalar_one_or_none()
         if not lesson:
             raise LessonNotFound(lesson_id)
+        return lesson
+
+    async def get_and_track(self, lesson_id: UUID, user: "User", progress_service) -> Lesson:
+        """Get a lesson and track progress for students.
+
+        For student users, this:
+        1. Fetches the lesson
+        2. Checks if the lesson has a quiz
+        3. Calls progress_service.touch() to record the visit
+
+        For non-students, simply returns the lesson.
+        """
+        lesson = await self.get_by_id(lesson_id)
+
+        if user.role == "student":
+            from src.quizzes.models import Quiz
+
+            result = await self._db.execute(
+                select(Quiz).where(Quiz.lesson_id == lesson_id).limit(1)
+            )
+            has_quiz = result.scalar_one_or_none() is not None
+            await progress_service.touch(user.id, lesson_id, has_quiz)
+
         return lesson
 
     async def list_by_course(self, course_id: UUID) -> list[Lesson]:

@@ -4,7 +4,8 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,13 +28,15 @@ class Progress(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
     lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False, index=True
     )
     status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default=ProgressStatus.NOT_STARTED.value
+        SAEnum(ProgressStatus, name="progressstatus", native_enum=True, create_constraint=True),
+        nullable=False,
+        default=ProgressStatus.NOT_STARTED,
     )
     accessed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

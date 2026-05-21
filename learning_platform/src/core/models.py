@@ -8,6 +8,7 @@ migrations (see gotchas.md #3).
 Add new model imports here whenever a new module's models.py is created.
 """
 
+from src.auth.models import BlacklistedToken  # noqa: F401
 from src.courses.models import Course, Enrollment  # noqa: F401
 from src.lessons.models import Lesson  # noqa: F401
 from src.progress.models import Progress  # noqa: F401

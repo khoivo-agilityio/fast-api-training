@@ -1,6 +1,6 @@
 """Auth module exceptions — specific authentication/authorization errors."""
 
-from src.core.exceptions import AuthenticationError, ConflictError
+from src.core.exceptions import AuthenticationError, AuthorizationError, ConflictError
 
 
 class InvalidCredentials(AuthenticationError):
@@ -51,7 +51,7 @@ class TokenRevoked(AuthenticationError):
         )
 
 
-class InsufficientPermissions(AuthenticationError):
+class InsufficientPermissions(AuthorizationError):
     """Raised when the user lacks the required role."""
 
     def __init__(self, required_roles: list[str] | None = None):

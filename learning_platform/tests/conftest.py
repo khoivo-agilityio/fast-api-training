@@ -53,6 +53,32 @@ async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
         await session.rollback()
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def reset_limiter():
+    """Clear the slowapi limiter's in-memory storage before every test.
+
+    Prevents rate-limit counts from one test spilling into the next.
+    Without this, tests that hit rate-limited endpoints (e.g. /register)
+    via fixtures like `registered_user` can exhaust the limit and cause
+    unrelated tests to fail with 429.
+
+    Note: The auth router creates its own Limiter instance (separate from
+    app.state.limiter), so we must reset both.
+    """
+    from src.auth.router import limiter as auth_limiter
+    from src.main import app
+
+    for lim in (app.state.limiter, auth_limiter):
+        storage = getattr(lim, "_storage", None)
+        if storage is not None and hasattr(storage, "reset"):
+            storage.reset()
+    yield
+    for lim in (app.state.limiter, auth_limiter):
+        storage = getattr(lim, "_storage", None)
+        if storage is not None and hasattr(storage, "reset"):
+            storage.reset()
+
+
 @pytest_asyncio.fixture
 async def client(async_session) -> AsyncGenerator[AsyncClient, None]:
     """httpx.AsyncClient wrapping the FastAPI app with test DB."""

@@ -34,7 +34,7 @@ class TestCreateCourseEndpoint:
             headers=student["auth_header"],
             json={"title": "Nope"},
         )
-        assert response.status_code == 401  # require_roles raises AuthenticationError
+        assert response.status_code == 403  # require_roles raises InsufficientPermissions (403)
 
     async def test_create_course_401_no_auth(self, client):
         response = await client.post(
@@ -136,7 +136,7 @@ class TestDeleteCourseEndpoint:
         response = await client.delete(
             f"/api/v1/courses/{course.id}", headers=instructor["auth_header"]
         )
-        assert response.status_code == 401  # require_roles("admin") fails
+        assert response.status_code == 403  # require_roles("admin") → InsufficientPermissions
 
 
 class TestEnrollEndpoint:

@@ -9,6 +9,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
+from src.auth.admin_auth import require_admin_or_session
 from src.auth.dependencies import get_current_user, require_roles
 from src.core.pagination import PaginationParams
 from src.courses.dependencies import get_course_service
@@ -163,12 +164,12 @@ ui_router = APIRouter(prefix="/admin/ui", tags=["admin"])
 
 @ui_router.get("/courses", include_in_schema=False)
 async def admin_ui_courses(
+    _: None = Depends(require_admin_or_session),
     service: CourseService = Depends(get_course_service),
 ) -> list[dict]:
     """Return all courses as {id, title} for the cascading dropdown in Quiz create.
 
-    No JWT auth — called via browser fetch from SQLAdmin which already enforces
-    session-based admin authentication.
+    Protected by dual auth — accepts JWT Bearer (admin) or SQLAdmin session cookie.
     """
     courses, _ = await service.list_courses(limit=500, offset=0)
     return [{"id": str(c.id), "title": c.title} for c in courses]

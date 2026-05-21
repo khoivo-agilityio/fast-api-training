@@ -43,10 +43,10 @@ class TestUpdateMe:
         resp = await client.patch(
             "/api/v1/users/me",
             headers=auth_headers,
-            json={"avatar": "https://example.com/avatar.png"},
+            json={"avatar": "https://bucket.s3.amazonaws.com/avatar.png"},
         )
         assert resp.status_code == 200
-        assert resp.json()["avatar"] == "https://example.com/avatar.png"
+        assert resp.json()["avatar"] == "https://bucket.s3.amazonaws.com/avatar.png"
 
     async def test_update_password(self, client: AsyncClient, auth_headers):
         """After changing password, login with new password should work."""

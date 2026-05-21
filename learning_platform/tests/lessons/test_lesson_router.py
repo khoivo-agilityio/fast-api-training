@@ -40,7 +40,8 @@ class TestCreateLessonEndpoint:
         )
         assert response.status_code == 403
 
-    async def test_create_lesson_401_student(self, client, async_session):
+    async def test_create_lesson_403_student(self, client, async_session):
+        """Student cannot create lessons — returns 403 (InsufficientPermissions, C3 fix)."""
         instructor = await create_test_instructor(async_session)
         course = await create_test_course(async_session, instructor["user"].id)
         student = await create_test_user(async_session, email="student@x.com", role="student")
@@ -49,7 +50,7 @@ class TestCreateLessonEndpoint:
             headers=student["auth_header"],
             json={"title": "Nope", "content": "Nope"},
         )
-        assert response.status_code == 401
+        assert response.status_code == 403
 
 
 class TestListLessonsEndpoint:
