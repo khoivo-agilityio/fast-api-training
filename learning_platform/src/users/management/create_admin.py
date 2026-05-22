@@ -15,14 +15,13 @@ import argparse
 import asyncio
 import sys
 
+from src.auth.security import hash_password
+from src.core.database import async_session_factory
+from src.users.models import User, UserRole
+from src.users.service import UserService
+
 
 async def create_admin(email: str, password: str, display_name: str) -> None:
-    """Create an admin user in the database."""
-    from src.auth.security import hash_password
-    from src.core.database import async_session_factory
-    from src.users.models import User, UserRole
-    from src.users.service import UserService
-
     async with async_session_factory() as session:
         user_service = UserService(session)
 

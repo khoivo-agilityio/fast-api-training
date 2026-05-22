@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.lessons.exceptions import LessonNotFound
 from src.lessons.models import Lesson
 from src.lessons.schemas import LessonCreateRequest, LessonUpdateRequest
+from src.quizzes.models import Quiz
 
 if TYPE_CHECKING:
     from src.users.models import User
@@ -62,8 +63,6 @@ class LessonService:
         lesson = await self.get_by_id(lesson_id)
 
         if user.role == "student":
-            from src.quizzes.models import Quiz
-
             result = await self._db.execute(
                 select(Quiz).where(Quiz.lesson_id == lesson_id).limit(1)
             )

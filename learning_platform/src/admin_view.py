@@ -13,6 +13,10 @@ from sqladmin import ModelView
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 
+from src.auth.jwt import decode_token
+from src.auth.security import hash_password
+from src.auth.service import AuthService
+from src.core.database import async_session_factory
 from src.courses.models import Course, Enrollment
 from src.lessons.models import Lesson
 from src.progress.models import Progress
@@ -33,15 +37,10 @@ class AdminAuthBackend(AuthenticationBackend):
         email = form.get("username", "")
         password = form.get("password", "")
 
-        from src.auth.service import AuthService
-        from src.core.database import async_session_factory
-
         async with async_session_factory() as session:
             service = AuthService(session)
             try:
                 tokens = await service.login(str(email), str(password))
-                from src.auth.jwt import decode_token
-
                 payload = decode_token(tokens.access_token)
                 if payload.get("role") != "admin":
                     return False
@@ -65,8 +64,6 @@ class AdminAuthBackend(AuthenticationBackend):
         if not token:
             return False
         try:
-            from src.auth.jwt import decode_token
-
             payload = decode_token(token)
             return payload.get("role") == "admin"
         except Exception:
@@ -91,8 +88,6 @@ class UserAdmin(ModelView, model=User):
     async def on_model_change(self, data: dict, model: User, is_created: bool, request: Request) -> None:
         """Hash the password before saving to the database."""
         if "password" in data and data["password"]:
-            from src.auth.security import hash_password
-
             data["password"] = await hash_password(data["password"])
 
 

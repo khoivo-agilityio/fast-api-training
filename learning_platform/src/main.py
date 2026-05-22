@@ -16,6 +16,21 @@ from slowapi.util import get_remote_address
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.config import settings
+from sqladmin import Admin
+from src.admin_view import (
+    AdminAuthBackend,
+    AnswerAdmin,
+    CourseAdmin,
+    EnrollmentAdmin,
+    LessonAdmin,
+    ProgressAdmin,
+    QuestionAdmin,
+    QuizAdmin,
+    SubmissionAdmin,
+    UserAdmin,
+)
+from src.auth.router import router as auth_router
+from src.core.database import engine
 from src.core.exceptions import (
     AuthenticationError,
     AuthorizationError,
@@ -24,6 +39,20 @@ from src.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from src.core.logging import configure_logging
+from src.courses.router import admin_router as courses_admin_router
+from src.courses.router import router as courses_router
+from src.courses.router import ui_router as courses_ui_router
+from src.lessons.router import router as lessons_router
+from src.lessons.router import ui_router as lessons_ui_router
+from src.progress.router import admin_router as progress_admin_router
+from src.progress.router import router as progress_router
+from src.quizzes.router import router as quizzes_router
+from src.submissions.router import admin_router as submissions_admin_router
+from src.submissions.router import router as submissions_router
+from src.users.router import admin_router as users_admin_router
+from src.users.router import router as users_router
+from starlette.middleware.sessions import SessionMiddleware
 
 # Status code mapping — walks MRO to find first matching parent (gotchas.md #2)
 _STATUS_MAP: dict[type, int] = {
@@ -52,8 +81,6 @@ def _resolve_status(exc: DomainError) -> int:
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     # Startup
-    from src.core.logging import configure_logging
-
     configure_logging(settings.ENABLE_DEBUG)
     yield
     # Shutdown
@@ -153,20 +180,6 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # Mount routers
-    from src.auth.router import router as auth_router
-    from src.courses.router import admin_router as courses_admin_router
-    from src.courses.router import router as courses_router
-    from src.courses.router import ui_router as courses_ui_router
-    from src.lessons.router import router as lessons_router
-    from src.lessons.router import ui_router as lessons_ui_router
-    from src.progress.router import admin_router as progress_admin_router
-    from src.progress.router import router as progress_router
-    from src.quizzes.router import router as quizzes_router
-    from src.submissions.router import admin_router as submissions_admin_router
-    from src.submissions.router import router as submissions_router
-    from src.users.router import admin_router as users_admin_router
-    from src.users.router import router as users_router
-
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(users_admin_router, prefix="/api/v1")
@@ -188,23 +201,6 @@ def create_app() -> FastAPI:
 
     # SQLAdmin UI — mounted at /admin
     # SessionMiddleware must be added AFTER routes to avoid double-wrapping CORS
-    from sqladmin import Admin
-    from starlette.middleware.sessions import SessionMiddleware
-
-    from src.admin_view import (
-        AdminAuthBackend,
-        AnswerAdmin,
-        CourseAdmin,
-        EnrollmentAdmin,
-        LessonAdmin,
-        ProgressAdmin,
-        QuestionAdmin,
-        QuizAdmin,
-        SubmissionAdmin,
-        UserAdmin,
-    )
-    from src.core.database import engine
-
     # Trust X-Forwarded-Proto/For headers from Railway's reverse proxy
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
     # https_only=False because TLS is terminated at the Railway proxy, not the app

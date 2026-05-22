@@ -11,6 +11,7 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.exceptions import InsufficientPermissions
+from src.auth.jwt import decode_token
 from src.core.database import get_db
 
 
@@ -32,8 +33,6 @@ async def require_admin_or_session(
         token = auth_header.removeprefix("Bearer ").strip()
         if token:
             try:
-                from src.auth.jwt import decode_token
-
                 payload = decode_token(token)
                 if payload.get("type") == "access" and payload.get("role") == "admin":
                     return  # Authenticated via JWT
@@ -44,8 +43,6 @@ async def require_admin_or_session(
     session_token = request.session.get("token") if hasattr(request, "session") else None
     if session_token:
         try:
-            from src.auth.jwt import decode_token
-
             payload = decode_token(session_token)
             if payload.get("role") == "admin":
                 return  # Authenticated via session

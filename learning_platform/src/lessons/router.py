@@ -8,6 +8,7 @@ Parse params → call service → return schema.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.admin_auth import require_admin_or_session
@@ -17,6 +18,7 @@ from src.courses.dependencies import get_course_service
 from src.courses.exceptions import NotCourseOwner
 from src.courses.service import CourseService
 from src.lessons.dependencies import get_lesson_service
+from src.lessons.models import Lesson
 from src.lessons.schemas import LessonCreateRequest, LessonResponse, LessonUpdateRequest
 from src.lessons.service import LessonService
 from src.progress.dependencies import get_progress_service
@@ -116,10 +118,6 @@ async def admin_ui_lessons(
 
     Protected by dual auth — accepts JWT Bearer (admin) or SQLAdmin session cookie.
     """
-    from sqlalchemy import select
-
-    from src.lessons.models import Lesson
-
     result = await db.execute(
         select(Lesson.id, Lesson.title).where(Lesson.course_id == course_id).order_by(Lesson.order)
     )

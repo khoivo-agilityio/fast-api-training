@@ -5,7 +5,7 @@ Thin router: no try/except, no DB queries, no business logic.
 Parse params → call service → return schema.
 """
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Query
 
@@ -139,8 +139,6 @@ async def admin_update_course(
     service: CourseService = Depends(get_course_service),
 ) -> CourseResponse:
     """Update any course (admin only — skips ownership check)."""
-    from uuid import uuid4
-
     course = await service.update(course_id, data, user_id=uuid4(), user_role="admin")
     return CourseResponse.model_validate(course)
 
