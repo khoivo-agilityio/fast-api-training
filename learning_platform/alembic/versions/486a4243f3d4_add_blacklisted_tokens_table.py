@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '486a4243f3d4'
-down_revision: Union[str, None] = 'b1a12cb3f071'
+down_revision: Union[str, None] = 'c3e1f8a2b5d7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -35,13 +35,13 @@ def upgrade() -> None:
     op.create_index(op.f('ix_lessons_course_id'), 'lessons', ['course_id'], unique=False)
     op.alter_column('progress', 'status',
                existing_type=sa.VARCHAR(length=20),
-               type_=sa.Enum('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', name='progressstatus', create_constraint=True),
+               type_=sa.Enum('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', name='progressstatus'),
                existing_nullable=False)
     op.create_index(op.f('ix_progress_lesson_id'), 'progress', ['lesson_id'], unique=False)
     op.create_index(op.f('ix_progress_user_id'), 'progress', ['user_id'], unique=False)
     op.alter_column('questions', 'type',
                existing_type=sa.VARCHAR(length=10),
-               type_=sa.Enum('MCQ', 'TEXT', name='questiontype', create_constraint=True),
+               type_=sa.Enum('MCQ', 'TEXT', name='questiontype'),
                existing_nullable=False)
     op.create_index(op.f('ix_questions_quiz_id'), 'questions', ['quiz_id'], unique=False)
     op.create_index(op.f('ix_submissions_quiz_id'), 'submissions', ['quiz_id'], unique=False)
@@ -55,13 +55,13 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_submissions_quiz_id'), table_name='submissions')
     op.drop_index(op.f('ix_questions_quiz_id'), table_name='questions')
     op.alter_column('questions', 'type',
-               existing_type=sa.Enum('MCQ', 'TEXT', name='questiontype', create_constraint=True),
+               existing_type=sa.Enum('MCQ', 'TEXT', name='questiontype'),
                type_=sa.VARCHAR(length=10),
                existing_nullable=False)
     op.drop_index(op.f('ix_progress_user_id'), table_name='progress')
     op.drop_index(op.f('ix_progress_lesson_id'), table_name='progress')
     op.alter_column('progress', 'status',
-               existing_type=sa.Enum('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', name='progressstatus', create_constraint=True),
+               existing_type=sa.Enum('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', name='progressstatus'),
                type_=sa.VARCHAR(length=20),
                existing_nullable=False)
     op.drop_index(op.f('ix_lessons_course_id'), table_name='lessons')
