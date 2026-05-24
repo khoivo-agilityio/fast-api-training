@@ -29,4 +29,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8001
 
 # Run migrations then start the server
-CMD ["sh", "-c", "python -m alembic upgrade head && python -m uvicorn src.main:app --host 0.0.0.0 --port 8001"]
+CMD ["sh", "-c", "echo '=== Running Alembic migrations ===' && python -m alembic upgrade head && echo '=== Migrations complete ===' && python -m uvicorn src.main:app --host 0.0.0.0 --port 8001"]
