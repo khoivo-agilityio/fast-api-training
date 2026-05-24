@@ -36,13 +36,15 @@ def upgrade() -> None:
     op.alter_column('progress', 'status',
                existing_type=sa.VARCHAR(length=20),
                type_=sa.Enum('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', name='progressstatus'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::progressstatus')
     op.create_index(op.f('ix_progress_lesson_id'), 'progress', ['lesson_id'], unique=False)
     op.create_index(op.f('ix_progress_user_id'), 'progress', ['user_id'], unique=False)
     op.alter_column('questions', 'type',
                existing_type=sa.VARCHAR(length=10),
                type_=sa.Enum('MCQ', 'TEXT', name='questiontype'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='type::questiontype')
     op.create_index(op.f('ix_questions_quiz_id'), 'questions', ['quiz_id'], unique=False)
     op.create_index(op.f('ix_submissions_quiz_id'), 'submissions', ['quiz_id'], unique=False)
     op.create_index(op.f('ix_submissions_user_id'), 'submissions', ['user_id'], unique=False)
@@ -57,13 +59,15 @@ def downgrade() -> None:
     op.alter_column('questions', 'type',
                existing_type=sa.Enum('MCQ', 'TEXT', name='questiontype'),
                type_=sa.VARCHAR(length=10),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='type::VARCHAR(10)')
     op.drop_index(op.f('ix_progress_user_id'), table_name='progress')
     op.drop_index(op.f('ix_progress_lesson_id'), table_name='progress')
     op.alter_column('progress', 'status',
                existing_type=sa.Enum('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', name='progressstatus'),
                type_=sa.VARCHAR(length=20),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::VARCHAR(20)')
     op.drop_index(op.f('ix_lessons_course_id'), table_name='lessons')
     op.drop_index(op.f('ix_enrollments_user_id'), table_name='enrollments')
     op.drop_index(op.f('ix_enrollments_course_id'), table_name='enrollments')
