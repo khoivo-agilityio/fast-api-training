@@ -20,6 +20,13 @@ from src.core.database import async_session_factory
 from src.users.models import User, UserRole
 from src.users.service import UserService
 
+# Import other models so SQLAlchemy can resolve string relationships (e.g. "Course")
+import src.courses.models  # noqa
+import src.lessons.models  # noqa
+import src.quizzes.models  # noqa
+import src.progress.models  # noqa
+import src.submissions.models  # noqa
+
 
 async def create_admin(email: str, password: str, display_name: str) -> None:
     async with async_session_factory() as session:
@@ -29,10 +36,10 @@ async def create_admin(email: str, password: str, display_name: str) -> None:
         existing = await user_service.get_by_email(email)
         if existing:
             if existing.role == UserRole.ADMIN:
-                print(f"⚠️  Admin user '{email}' already exists. No action taken.")
+                print(f"Admin user '{email}' already exists. No action taken.")
             else:
                 print(
-                    f"⚠️  User '{email}' already exists with role '{existing.role}'. "
+                    f"User '{email}' already exists with role '{existing.role}'. "
                     f"Update their role via SQLAdmin or the database directly."
                 )
             return
@@ -48,11 +55,11 @@ async def create_admin(email: str, password: str, display_name: str) -> None:
         session.add(user)
         await session.commit()
 
-        print(f"✅ Admin user created successfully!")
-        print(f"   Email:        {email}")
-        print(f"   Display Name: {display_name}")
-        print(f"   Role:         admin")
-        print(f"   ID:           {user.id}")
+        print(f"Admin user created successfully!")
+        print(f"Email:        {email}")
+        print(f"Display Name: {display_name}")
+        print(f"Role:         admin")
+        print(f"ID:           {user.id}")
 
 
 def main() -> None:
@@ -92,7 +99,7 @@ Examples:
 
     # Validate password length
     if len(args.password) < 8:
-        print("❌ Error: Password must be at least 8 characters long.")
+        print("Error: Password must be at least 8 characters long.")
         sys.exit(1)
 
     asyncio.run(create_admin(args.email, args.password, args.display_name))
@@ -100,3 +107,21 @@ Examples:
 
 if __name__ == "__main__":
     main()
+
+"""
+
+SQL query to create admin on prod database, if needed:
+
+Usage:
+
+INSERT INTO users (id, email, password, display_name, role, created_at)
+VALUES (
+    gen_random_uuid(),
+    'admin@admin.com',
+    '$2b$12$b5uWv8uEUstq04sx2ESVsOjMxHbgj4Hyb8Xul/drmkaZ/fAiISxCi',
+    'Admin',
+    'admin',
+    NOW()
+);
+
+"""

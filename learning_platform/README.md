@@ -64,27 +64,19 @@ docker compose ps
 uv run python -m alembic upgrade head
 ```
 
-### 5. Start the development server
+### 5. Create an initial admin user
 
-There are **two ways** to run the server. Choose one:
+```bash
+uv run python create_admin.py
+```
 
-#### Option A — Direct (recommended for day-to-day dev)
+### 6. Start the development server
 
 Runs uvicorn on your Mac. The `.env` file uses `localhost` for all service URLs.
 
 ```bash
 uv run python -m uvicorn src.main:app --reload --port 8001
 ```
-
-#### Option B — Full Docker stack
-
-Runs everything inside Docker Compose. Service URLs are automatically overridden to Docker-internal hostnames (`db`, `minio`).
-
-```bash
-docker compose up -d --build
-```
-
-> ⚠️ **Do not mix the two modes.** If you run uvicorn directly (Option A) but your `.env` has Docker-internal hostnames like `db` or `minio`, you will get `nodename nor servname provided` errors.
 
 The API is now live at **http://localhost:8001**
 
@@ -188,29 +180,6 @@ uv run pytest tests/ --tb=short -q
 uv run pytest tests/ -v --cov=src --cov-report=term-missing
 ```
 
-### Run Postman / Newman end-to-end tests (requires running server + Docker)
-
-```bash
-# Install Newman globally
-npm install -g newman
-
-# Run the full Postman collection
-newman run docs/postman_collection_all.json \
-  --environment docs/postman_environment_all.json \
-  --bail
-
-# Run only Phase 4 + 5 tests
-newman run docs/postman_collection_phase45.json \
-  --environment docs/postman_environment_phase45.json \
-  --bail
-```
-
-The Postman collections automate the full E2E flow:
-1. Register admin / instructor / student
-2. Login and capture tokens
-3. Create courses, lessons, quizzes
-4. Enroll student, complete lessons, take quizzes
-5. Admin CRUD operations
 
 ### Linting & Formatting
 
@@ -261,11 +230,8 @@ learning_platform/
 ## Docker
 
 ```bash
-# Start only infrastructure (db + minio) — for Option A dev workflow
+# Start infrastructure (db + minio)
 docker compose up -d db minio
-
-# Full stack (app + db + minio) — Option B, mirrors production
-docker compose up -d --build
 
 # View app logs
 docker compose logs app --tail=50
@@ -288,8 +254,8 @@ docker compose down -v
 |---------|-----|
 | `Connection refused` on port 5432 | Run `docker compose up -d db minio` |
 | `Connection refused` on port 9000 | MinIO not started — run `docker compose up -d minio` |
-| `nodename nor servname provided` (`db`) | You have Docker-internal hostnames in `.env` but are running uvicorn directly. Use `localhost` in `.env` for Option A. |
-| `ECONNREFUSED 127.0.0.1:9000` (from client upload) | `S3_ENDPOINT_URL` in `.env` should be `http://localhost:9000` for Option A; Docker Compose overrides it automatically for Option B. |
+| `nodename nor servname provided` (`db`) | You have Docker-internal hostnames in `.env` but are running uvicorn directly. Use `localhost` in `.env`. |
+| `ECONNREFUSED 127.0.0.1:9000` (from client upload) | `S3_ENDPOINT_URL` in `.env` should be `http://localhost:9000`. |
 | TablePlus can't connect | Docker containers must be running first |
 | `alembic upgrade head` fails | Start Docker first (`docker compose up -d db`), then run migrations |
 | SQLAdmin login rejected | Register the admin user via API first |
