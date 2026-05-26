@@ -11,11 +11,13 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.config import settings
 from src.core.exceptions import ValidationError
 from src.submissions.exceptions import AlreadySubmitted, SubmissionNotFound
 from src.submissions.models import Answer, Submission
+from src.submissions.repository import AnswerRepository, SubmissionRepository
 from src.submissions.schemas import SubmissionDetailResponse, SubmitQuizRequest
 
 
@@ -24,6 +26,8 @@ class SubmissionService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
+        self.submission_repo = SubmissionRepository(db)
+        self.answer_repo = AnswerRepository(db)
 
     # ── Private helpers ─────────────────────────────────────────────────────
 
@@ -67,10 +71,8 @@ class SubmissionService:
         await course_service.check_enrollment(user_id, lesson.course_id)
 
         # 2. Check no prior submission
-        result = await self._db.execute(
-            select(Submission).where(Submission.user_id == user_id, Submission.quiz_id == quiz_id)
-        )
-        if result.scalar_one_or_none():
+        existing = await self.submission_repo.get_by_user_and_quiz(user_id, quiz_id)
+        if existing:
             raise AlreadySubmitted()
 
         # 3. Load all questions
@@ -132,13 +134,13 @@ class SubmissionService:
             quiz_id=quiz_id,
             score=score,
         )
-        self._db.add(submission)
+        self.submission_repo.add(submission)
         await self._db.flush()
 
         # Link answers to submission
         for answer_obj in answer_objects:
             answer_obj.submission_id = submission.id
-            self._db.add(answer_obj)
+            self.answer_repo.add(answer_obj)
         await self._db.flush()
 
         # 7. Trigger progress completion if score >= threshold
@@ -167,10 +169,7 @@ class SubmissionService:
 
     async def get_user_submission(self, quiz_id: UUID, user_id: UUID) -> Submission:
         """Get a user's submission for a quiz, or raise SubmissionNotFound."""
-        result = await self._db.execute(
-            select(Submission).where(Submission.user_id == user_id, Submission.quiz_id == quiz_id)
-        )
-        submission = result.scalar_one_or_none()
+        submission = await self.submission_repo.get_by_user_and_quiz(user_id, quiz_id)
         if not submission:
             raise SubmissionNotFound()
         return submission
@@ -179,12 +178,9 @@ class SubmissionService:
         self, quiz_id: UUID, user_id: UUID
     ) -> SubmissionDetailResponse:
         """Get a user's submission with answers for a quiz."""
-        submission = await self.get_user_submission(quiz_id, user_id)
-
-        result = await self._db.execute(
-            select(Answer).where(Answer.submission_id == submission.id)
-        )
-        answers = list(result.scalars().all())
+        submission = await self.submission_repo.get_with_answers(user_id, quiz_id)
+        if not submission:
+            raise SubmissionNotFound()
 
         answer_responses = [
             {
@@ -193,7 +189,7 @@ class SubmissionService:
                 "text": a.text,
                 "is_correct": a.is_correct,
             }
-            for a in answers
+            for a in submission.answers
         ]
 
         return SubmissionDetailResponse(
@@ -205,23 +201,19 @@ class SubmissionService:
             answers=answer_responses,
         )
 
-    # ── Admin helpers (kept from original) ──────────────────────
+    # ── Admin helpers ──────────────────────────────────────────
 
     async def list_all(self, limit: int = 20, offset: int = 0) -> list[Submission]:
         """List all submissions with pagination (admin use)."""
-        result = await self._db.execute(
-            select(Submission).order_by(Submission.submitted_at.desc()).limit(limit).offset(offset)
-        )
-        return list(result.scalars().all())
+        return await self.submission_repo.list_all(limit, offset)
 
     async def get_by_id(self, submission_id: UUID) -> Submission | None:
         """Get a submission by ID (returns None if not found)."""
-        result = await self._db.execute(select(Submission).where(Submission.id == submission_id))
-        return result.scalar_one_or_none()
+        return await self.submission_repo.get_by_id(submission_id)
 
     async def delete(self, submission_id: UUID) -> None:
         """Delete a submission by ID (admin use)."""
         submission = await self.get_by_id(submission_id)
         if submission:
-            await self._db.delete(submission)
+            await self.submission_repo.delete(submission)
             await self._db.flush()

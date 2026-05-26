@@ -28,9 +28,11 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(
     current_user: User = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
 ) -> UserResponse:
     """Get the authenticated user's profile."""
-    return UserResponse.model_validate(current_user)
+    user = await service.get_by_id(current_user.id)
+    return UserResponse.model_validate(user)
 
 
 @router.patch("/me", response_model=UserResponse)

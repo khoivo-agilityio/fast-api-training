@@ -9,7 +9,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.database import Base
+from src.core.database import AuditMixin, Base
 
 
 class ProgressStatus(StrEnum):
@@ -20,7 +20,7 @@ class ProgressStatus(StrEnum):
     COMPLETED = "completed"
 
 
-class Progress(Base):
+class Progress(AuditMixin, Base):
     """Progress — tracks one user's progress on one lesson."""
 
     __tablename__ = "progress"

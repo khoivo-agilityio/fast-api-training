@@ -9,11 +9,13 @@ Class-based service pattern:
 
 from uuid import UUID
 
-from sqlalchemy import func, select
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from src.quizzes.exceptions import QuestionNotFound, QuizAlreadyExists, QuizNotFound
 from src.quizzes.models import Question, Quiz
+from src.quizzes.repository import QuestionRepository, QuizRepository
 from src.quizzes.schemas import (
     QuestionCreateRequest,
     QuestionUpdateRequest,
@@ -27,13 +29,15 @@ class QuizService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
+        self.quiz_repo = QuizRepository(db)
+        self.question_repo = QuestionRepository(db)
 
     # ── Quiz CRUD ───────────────────────────────────────────────
 
     async def create_quiz(self, lesson_id: UUID, data: QuizCreateRequest) -> Quiz:
         """Create a quiz for a lesson. Raises QuizAlreadyExists if one exists."""
-        result = await self._db.execute(select(Quiz).where(Quiz.lesson_id == lesson_id))
-        if result.scalar_one_or_none():
+        existing = await self.quiz_repo.get_by_lesson_id(lesson_id)
+        if existing:
             raise QuizAlreadyExists()
 
         quiz = Quiz(
@@ -42,22 +46,20 @@ class QuizService:
             description=data.description,
             time_limit_minutes=data.time_limit_minutes,
         )
-        self._db.add(quiz)
+        self.quiz_repo.add(quiz)
         await self._db.flush()
         return quiz
 
     async def get_quiz_by_lesson(self, lesson_id: UUID) -> Quiz:
         """Get quiz by lesson ID or raise QuizNotFound."""
-        result = await self._db.execute(select(Quiz).where(Quiz.lesson_id == lesson_id))
-        quiz = result.scalar_one_or_none()
+        quiz = await self.quiz_repo.get_by_lesson_id(lesson_id)
         if not quiz:
             raise QuizNotFound(f"lesson_id={lesson_id}")
         return quiz
 
     async def get_quiz_by_id(self, quiz_id: UUID) -> Quiz:
         """Get quiz by its own ID or raise QuizNotFound."""
-        result = await self._db.execute(select(Quiz).where(Quiz.id == quiz_id))
-        quiz = result.scalar_one_or_none()
+        quiz = await self.quiz_repo.get_by_id(quiz_id)
         if not quiz:
             raise QuizNotFound(quiz_id)
         return quiz
@@ -65,8 +67,7 @@ class QuizService:
     async def get_quiz_with_questions(self, quiz_id: UUID) -> tuple[Quiz, list[Question]]:
         """Load quiz + all its questions. Used by submissions service."""
         quiz = await self.get_quiz_by_id(quiz_id)
-        result = await self._db.execute(select(Question).where(Question.quiz_id == quiz_id))
-        questions = list(result.scalars().all())
+        questions = await self.question_repo.list_by_quiz(quiz_id)
         return quiz, questions
 
     async def update_quiz(self, lesson_id: UUID, data: QuizUpdateRequest) -> Quiz:
@@ -81,7 +82,7 @@ class QuizService:
     async def delete_quiz(self, lesson_id: UUID) -> None:
         """Delete a quiz by lesson ID."""
         quiz = await self.get_quiz_by_lesson(lesson_id)
-        await self._db.delete(quiz)
+        await self.quiz_repo.delete(quiz)
         await self._db.flush()
 
     # ── Question CRUD ───────────────────────────────────────────
@@ -96,14 +97,13 @@ class QuizService:
             options=data.options,
             correct_answer=data.correct_answer,
         )
-        self._db.add(question)
+        self.question_repo.add(question)
         await self._db.flush()
         return question
 
     async def get_question_by_id(self, question_id: UUID) -> Question:
         """Get question by ID or raise QuestionNotFound."""
-        result = await self._db.execute(select(Question).where(Question.id == question_id))
-        question = result.scalar_one_or_none()
+        question = await self.question_repo.get_by_id(question_id)
         if not question:
             raise QuestionNotFound(question_id)
         return question
@@ -120,12 +120,14 @@ class QuizService:
     async def delete_question(self, question_id: UUID) -> None:
         """Delete a question."""
         question = await self.get_question_by_id(question_id)
-        await self._db.delete(question)
+        await self.question_repo.delete(question)
         await self._db.flush()
 
     async def count_questions(self, quiz_id: UUID) -> int:
         """Count questions in a quiz."""
-        result = await self._db.execute(
-            select(func.count()).select_from(Question).where(Question.quiz_id == quiz_id)
-        )
-        return result.scalar_one()
+        return await self.question_repo.count_by_quiz(quiz_id)
+
+    async def has_quiz_for_lesson(self, lesson_id: UUID) -> bool:
+        """Return True if a quiz exists for the given lesson."""
+        quiz = await self.quiz_repo.get_by_lesson_id(lesson_id)
+        return quiz is not None

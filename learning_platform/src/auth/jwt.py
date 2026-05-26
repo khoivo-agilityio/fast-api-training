@@ -27,11 +27,12 @@ def create_access_token(user_id: str, role: str) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: str) -> str:
+def create_refresh_token(user_id: str, role: str) -> str:
     """Create a long-lived refresh token."""
     now = datetime.now(UTC)
     payload = {
         "sub": user_id,
+        "role": role,
         "type": "refresh",
         "jti": str(uuid.uuid4()),
         "iat": now,
@@ -44,7 +45,7 @@ def create_token_pair(user_id: str, role: str) -> dict[str, str]:
     """Create both access and refresh tokens for a user."""
     return {
         "access_token": create_access_token(user_id, role),
-        "refresh_token": create_refresh_token(user_id),
+        "refresh_token": create_refresh_token(user_id, role),
         "token_type": "bearer",
     }
 

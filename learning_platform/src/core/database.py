@@ -29,16 +29,38 @@ engine = create_async_engine(_normalize_db_url(settings.DATABASE_URL), echo=sett
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
+import uuid
+from datetime import datetime
+from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+class AuditMixin:
+    """Mixin to add audit fields to models."""
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, onupdate=func.now()
+    )
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    deleted_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+
 class Base(DeclarativeBase):
     """Declarative base for all ORM models."""
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Yield an async session; auto-commit on success, rollback on error."""
+    """Yield an async session."""
     async with async_session_factory() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+        yield session

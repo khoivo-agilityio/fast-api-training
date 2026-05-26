@@ -12,10 +12,10 @@ from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.core.database import Base
+from src.core.database import AuditMixin, Base
 
 
-class BlacklistedToken(Base):
+class BlacklistedToken(AuditMixin, Base):
     """Blacklisted JWT — prevents reuse of revoked access and refresh tokens."""
 
     __tablename__ = "blacklisted_tokens"
@@ -23,9 +23,6 @@ class BlacklistedToken(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     jti: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
 
     def __str__(self) -> str:
         return f"BlacklistedToken(jti={self.jti})"

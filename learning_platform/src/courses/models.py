@@ -13,10 +13,10 @@ from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, fun
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.database import Base
+from src.core.database import AuditMixin, Base
 
 
-class Course(Base):
+class Course(AuditMixin, Base):
     """Course — created by instructors, enrolled by students."""
 
     __tablename__ = "courses"
@@ -27,12 +27,6 @@ class Course(Base):
     )
     title: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
-    )
 
     def __str__(self) -> str:
         return self.title
@@ -56,7 +50,7 @@ class Course(Base):
     )
 
 
-class Enrollment(Base):
+class Enrollment(AuditMixin, Base):
     """Enrollment — many-to-many join between students and courses."""
 
     __tablename__ = "enrollments"
@@ -68,9 +62,6 @@ class Enrollment(Base):
     )
     course_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False, index=True
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
     def __str__(self) -> str:

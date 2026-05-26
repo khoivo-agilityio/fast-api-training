@@ -16,10 +16,8 @@ and user CRUD to users.service.UserService.
 """
 
 from datetime import UTC, datetime
-from uuid import UUID
 
 import jwt as pyjwt
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth import jwt, security
@@ -31,6 +29,7 @@ from src.auth.exceptions import (
     TokenRevoked,
 )
 from src.auth.models import BlacklistedToken
+from src.auth.repository import BlacklistedTokenRepository
 from src.auth.schemas import RegisterRequest, TokenResponse
 from src.users.service import UserService
 
@@ -41,18 +40,16 @@ class AuthService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
         self._user_service = UserService(db)
+        self._token_repo = BlacklistedTokenRepository(db)
 
     async def _is_token_blacklisted(self, jti: str) -> bool:
         """Check if a token's JTI is in the blacklist."""
-        result = await self._db.execute(
-            select(BlacklistedToken).where(BlacklistedToken.jti == jti)
-        )
-        return result.scalar_one_or_none() is not None
+        return await self._token_repo.is_blacklisted(jti)
 
     async def _blacklist_token(self, jti: str, expires_at: datetime) -> None:
         """Add a token's JTI to the blacklist."""
         token_record = BlacklistedToken(jti=jti, expires_at=expires_at)
-        self._db.add(token_record)
+        self._token_repo.add(token_record)
         await self._db.flush()
 
     async def register(self, data: RegisterRequest) -> TokenResponse:
@@ -121,10 +118,10 @@ class AuthService:
         expires_at = datetime.fromtimestamp(exp_timestamp, tz=UTC)
         await self._blacklist_token(jti, expires_at)
 
-        # Issue new token pair
+        # Issue new token pair — role is already in the refresh payload, no DB hit needed
         user_id = payload["sub"]
-        user = await self._user_service.get_by_id(UUID(user_id))
-        tokens = jwt.create_token_pair(str(user.id), user.role)
+        role = payload.get("role", "student")
+        tokens = jwt.create_token_pair(user_id, role)
         return TokenResponse(**tokens)
 
     async def logout(self, access_token: str) -> None:

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth import security
 from src.users.exceptions import UserNotFound
 from src.users.models import User
+from src.users.repository import UserRepository
 from src.users.schemas import UserUpdateRequest
 
 
@@ -24,19 +25,18 @@ class UserService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
+        self.repo = UserRepository(db)
 
     async def get_by_id(self, user_id: UUID) -> User:
         """Get user by ID or raise UserNotFound."""
-        result = await self._db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
+        user = await self.repo.get_by_id(user_id)
         if not user:
             raise UserNotFound(user_id)
         return user
 
     async def get_by_email(self, email: str) -> User | None:
         """Get user by email (returns None if not found — used by auth login)."""
-        result = await self._db.execute(select(User).where(User.email == email))
-        return result.scalar_one_or_none()
+        return await self.repo.get_by_email(email)
 
     async def create_user(
         self,
@@ -53,7 +53,7 @@ class UserService:
             display_name=display_name,
             role=role,
         )
-        self._db.add(user)
+        self.repo.add(user)
         await self._db.flush()
         return user
 
@@ -75,15 +75,12 @@ class UserService:
 
     async def list_all(self, limit: int = 20, offset: int = 0) -> list[User]:
         """List all users with pagination (admin use)."""
-        result = await self._db.execute(
-            select(User).order_by(User.created_at.desc()).limit(limit).offset(offset)
-        )
-        return list(result.scalars().all())
+        return await self.repo.list_all(limit, offset)
 
     async def delete(self, user_id: UUID) -> None:
         """Delete a user by ID (admin use)."""
         user = await self.get_by_id(user_id)
-        await self._db.delete(user)
+        await self.repo.delete(user)
         await self._db.flush()
 
     async def update_avatar(self, user_id: UUID, avatar_url: str) -> User:

@@ -16,8 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.lessons.exceptions import LessonNotFound
 from src.lessons.models import Lesson
+from src.lessons.repository import LessonRepository
 from src.lessons.schemas import LessonCreateRequest, LessonUpdateRequest
-from src.quizzes.models import Quiz
 
 if TYPE_CHECKING:
     from src.users.models import User
@@ -28,6 +28,7 @@ class LessonService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
+        self.repo = LessonRepository(db)
 
     async def create(self, course_id: UUID, data: LessonCreateRequest) -> Lesson:
         """Create a new lesson in the given course."""
@@ -38,24 +39,25 @@ class LessonService:
             timeline=data.timeline,
             order=data.order,
         )
-        self._db.add(lesson)
+        self.repo.add(lesson)
         await self._db.flush()
         return lesson
 
     async def get_by_id(self, lesson_id: UUID) -> Lesson:
         """Get lesson by ID or raise LessonNotFound."""
-        result = await self._db.execute(select(Lesson).where(Lesson.id == lesson_id))
-        lesson = result.scalar_one_or_none()
+        lesson = await self.repo.get_by_id(lesson_id)
         if not lesson:
             raise LessonNotFound(lesson_id)
         return lesson
 
-    async def get_and_track(self, lesson_id: UUID, user: "User", progress_service) -> Lesson:
+    async def get_and_track(
+        self, lesson_id: UUID, user: "User", progress_service, quiz_service
+    ) -> Lesson:
         """Get a lesson and track progress for students.
 
         For student users, this:
         1. Fetches the lesson
-        2. Checks if the lesson has a quiz
+        2. Asks quiz_service whether the lesson has a quiz (avoids cross-module import)
         3. Calls progress_service.touch() to record the visit
 
         For non-students, simply returns the lesson.
@@ -63,20 +65,14 @@ class LessonService:
         lesson = await self.get_by_id(lesson_id)
 
         if user.role == "student":
-            result = await self._db.execute(
-                select(Quiz).where(Quiz.lesson_id == lesson_id).limit(1)
-            )
-            has_quiz = result.scalar_one_or_none() is not None
+            has_quiz = await quiz_service.has_quiz_for_lesson(lesson_id)
             await progress_service.touch(user.id, lesson_id, has_quiz)
 
         return lesson
 
     async def list_by_course(self, course_id: UUID) -> list[Lesson]:
         """List all lessons in a course, ordered by the 'order' field."""
-        result = await self._db.execute(
-            select(Lesson).where(Lesson.course_id == course_id).order_by(Lesson.order)
-        )
-        return list(result.scalars().all())
+        return await self.repo.list_by_course(course_id)
 
     async def update(self, lesson_id: UUID, data: LessonUpdateRequest) -> Lesson:
         """Partial update of a lesson."""
@@ -92,5 +88,9 @@ class LessonService:
     async def delete(self, lesson_id: UUID) -> None:
         """Delete a lesson."""
         lesson = await self.get_by_id(lesson_id)
-        await self._db.delete(lesson)
+        await self.repo.delete(lesson)
         await self._db.flush()
+
+    async def count_by_course(self, course_id: UUID) -> int:
+        """Return the total number of lessons in a course."""
+        return await self.repo.count_by_course(course_id)

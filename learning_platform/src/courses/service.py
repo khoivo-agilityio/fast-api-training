@@ -21,6 +21,7 @@ from src.courses.exceptions import (
     NotEnrolled,
 )
 from src.courses.models import Course, Enrollment
+from src.courses.repository import CourseRepository, EnrollmentRepository
 from src.courses.schemas import CourseCreateRequest, CourseUpdateRequest
 
 
@@ -29,6 +30,8 @@ class CourseService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
+        self.course_repo = CourseRepository(db)
+        self.enrollment_repo = EnrollmentRepository(db)
 
     async def create(self, data: CourseCreateRequest, instructor_id: UUID) -> Course:
         """Create a new course owned by the given instructor."""
@@ -37,14 +40,13 @@ class CourseService:
             description=data.description,
             instructor_id=instructor_id,
         )
-        self._db.add(course)
+        self.course_repo.add(course)
         await self._db.flush()
         return course
 
     async def get_by_id(self, course_id: UUID) -> Course:
         """Get course by ID or raise CourseNotFound."""
-        result = await self._db.execute(select(Course).where(Course.id == course_id))
-        course = result.scalar_one_or_none()
+        course = await self.course_repo.get_by_id(course_id)
         if not course:
             raise CourseNotFound(course_id)
         return course
@@ -57,21 +59,7 @@ class CourseService:
         instructor_id: UUID | None = None,
     ) -> tuple[list[Course], int]:
         """List courses with optional search and instructor filter. Returns (items, total)."""
-        query = select(Course)
-        count_query = select(func.count()).select_from(Course)
-
-        if search:
-            query = query.where(Course.title.ilike(f"%{search}%"))
-            count_query = count_query.where(Course.title.ilike(f"%{search}%"))
-        if instructor_id:
-            query = query.where(Course.instructor_id == instructor_id)
-            count_query = count_query.where(Course.instructor_id == instructor_id)
-
-        query = query.order_by(Course.created_at.desc()).limit(limit).offset(offset)
-        result = await self._db.execute(query)
-        total_result = await self._db.execute(count_query)
-
-        return list(result.scalars().all()), total_result.scalar_one()
+        return await self.course_repo.list_courses(limit, offset, search, instructor_id)
 
     async def update(
         self, course_id: UUID, data: CourseUpdateRequest, user_id: UUID, user_role: str
@@ -93,36 +81,32 @@ class CourseService:
     async def delete(self, course_id: UUID) -> None:
         """Delete a course (admin only — enforced at router level)."""
         course = await self.get_by_id(course_id)
-        await self._db.delete(course)
+        await self.course_repo.delete(course)
         await self._db.flush()
 
     async def enroll(self, user_id: UUID, course_id: UUID) -> Enrollment:
         """Enroll a student in a course. Raises AlreadyEnrolled if duplicate."""
         await self.get_by_id(course_id)  # Ensure course exists
 
-        result = await self._db.execute(
-            select(Enrollment).where(
-                Enrollment.user_id == user_id, Enrollment.course_id == course_id
-            )
-        )
-        if result.scalar_one_or_none():
+        existing = await self.enrollment_repo.get_enrollment(user_id, course_id)
+        if existing:
             raise AlreadyEnrolled()
 
         enrollment = Enrollment(user_id=user_id, course_id=course_id)
-        self._db.add(enrollment)
+        self.enrollment_repo.add(enrollment)
         await self._db.flush()
         return enrollment
 
     async def is_enrolled(self, user_id: UUID, course_id: UUID) -> bool:
         """Check if a user is enrolled in a course."""
-        result = await self._db.execute(
-            select(Enrollment).where(
-                Enrollment.user_id == user_id, Enrollment.course_id == course_id
-            )
-        )
-        return result.scalar_one_or_none() is not None
+        existing = await self.enrollment_repo.get_enrollment(user_id, course_id)
+        return existing is not None
 
     async def check_enrollment(self, user_id: UUID, course_id: UUID) -> None:
         """Raise NotEnrolled if the user is not enrolled in the course."""
         if not await self.is_enrolled(user_id, course_id):
             raise NotEnrolled()
+
+    async def get_enrolled_course_ids(self, user_id: UUID) -> list[UUID]:
+        """Return all course IDs the user is enrolled in."""
+        return await self.enrollment_repo.get_enrolled_course_ids(user_id)

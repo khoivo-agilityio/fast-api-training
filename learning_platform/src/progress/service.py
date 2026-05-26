@@ -3,9 +3,9 @@ Progress Service — Lesson-level progress tracking with course-level derivation
 
 Class-based service pattern:
 - Takes AsyncSession via constructor
-- All DB queries are owned by this service (no repositories layer)
+- All DB queries are owned by this service via ProgressRepository
+- Cross-domain data is accessed through injected CourseService / LessonService
 - Raises domain exceptions — never HTTPException
-- Cross-module access goes through service public methods only
 
 Key behaviours:
 - touch()              : Called by LessonService.get_and_track() for students
@@ -16,12 +16,10 @@ Key behaviours:
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.courses.models import Enrollment
-from src.lessons.models import Lesson
 from src.progress.models import Progress, ProgressStatus
+from src.progress.repository import ProgressRepository
 from src.progress.schemas import CourseProgressResponse
 
 
@@ -30,6 +28,7 @@ class ProgressService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
+        self.repo = ProgressRepository(db)
 
     # ------------------------------------------------------------------
     # Core tracking methods
@@ -44,13 +43,7 @@ class ProgressService:
         - in_progress + no quiz → completed
         - completed          → update accessed_at only (idempotent)
         """
-        result = await self._db.execute(
-            select(Progress).where(
-                Progress.user_id == user_id,
-                Progress.lesson_id == lesson_id,
-            )
-        )
-        progress = result.scalar_one_or_none()
+        progress = await self.repo.get_by_user_and_lesson(user_id, lesson_id)
         now = datetime.now(UTC)
 
         if progress is None:
@@ -70,7 +63,7 @@ class ProgressService:
                     accessed_at=now,
                     completed_at=now,
                 )
-            self._db.add(progress)
+            self.repo.add(progress)
         elif progress.status == ProgressStatus.NOT_STARTED:
             # Transition from not_started
             if has_quiz:
@@ -92,17 +85,8 @@ class ProgressService:
         return progress
 
     async def mark_lesson_completed(self, user_id: UUID, lesson_id: UUID) -> Progress:
-        """Mark a lesson as completed (called after passing quiz).
-
-        Creates a new record if none exists.
-        """
-        result = await self._db.execute(
-            select(Progress).where(
-                Progress.user_id == user_id,
-                Progress.lesson_id == lesson_id,
-            )
-        )
-        progress = result.scalar_one_or_none()
+        """Mark a lesson as completed (called after passing quiz)."""
+        progress = await self.repo.get_by_user_and_lesson(user_id, lesson_id)
         now = datetime.now(UTC)
 
         if progress is None:
@@ -113,7 +97,7 @@ class ProgressService:
                 accessed_at=now,
                 completed_at=now,
             )
-            self._db.add(progress)
+            self.repo.add(progress)
         else:
             progress.status = ProgressStatus.COMPLETED
             progress.completed_at = now
@@ -128,42 +112,30 @@ class ProgressService:
 
     async def get_lesson_progress(self, user_id: UUID, lesson_id: UUID) -> Progress | None:
         """Return the progress record for (user, lesson) or None if it doesn't exist."""
-        result = await self._db.execute(
-            select(Progress).where(
-                Progress.user_id == user_id,
-                Progress.lesson_id == lesson_id,
-            )
-        )
-        return result.scalar_one_or_none()
+        return await self.repo.get_by_user_and_lesson(user_id, lesson_id)
 
     async def get_course_progress(
-        self, user_id: UUID, course_id: UUID, course_service
+        self,
+        user_id: UUID,
+        course_id: UUID,
+        course_service,
+        lesson_service,
     ) -> CourseProgressResponse:
         """Derive course-level progress from lesson-level records.
 
-        Counts total lessons in the course and completed ones by the user.
-        CourseService is injected as a parameter to avoid internal service creation.
+        - course_service: CourseService — fetches course title and enrolled lesson IDs
+        - lesson_service: LessonService — provides total lesson count and lesson IDs
         """
         # Raises CourseNotFound if the course doesn't exist
         course = await course_service.get_by_id(course_id)
 
-        # Total lessons in course
-        total_result = await self._db.execute(
-            select(func.count()).select_from(Lesson).where(Lesson.course_id == course_id)
-        )
-        total = total_result.scalar_one()
+        # Get all lesson IDs in this course via LessonService (no cross-module import)
+        lessons = await lesson_service.list_by_course(course_id)
+        total = len(lessons)
+        lesson_ids = [lesson.id for lesson in lessons]
 
-        # Completed lessons by this user for this course
-        completed_result = await self._db.execute(
-            select(func.count())
-            .select_from(Progress)
-            .where(
-                Progress.user_id == user_id,
-                Progress.status == ProgressStatus.COMPLETED,
-                Progress.lesson_id.in_(select(Lesson.id).where(Lesson.course_id == course_id)),
-            )
-        )
-        completed = completed_result.scalar_one()
+        # Count how many of those lessons the user has completed
+        completed = await self.repo.count_completed_in_lessons(user_id, lesson_ids)
 
         percent = round(100 * completed / total, 2) if total > 0 else 0.0
 
@@ -177,21 +149,18 @@ class ProgressService:
         )
 
     async def get_all_courses_progress(
-        self, user_id: UUID, course_service
+        self,
+        user_id: UUID,
+        course_service,
+        lesson_service,
     ) -> list[CourseProgressResponse]:
         """Return progress for all courses the user is enrolled in."""
-        result = await self._db.execute(
-            select(Enrollment.course_id).where(Enrollment.user_id == user_id)
-        )
-        course_ids = list(result.scalars().all())
+        course_ids = await course_service.get_enrolled_course_ids(user_id)
         return [
-            await self.get_course_progress(user_id, course_id, course_service)
+            await self.get_course_progress(user_id, course_id, course_service, lesson_service)
             for course_id in course_ids
         ]
 
     async def list_all(self, limit: int = 20, offset: int = 0) -> list[Progress]:
         """List all progress records with pagination (admin use)."""
-        result = await self._db.execute(
-            select(Progress).order_by(Progress.accessed_at.desc()).limit(limit).offset(offset)
-        )
-        return list(result.scalars().all())
+        return await self.repo.list_all(limit, offset)

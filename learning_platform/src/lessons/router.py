@@ -23,6 +23,8 @@ from src.lessons.schemas import LessonCreateRequest, LessonResponse, LessonUpdat
 from src.lessons.service import LessonService
 from src.progress.dependencies import get_progress_service
 from src.progress.service import ProgressService
+from src.quizzes.dependencies import get_quiz_service
+from src.quizzes.service import QuizService
 from src.users.models import User
 
 router = APIRouter(tags=["lessons"])
@@ -63,9 +65,12 @@ async def get_lesson(
     current_user: User = Depends(get_current_user),
     lesson_service: LessonService = Depends(get_lesson_service),
     progress_service: ProgressService = Depends(get_progress_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
 ) -> LessonResponse:
     """Get a single lesson by ID. Tracks progress for students."""
-    lesson = await lesson_service.get_and_track(lesson_id, current_user, progress_service)
+    lesson = await lesson_service.get_and_track(
+        lesson_id, current_user, progress_service, quiz_service
+    )
     return LessonResponse.model_validate(lesson)
 
 

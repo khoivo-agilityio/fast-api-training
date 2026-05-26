@@ -14,7 +14,7 @@ from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.database import Base
+from src.core.database import AuditMixin, Base
 
 
 class UserRole(StrEnum):
@@ -25,7 +25,7 @@ class UserRole(StrEnum):
     STUDENT = "student"
 
 
-class User(Base):
+class User(AuditMixin, Base):
     """User account — supports admin, instructor, and student roles."""
 
     __tablename__ = "users"
@@ -36,9 +36,6 @@ class User(Base):
     password: Mapped[str] = mapped_column(String, nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     avatar: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
 
     def __str__(self) -> str:
         return f"{self.display_name} <{self.email}>"

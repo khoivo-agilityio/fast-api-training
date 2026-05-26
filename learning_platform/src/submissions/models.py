@@ -12,10 +12,10 @@ from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.database import Base
+from src.core.database import AuditMixin, Base
 
 
-class Submission(Base):
+class Submission(AuditMixin, Base):
     """Student's quiz submission with auto-graded score."""
 
     __tablename__ = "submissions"
@@ -50,7 +50,7 @@ class Submission(Base):
     )
 
 
-class Answer(Base):
+class Answer(AuditMixin, Base):
     """Individual answer within a submission."""
 
     __tablename__ = "answers"

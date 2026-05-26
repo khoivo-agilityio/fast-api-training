@@ -12,7 +12,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.database import Base
+from src.core.database import AuditMixin, Base
 
 
 class QuestionType(StrEnum):
@@ -22,7 +22,7 @@ class QuestionType(StrEnum):
     TEXT = "text"
 
 
-class Quiz(Base):
+class Quiz(AuditMixin, Base):
     """Quiz — belongs to a lesson. One quiz per lesson."""
 
     __tablename__ = "quizzes"
@@ -52,7 +52,7 @@ class Quiz(Base):
     )
 
 
-class Question(Base):
+class Question(AuditMixin, Base):
     """Question — belongs to a quiz. Supports MCQ and text types."""
 
     __tablename__ = "questions"

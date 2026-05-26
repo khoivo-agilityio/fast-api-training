@@ -26,7 +26,6 @@ from src.auth.models import BlacklistedToken
 from src.auth.service import AuthService
 from src.core.database import get_db
 from src.users.models import User
-from src.users.service import UserService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
@@ -67,8 +66,11 @@ async def get_current_user(
         if result.scalar_one_or_none() is not None:
             raise TokenRevoked()
 
-    user_service = UserService(db)
-    user = await user_service.get_by_id(UUID(user_id))
+    # Construct a User object from the JWT payload to avoid a database hit
+    user = User(
+        id=UUID(user_id),
+        role=payload.get("role", "student")
+    )
     return user
 
 
