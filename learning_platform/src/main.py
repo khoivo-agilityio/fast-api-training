@@ -29,7 +29,8 @@ from src.admin_view import (
     SubmissionAdmin,
     UserAdmin,
 )
-from src.auth.router import router as auth_router
+from src.api.v1.router import v1_router
+from src.api.v2.router import v2_router
 from src.core.database import engine
 from src.core.exceptions import (
     AuthenticationError,
@@ -40,18 +41,6 @@ from src.core.exceptions import (
     ValidationError,
 )
 from src.core.logging import configure_logging
-from src.courses.router import admin_router as courses_admin_router
-from src.courses.router import router as courses_router
-from src.courses.router import ui_router as courses_ui_router
-from src.lessons.router import router as lessons_router
-from src.lessons.router import ui_router as lessons_ui_router
-from src.progress.router import admin_router as progress_admin_router
-from src.progress.router import router as progress_router
-from src.quizzes.router import router as quizzes_router
-from src.submissions.router import admin_router as submissions_admin_router
-from src.submissions.router import router as submissions_router
-from src.users.router import admin_router as users_admin_router
-from src.users.router import router as users_router
 from starlette.middleware.sessions import SessionMiddleware
 
 # Status code mapping — walks MRO to find first matching parent (gotchas.md #2)
@@ -179,20 +168,9 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # Mount routers
-    app.include_router(auth_router, prefix="/api/v1")
-    app.include_router(users_router, prefix="/api/v1")
-    app.include_router(users_admin_router, prefix="/api/v1")
-    app.include_router(courses_router, prefix="/api/v1")
-    app.include_router(courses_admin_router, prefix="/api/v1")
-    app.include_router(courses_ui_router, prefix="/api/v1")
-    app.include_router(lessons_router, prefix="/api/v1")
-    app.include_router(lessons_ui_router, prefix="/api/v1")
-    app.include_router(quizzes_router, prefix="/api/v1")
-    app.include_router(submissions_router, prefix="/api/v1")
-    app.include_router(submissions_admin_router, prefix="/api/v1")
-    app.include_router(progress_router, prefix="/api/v1")
-    app.include_router(progress_admin_router, prefix="/api/v1")
+    # Mount versioned API routers
+    app.include_router(v1_router)
+    app.include_router(v2_router)
 
     # Health check
     @app.get("/health", tags=["system"])
