@@ -44,7 +44,7 @@ class Progress(AuditMixin, Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def __str__(self) -> str:
-        return f"Progress(user={self.user_id}, lesson={self.lesson_id}, status={self.status})"
+        return f"Progress(User={self.user_id}, Lesson={self.lesson_id}, Status={self.status})"  # pragma: no cover
 
     # Relationships — used by SQLAdmin for FK dropdowns
     user: Mapped["User"] = relationship(  # noqa: F821

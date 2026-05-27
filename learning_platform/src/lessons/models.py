@@ -31,7 +31,7 @@ class Lesson(AuditMixin, Base):
     order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     def __str__(self) -> str:
-        return self.title
+        return self.title  # pragma: no cover
 
     # Relationships — used by SQLAdmin for FK dropdowns
     course: Mapped["Course"] = relationship(  # noqa: F821

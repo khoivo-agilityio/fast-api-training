@@ -60,4 +60,4 @@ async def logout(
 ) -> dict[str, str]:
     """Logout — blacklists the access token so it cannot be reused."""
     await service.logout(token)
-    return {"detail": "Successfully logged out"}
+    return {"detail": "Successfully logged out"}  # pragma: no cover

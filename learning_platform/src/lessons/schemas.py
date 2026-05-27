@@ -38,6 +38,6 @@ class LessonResponse(BaseModel):
     content: str
     order: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: datetime | None
 
     model_config = {"from_attributes": True}

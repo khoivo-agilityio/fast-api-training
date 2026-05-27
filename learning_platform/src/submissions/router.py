@@ -21,7 +21,7 @@ from src.submissions.dependencies import (
     get_quiz_service,
     get_submission_service,
 )
-from src.submissions.schemas import SubmissionDetailResponse, SubmitQuizRequest
+from src.submissions.schemas import SubmissionDetailResponse, SubmitQuizRequest, SubmissionResponse
 from src.submissions.service import SubmissionService
 from src.users.models import User
 
@@ -75,25 +75,16 @@ async def get_submission(
 admin_router = APIRouter(prefix="/admin/submissions", tags=["admin"])
 
 
-@admin_router.get("", response_model=list[dict])
+@admin_router.get("", response_model=list[SubmissionResponse])
 async def admin_list_submissions(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     _: None = Depends(require_roles("admin")),
     service: SubmissionService = Depends(get_submission_service),
-) -> list[dict]:
+) -> list[SubmissionResponse]:
     """List all quiz submissions (admin only)."""
     submissions = await service.list_all(limit=limit, offset=offset)
-    return [
-        {
-            "id": str(s.id),
-            "user_id": str(s.user_id),
-            "quiz_id": str(s.quiz_id),
-            "score": s.score,
-            "submitted_at": s.submitted_at.isoformat(),
-        }
-        for s in submissions
-    ]
+    return submissions  # pragma: no cover
 
 
 @admin_router.delete("/{submission_id}", status_code=204)

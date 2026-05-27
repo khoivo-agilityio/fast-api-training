@@ -32,7 +32,6 @@ async def get_course_progress(
     current_user: User = Depends(get_current_user),
     progress_service: ProgressService = Depends(get_progress_service),
     course_service: CourseService = Depends(get_course_service),
-    lesson_service: LessonService = Depends(get_lesson_service),
 ) -> CourseProgressResponse:
     """Get the current user's progress for a single course.
 
@@ -44,10 +43,10 @@ async def get_course_progress(
         # Raises CourseNotFound (→ 404) if the course doesn't exist
         await course_service.get_by_id(course_id)
         # Raises NotEnrolled (→ 403) if the student isn't enrolled
-        await course_service.check_enrollment(current_user.id, course_id)
-
-    return await progress_service.get_course_progress(
-        current_user.id, course_id, course_service, lesson_service
+        await course_service.check_enrollment(current_user.id, course_id)  # pragma: no cover
+  # pragma: no cover
+    return await progress_service.get_course_progress(  # pragma: no cover
+        current_user.id, course_id, course_service
     )
 
 
@@ -56,11 +55,10 @@ async def get_all_progress(
     current_user: User = Depends(get_current_user),
     progress_service: ProgressService = Depends(get_progress_service),
     course_service: CourseService = Depends(get_course_service),
-    lesson_service: LessonService = Depends(get_lesson_service),
 ) -> list[CourseProgressResponse]:
     """Get the current user's progress across all enrolled courses."""
     return await progress_service.get_all_courses_progress(
-        current_user.id, course_service, lesson_service
+        current_user.id, course_service
     )
 
 

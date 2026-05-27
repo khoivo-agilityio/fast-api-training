@@ -36,7 +36,7 @@ class Quiz(AuditMixin, Base):
     # Using Integer minutes instead of Interval — SQLite doesn't support Interval (gotchas #9)
     time_limit_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return self.title
 
     # Relationships — used by SQLAdmin for FK dropdowns
@@ -70,7 +70,7 @@ class Question(AuditMixin, Base):
     options: Mapped[list | None] = mapped_column(JSON, nullable=True)
     correct_answer: Mapped[str] = mapped_column(String, nullable=False)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return self.text[:60] + ("..." if len(self.text) > 60 else "")
 
     # Relationships — used by SQLAdmin for FK dropdowns

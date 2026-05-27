@@ -43,7 +43,7 @@ class CourseResponse(BaseModel):
     description: str | None
     instructor_id: UUID
     created_at: datetime
-    updated_at: datetime
+    updated_at: datetime | None
 
     model_config = {"from_attributes": True}
 

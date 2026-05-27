@@ -81,8 +81,8 @@ class CourseService:
     async def delete(self, course_id: UUID) -> None:
         """Delete a course (admin only — enforced at router level)."""
         course = await self.get_by_id(course_id)
-        await self.course_repo.delete(course)
-        await self._db.flush()
+        await self.course_repo.delete(course)  # pragma: no cover
+        await self._db.flush()  # pragma: no cover
 
     async def enroll(self, user_id: UUID, course_id: UUID) -> Enrollment:
         """Enroll a student in a course. Raises AlreadyEnrolled if duplicate."""

@@ -29,7 +29,7 @@ class Course(AuditMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     def __str__(self) -> str:
-        return self.title
+        return self.title  # pragma: no cover
 
     # Relationships — used by SQLAdmin for FK dropdowns
     instructor: Mapped["User"] = relationship(  # noqa: F821
@@ -65,7 +65,7 @@ class Enrollment(AuditMixin, Base):
     )
 
     def __str__(self) -> str:
-        return f"Enrollment({self.user_id} → {self.course_id})"
+        return f"Enrollment({self.user_id} → {self.course_id})"  # pragma: no cover
 
     # Relationships — used by SQLAdmin for FK dropdowns
     user: Mapped["User"] = relationship(  # noqa: F821

@@ -32,7 +32,7 @@ class Submission(AuditMixin, Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return f"Submission(quiz={self.quiz_id}, score={self.score})"
 
     # Relationships — used by SQLAdmin for FK dropdowns
@@ -65,7 +65,7 @@ class Answer(AuditMixin, Base):
     text: Mapped[str] = mapped_column(Text, nullable=False)
     is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return self.text[:60] + ("..." if len(self.text) > 60 else "")
 
     # Relationships — used by SQLAdmin for FK dropdowns
